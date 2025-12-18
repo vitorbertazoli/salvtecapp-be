@@ -1,0 +1,58 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+export type AccountDocument = Account & Document;
+
+@Schema({ timestamps: true })
+export class Account {
+  @Prop({ required: true })
+  name: string;
+
+  @Prop()
+  logoUrl?: string;
+
+  @Prop({
+    required: true,
+    enum: ['free', 'pro', 'enterprise'],
+    default: 'free',
+  })
+  plan: 'free' | 'pro' | 'enterprise';
+
+  @Prop()
+  expireDate?: Date;
+
+  @Prop({ type: Object })
+  billingInfo: {
+    cardNumber?: string;
+    expiryDate?: string;
+    cvv?: string;
+  };
+
+  @Prop({ required: true })
+  createdBy: string;
+
+  @Prop({ required: true })
+  updatedBy: string;
+}
+
+export interface IAccount {
+  id: string;
+  name: string;
+  logoUrl?: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  expireDate?: Date;
+  billingInfo: {
+    cardNumber?: string;
+    expiryDate?: string;
+    cvv?: string;
+  };
+}
+
+export const AccountSchema = SchemaFactory.createForClass(Account);
+AccountSchema.virtual('id').get(function (this: AccountDocument) {
+  return this._id.toHexString();
+});
+
+AccountSchema.set('toJSON', {
+  virtuals: true,
+});
