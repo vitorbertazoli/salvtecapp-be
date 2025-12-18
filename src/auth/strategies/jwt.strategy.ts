@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       lastName: user.lastName,
       email: user.email,
       username: user.username,
-      roles: user.roles,
+      roles: user.roles.map(role => typeof role === 'string' ? role : (role as any).name),
     };
   }
 }
