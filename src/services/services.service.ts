@@ -62,9 +62,9 @@ export class ServicesService {
   async update(
     id: string,
     serviceData: Partial<Service>,
-    accountId?: string,
+    accountId: string,
   ): Promise<Service | null> {
-    const query = accountId ? { _id: id, account: new Types.ObjectId(accountId) } : { _id: id };
+    const query = { _id: id, account: new Types.ObjectId(accountId) };
     return this.serviceModel
       .findOneAndUpdate(query, serviceData, { new: true })
       .populate('account')
