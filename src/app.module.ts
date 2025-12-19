@@ -5,6 +5,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ProductsModule } from './products/products.module';
 import { RolesModule } from './roles/roles.module';
 import { ServicesModule } from './services/services.module';
 import { UsersModule } from './users/users.module';
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     AccountsModule,
     RolesModule,
     ServicesModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
