@@ -29,9 +29,11 @@ export class ServicesController {
   }
 
   @Get()
-  findAll(@Request() req: any) {
+  findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @Request() req: any) {
     // Always filter by the user's account from JWT token
-    return this.servicesService.findByAccount(req.user.account.toString());
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    return this.servicesService.findByAccount(req.user.account.toString(), pageNum, limitNum, search);
   }
 
   @Get(':id')

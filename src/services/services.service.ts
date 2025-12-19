@@ -14,17 +14,49 @@ export class ServicesService {
     return createdService.save();
   }
 
-  async findAll(): Promise<Service[]> {
-    return this.serviceModel.find().populate('account').exec();
-  }
-
   async findOne(id: string, accountId?: string): Promise<Service | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+    const query = accountId ? { _id: id, account: new Types.ObjectId(accountId) } : { _id: id };
     return this.serviceModel.findOne(query).populate('account').exec();
   }
 
-  async findByAccount(accountId: string): Promise<Service[]> {
-    return this.serviceModel.find({ account: new Types.ObjectId(accountId) }).populate('account').exec();
+  async findByAccount(accountId: string, page: number = 1, limit: number = 10, search: string = ''): Promise<{
+    services: Service[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    // Build search query
+    const searchQuery: any = { account: new Types.ObjectId(accountId) };
+    if (search) {
+      searchQuery.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [services, total] = await Promise.all([
+      this.serviceModel
+        .find(searchQuery)
+        .populate('account')
+        .sort({ createdAt: -1 }) // Sort by creation date, newest first
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.serviceModel.countDocuments(searchQuery).exec(),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      services,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async update(
@@ -32,7 +64,7 @@ export class ServicesService {
     serviceData: Partial<Service>,
     accountId?: string,
   ): Promise<Service | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+    const query = accountId ? { _id: id, account: new Types.ObjectId(accountId) } : { _id: id };
     return this.serviceModel
       .findOneAndUpdate(query, serviceData, { new: true })
       .populate('account')
@@ -40,7 +72,7 @@ export class ServicesService {
   }
 
   async delete(id: string, accountId?: string): Promise<Service | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+    const query = accountId ? { _id: id, account: new Types.ObjectId(accountId) } : { _id: id };
     return this.serviceModel.findOneAndDelete(query).exec();
   }
 }
