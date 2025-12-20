@@ -36,7 +36,7 @@ export class UsersController {
     const limitNum = parseInt(limit, 10) || 10;
 
     // Check if user has ADMIN role
-    const isAdmin = req.user.roles?.some((role: any) => role.name === 'ADMIN');
+    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
 
     if (isAdmin) {
       // ADMIN can see all users in their account
@@ -57,7 +57,7 @@ export class UsersController {
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req: any) {
     // Check if user has ADMIN role or is requesting their own data
-    const isAdmin = req.user.roles?.some((role: any) => role.name === 'ADMIN');
+    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
     const isOwnData = req.user.id === id;
 
     if (isAdmin || isOwnData) {
@@ -71,7 +71,7 @@ export class UsersController {
   @Put(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: any, @Request() req: any) {
     // Check if user has ADMIN role or is updating their own data
-    const isAdmin = req.user.roles?.some((role: any) => role.name === 'ADMIN');
+    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
     const isOwnData = req.user.id === id;
 
     if (isAdmin || isOwnData) {

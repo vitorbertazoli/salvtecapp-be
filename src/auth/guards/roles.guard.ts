@@ -25,9 +25,9 @@ export class RolesGuard implements CanActivate {
     }
 
     // Check if user has any of the required roles
-    return requiredRoles.some(role => {
+    return requiredRoles.some((role) => {
       // If roles are ObjectIds, convert to string for comparison
-      const userRoles = user.roles.map(r => typeof r === 'string' ? r : r.toString());
+      const userRoles = user.roles.map((r) => (typeof r === 'string' ? r : r.toString()));
       return userRoles.includes(role);
     });
   }

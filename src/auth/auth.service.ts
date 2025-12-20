@@ -9,24 +9,17 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private accountService: AccountsService,
-  ) { }
+    private accountService: AccountsService
+  ) {}
 
-  async validateUser(
-    accountName: string,
-    username: string,
-    password: string,
-  ): Promise<any> {
+  async validateUser(accountName: string, username: string, password: string): Promise<any> {
     // find the account first
     const account = await this.accountService.findByAccountName(accountName);
     if (!account) {
       return null;
     }
 
-    const user = await this.usersService.findOneByUsernameAndAccount(
-      username,
-      account.id,
-    );
+    const user = await this.usersService.findOneByUsernameAndAccount(username, account.id);
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       const { passwordHash: _, ...result } = user.toObject();
@@ -50,30 +43,30 @@ export class AuthService {
       lastName: userData?.lastName,
       email: userData?.email,
       username: userData?.username,
-      roles: userData?.roles.map((role: any) => role.name) || [],
+      roles: userData?.roles.map((role: any) => role.name) || []
     };
 
     const refreshPayload = {
-      sub: userData?.id,
+      sub: userData?.id
     };
 
     return {
       access_token: this.jwtService.sign(payload, {
         secret: process.env.JWT_SECRET,
-        expiresIn: '15m',
+        expiresIn: '15m'
       }),
       refresh_token: this.jwtService.sign(refreshPayload, {
         secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-        expiresIn: '7d',
+        expiresIn: '7d'
       }),
-      user: payload,
+      user: payload
     };
   }
 
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
       });
 
       const user = await this.usersService.findById(payload.sub);
@@ -89,22 +82,22 @@ export class AuthService {
         lastName: user.lastName,
         email: user.email,
         username: user.username,
-        roles: user.roles.map((role: any) => role.name) || [],
+        roles: user.roles.map((role: any) => role.name) || []
       };
       const refreshPayload = {
-        sub: user?.id,
+        sub: user?.id
       };
 
       return {
         access_token: this.jwtService.sign(accessPayload, {
           secret: process.env.JWT_SECRET,
-          expiresIn: '15m',
+          expiresIn: '15m'
         }),
         refresh_token: this.jwtService.sign(refreshPayload, {
           secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-          expiresIn: '7d',
+          expiresIn: '7d'
         }),
-        user: accessPayload,
+        user: accessPayload
       };
     } catch (error) {
       throw new Error('Invalid refresh token');

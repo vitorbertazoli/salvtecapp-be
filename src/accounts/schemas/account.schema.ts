@@ -14,7 +14,7 @@ export class Account {
   @Prop({
     required: true,
     enum: ['free', 'pro', 'enterprise'],
-    default: 'free',
+    default: 'free'
   })
   plan: 'free' | 'pro' | 'enterprise';
 
@@ -54,5 +54,5 @@ AccountSchema.virtual('id').get(function (this: AccountDocument) {
 });
 
 AccountSchema.set('toJSON', {
-  virtuals: true,
+  virtuals: true
 });

@@ -5,9 +5,7 @@ import { Role, RoleDocument } from './schemas/role.schema';
 
 @Injectable()
 export class RolesService {
-  constructor(
-    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
-  ) { }
+  constructor(@InjectModel(Role.name) private roleModel: Model<RoleDocument>) {}
 
   async create(roleData: Partial<Role>): Promise<Role> {
     const createdRole = new this.roleModel(roleData);

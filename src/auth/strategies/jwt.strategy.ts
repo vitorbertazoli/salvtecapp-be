@@ -9,13 +9,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'your-secret-key',
+      secretOrKey: process.env.JWT_SECRET || 'your-secret-key'
     });
   }
 
   async validate(payload: any) {
     const user = await this.usersService.findById(payload.sub);
-    if (!user) {
+    if (!user || user.status !== 'active') {
       return null;
     }
     return {
@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       lastName: user.lastName,
       email: user.email,
       username: user.username,
-      roles: user.roles.map(role => typeof role === 'string' ? role : (role as any).name),
+      roles: user.roles.map((role) => (typeof role === 'string' ? role : (role as any).name))
     };
   }
 }

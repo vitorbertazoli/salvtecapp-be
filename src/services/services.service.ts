@@ -5,9 +5,7 @@ import { Service, ServiceDocument } from './schemas/service.schema';
 
 @Injectable()
 export class ServicesService {
-  constructor(
-    @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>,
-  ) { }
+  constructor(@InjectModel(Service.name) private serviceModel: Model<ServiceDocument>) {}
 
   async create(serviceData: Partial<Service>): Promise<Service> {
     const createdService = new this.serviceModel(serviceData);
@@ -19,7 +17,12 @@ export class ServicesService {
     return this.serviceModel.findOne(query).populate('account').exec();
   }
 
-  async findByAccount(accountId: string, page: number = 1, limit: number = 10, search: string = ''): Promise<{
+  async findByAccount(
+    accountId: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = ''
+  ): Promise<{
     services: Service[];
     total: number;
     page: number;
@@ -31,10 +34,7 @@ export class ServicesService {
     // Build search query
     const searchQuery: any = { account: new Types.ObjectId(accountId) };
     if (search) {
-      searchQuery.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
+      searchQuery.$or = [{ name: { $regex: search, $options: 'i' } }, { description: { $regex: search, $options: 'i' } }];
     }
 
     const [services, total] = await Promise.all([
@@ -45,7 +45,7 @@ export class ServicesService {
         .skip(skip)
         .limit(limit)
         .exec(),
-      this.serviceModel.countDocuments(searchQuery).exec(),
+      this.serviceModel.countDocuments(searchQuery).exec()
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -55,20 +55,13 @@ export class ServicesService {
       total,
       page,
       limit,
-      totalPages,
+      totalPages
     };
   }
 
-  async update(
-    id: string,
-    serviceData: Partial<Service>,
-    accountId: string,
-  ): Promise<Service | null> {
+  async update(id: string, serviceData: Partial<Service>, accountId: string): Promise<Service | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
-    return this.serviceModel
-      .findOneAndUpdate(query, serviceData, { new: true })
-      .populate('account')
-      .exec();
+    return this.serviceModel.findOneAndUpdate(query, serviceData, { new: true }).populate('account').exec();
   }
 
   async delete(id: string, accountId?: string): Promise<Service | null> {

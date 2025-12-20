@@ -13,22 +13,22 @@ import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
+      isGlobal: true
     }),
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'),
+        uri: configService.get<string>('MONGODB_URI')
       }),
-      inject: [ConfigService],
+      inject: [ConfigService]
     }),
     AuthModule,
     UsersModule,
     AccountsModule,
     RolesModule,
     ServicesModule,
-    ProductsModule,
+    ProductsModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService]
 })
-export class AppModule { }
+export class AppModule {}

@@ -50,7 +50,8 @@ export class UsersService {
     return this.userModel
       .findOne({
         username: username,
-        account: new Types.ObjectId(accountId)
+        account: new Types.ObjectId(accountId),
+        status: 'active'
       })
       .populate('account', 'name id logoUrl')
       .populate('roles', 'name')
@@ -98,8 +99,15 @@ export class UsersService {
     };
   }
 
-  async update(id: string, userData: Partial<User>, accountId: string): Promise<User | null> {
+  async update(id: string, userData: Partial<User> & { password?: string }, accountId: string): Promise<User | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
+
+    // Hash password if provided
+    if (userData.password) {
+      userData.passwordHash = await bcrypt.hash(userData.password, 10);
+      delete userData.password; // Remove plain password from userData
+    }
+
     return this.userModel.findOneAndUpdate(query, userData, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 

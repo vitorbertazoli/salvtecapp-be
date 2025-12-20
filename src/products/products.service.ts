@@ -5,7 +5,7 @@ import { Product, ProductDocument } from './schemas/product.schema';
 
 @Injectable()
 export class ProductsService {
-  constructor(@InjectModel(Product.name) private productModel: Model<ProductDocument>) { }
+  constructor(@InjectModel(Product.name) private productModel: Model<ProductDocument>) {}
 
   async create(productData: Partial<Product>): Promise<Product> {
     const createdProduct = new this.productModel(productData);

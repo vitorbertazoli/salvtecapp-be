@@ -16,11 +16,11 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
-      signOptions: { expiresIn: '24h' },
-    }),
+      signOptions: { expiresIn: '24h' }
+    })
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy],
-  exports: [AuthService],
+  exports: [AuthService]
 })
-export class AuthModule { }
+export class AuthModule {}

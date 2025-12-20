@@ -1,16 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-  Request,
-  Put,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Request, Put } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -19,7 +7,7 @@ import { ServicesService } from './services.service';
 @Controller('services')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) { }
+  constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create services
