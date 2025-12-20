@@ -8,7 +8,7 @@ import { UsersService } from './users.service';
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create users

@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Account, AccountDocument } from './schemas/account.schema';
+import { Address, AddressDocument } from './schemas/address.schema';
 
 @Injectable()
 export class AccountsService {
-  constructor(@InjectModel(Account.name) private accountModel: Model<AccountDocument>) {}
+  constructor(
+    @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
+    @InjectModel(Address.name) private addressModel: Model<AddressDocument>
+  ) { }
 
   async create(accountData: Partial<Account>): Promise<Account> {
     const createdAccount = new this.accountModel(accountData);
@@ -31,5 +35,44 @@ export class AccountsService {
 
   async delete(id: string): Promise<Account | null> {
     return this.accountModel.findByIdAndDelete(id).exec();
+  }
+
+  // Address methods
+  async createAddress(
+    accountId: string,
+    street: string,
+    number: string,
+    city: string,
+    state: string,
+    zipCode: string,
+    createdBy: string,
+    updatedBy: string,
+    complement?: string,
+    neighborhood?: string,
+    country: string = 'Brazil'
+  ): Promise<Address> {
+    const createdAddress = new this.addressModel({
+      account: new Types.ObjectId(accountId),
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state,
+      zipCode,
+      country,
+      createdBy,
+      updatedBy
+    });
+    return createdAddress.save();
+  }
+
+  async updateAddress(id: string, addressData: Partial<Address>, accountId: string): Promise<Address | null> {
+    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    return this.addressModel.findOneAndUpdate(query, addressData, { new: true }).exec();
+  }
+
+  async findAddressById(id: string, accountId: string): Promise<AddressDocument | null> {
+    return this.addressModel.findOne({ _id: id, account: new Types.ObjectId(accountId) }).exec();
   }
 }
