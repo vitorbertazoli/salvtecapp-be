@@ -10,7 +10,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private accountService: AccountsService
-  ) {}
+  ) { }
 
   async validateUser(accountName: string, username: string, password: string): Promise<any> {
     // find the account first
