@@ -17,7 +17,7 @@ export class UsersService {
     username: string,
     roles: string[] = [],
     createdBy: string,
-    updatedBy: string,
+    updatedBy: string
   ): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, 10);
     const createdUser = new this.userModel({
@@ -29,15 +29,12 @@ export class UsersService {
       username,
       roles: roles.map((role) => new Types.ObjectId(role)),
       createdBy,
-      updatedBy,
+      updatedBy
     });
     return createdUser.save();
   }
 
-  async findOneByAccountAndEmail(
-    account: string,
-    email: string,
-  ): Promise<UserDocument | null> {
+  async findOneByAccountAndEmail(account: string, email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ account, email }).exec();
   }
 
@@ -49,15 +46,71 @@ export class UsersService {
     return this.userModel.findById(id).populate('roles').exec();
   }
 
-  async findOneByUsernameAndAccount(
-    username: string,
-    accountId: string,
-  ): Promise<UserDocument | null> {
+  async findOneByUsernameAndAccount(username: string, accountId: string): Promise<UserDocument | null> {
     return this.userModel
       .findOne({
         username: username,
-        account: new Types.ObjectId(accountId),
+        account: new Types.ObjectId(accountId)
       })
+      .populate('account', 'name id logoUrl')
+      .populate('roles', 'name')
+      .exec();
+  }
+
+  async findByAccount(
+    accountId: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = ''
+  ): Promise<{
+    users: User[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    // Build search query
+    const searchQuery: any = { account: new Types.ObjectId(accountId) };
+    if (search) {
+      searchQuery.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      this.userModel.find(searchQuery).populate('account', 'name id logoUrl').populate('roles', 'name').sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.userModel.countDocuments(searchQuery).exec()
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      users,
+      total,
+      page,
+      limit,
+      totalPages
+    };
+  }
+
+  async update(id: string, userData: Partial<User>, accountId: string): Promise<User | null> {
+    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    return this.userModel.findOneAndUpdate(query, userData, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
+  }
+
+  async delete(id: string, accountId: string): Promise<User | null> {
+    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    return this.userModel.findOneAndDelete(query).exec();
+  }
+
+  async findByIdAndAccount(id: string, accountId: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
       .populate('account', 'name id logoUrl')
       .populate('roles', 'name')
       .exec();
