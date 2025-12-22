@@ -7,7 +7,7 @@ import { TechniciansService } from './technicians.service';
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TechniciansController {
-  constructor(private readonly techniciansService: TechniciansService) { }
+  constructor(private readonly techniciansService: TechniciansService) {}
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians

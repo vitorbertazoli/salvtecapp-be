@@ -5,6 +5,8 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CustomersModule } from './customers/customers.module';
+import { EquipmentModule } from './equipment/equipment.module';
 import { ProductsModule } from './products/products.module';
 import { RolesModule } from './roles/roles.module';
 import { ServicesModule } from './services/services.module';
@@ -28,7 +30,9 @@ import { UsersModule } from './users/users.module';
     RolesModule,
     ServicesModule,
     ProductsModule,
-    TechniciansModule
+    TechniciansModule,
+    CustomersModule,
+    EquipmentModule
   ],
   controllers: [AppController],
   providers: [AppService]

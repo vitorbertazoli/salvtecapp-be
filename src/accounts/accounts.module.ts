@@ -16,4 +16,4 @@ import { Address, AddressSchema } from './schemas/address.schema';
   providers: [AccountsService],
   exports: [AccountsService]
 })
-export class AccountsModule { }
+export class AccountsModule {}

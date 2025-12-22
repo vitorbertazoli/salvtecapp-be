@@ -9,7 +9,7 @@ export class TechniciansService {
   constructor(
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
     private readonly accountsService: AccountsService
-  ) { }
+  ) {}
 
   async create(
     account: string,

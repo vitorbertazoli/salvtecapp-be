@@ -9,7 +9,7 @@ export class AccountsService {
   constructor(
     @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
     @InjectModel(Address.name) private addressModel: Model<AddressDocument>
-  ) { }
+  ) {}
 
   async create(accountData: Partial<Account>): Promise<Account> {
     const createdAccount = new this.accountModel(accountData);
@@ -68,8 +68,9 @@ export class AccountsService {
   }
 
   async updateAddress(id: string, addressData: Partial<Address>, accountId: string): Promise<Address | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
-    return this.addressModel.findOneAndUpdate(query, addressData, { new: true }).exec();
+    const query = { _id: id, account: accountId };
+    const data = await this.addressModel.findOneAndUpdate(query, addressData, { new: true }).exec();
+    return data;
   }
 
   async findAddressById(id: string, accountId: string): Promise<AddressDocument | null> {

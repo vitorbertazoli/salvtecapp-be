@@ -11,4 +11,4 @@ import { TechniciansService } from './technicians.service';
   providers: [TechniciansService],
   exports: [TechniciansService]
 })
-export class TechniciansModule { }
+export class TechniciansModule {}
