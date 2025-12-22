@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Address } from 'src/accounts/schemas/address.schema';
-import { Equipment } from 'src/equipment/schemas/equipment.schema';
 import { AccountsService } from '../accounts/accounts.service';
 import { EquipmentService } from '../equipment/equipment.service';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
@@ -200,19 +199,23 @@ export class CustomersService {
     for (const equipmentData of equipmentsToUpdate) {
       if (equipmentData._id) {
         // Update existing equipment
-        await this.equipmentService.update(equipmentData._id, {
-          ...equipmentData,
-          updatedBy: customerData.updatedBy
-        });
-      } else {
-        // Create new equipment
-        await this.equipmentService.create({
+        const updatedEquip = await this.equipmentService.update(equipmentData._id, {
           ...equipmentData,
           customer: currentCustomer!._id,
           account: new Types.ObjectId(accountId),
-          createdBy: customerData.createdBy!,
+          updatedBy: customerData.updatedBy
+        });
+        console.log('Updated Equipment:', updatedEquip);
+      } else {
+        // Create new equipment
+        const createdEquip = await this.equipmentService.create({
+          ...equipmentData,
+          customer: currentCustomer!._id,
+          account: new Types.ObjectId(accountId),
+          createdBy: customerData.updatedBy!,
           updatedBy: customerData.updatedBy!
         });
+        console.log('Created Equipment:', createdEquip);
       }
     }
 
