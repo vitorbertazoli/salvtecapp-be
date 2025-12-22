@@ -68,7 +68,7 @@ export class AccountsService {
   }
 
   async updateAddress(id: string, addressData: Partial<Address>, accountId: string): Promise<Address | null> {
-    const query = { _id: id, account: accountId };
+    const query = { _id: id, account: new Types.ObjectId(accountId) };
     const data = await this.addressModel.findOneAndUpdate(query, addressData, { new: true }).exec();
     return data;
   }

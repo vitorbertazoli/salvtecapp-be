@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Address } from 'src/accounts/schemas/address.schema';
+import { Equipment } from 'src/equipment/schemas/equipment.schema';
 import { AccountsService } from '../accounts/accounts.service';
 import { EquipmentService } from '../equipment/equipment.service';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
@@ -159,51 +161,59 @@ export class CustomersService {
     return this.customerModel.findByIdAndUpdate(id, customerData, { new: true }).exec();
   }
 
-  async updateByAccount(id: string, customerData: Partial<Customer> & { address?: any; equipments?: any[] }, accountId: string): Promise<Customer | null> {
+  async updateByAccount(
+    id: string,
+    customerData: Partial<Customer> & { address?: Partial<Address>; equipments?: any[] },
+    accountId: string
+  ): Promise<Customer | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
 
+    const currentCustomer = await this.customerModel.findOne(query).exec();
+
     // Handle address update if address data is provided
-    if (customerData.address && typeof customerData.address === 'object') {
-      // First, get the current customer to find the address ID
-      const currentCustomer = await this.customerModel.findOne(query).exec();
-      if (currentCustomer && currentCustomer.address) {
-        // Update the existing address
-        await this.accountsService.updateAddress(
-          currentCustomer.address.toString(),
-          {
-            ...customerData.address,
-            updatedBy: customerData.updatedBy
-          },
-          accountId
-        );
-      }
+    if (currentCustomer && customerData.address && typeof customerData.address === 'object') {
+      await this.accountsService.updateAddress(
+        currentCustomer.address.toString(),
+        {
+          ...customerData.address,
+          updatedBy: customerData.updatedBy
+        },
+        accountId
+      );
       // Remove address from customerData since we've handled it separately
       delete customerData.address;
     }
 
-    if (customerData.equipments) {
-      // Get existing equipment for this customer
-      const existingEquipments = await this.equipmentService.findByCustomer(id);
+    const currentCustomerEquipments = await this.equipmentService.findByCustomer(id);
+    // Compare the currentCustomerEquipments with the customerData.equipments to determine additions, updates, deletions
+    const equipmentsToUpdate = customerData.equipments || [];
+    const equipmentsToUpdateIds = equipmentsToUpdate.filter((eq) => eq._id).map((eq) => eq._id);
+    // const currentEquipmentIds = currentCustomerEquipments.map((eq: any) => eq._id.toString());
 
-      // Delete all existing equipment
-      for (const equipment of existingEquipments) {
-        await this.equipmentService.delete((equipment as any)._id.toString());
-      }
+    // Equipments to delete
+    const equipmentsToDelete = currentCustomerEquipments.filter((eq: any) => !equipmentsToUpdateIds.includes(eq._id.toString()));
+    for (const equipment of equipmentsToDelete) {
+      await this.equipmentService.delete((equipment as any)._id.toString());
+    }
 
-      // Create new equipment
-      for (const equipmentData of customerData.equipments) {
-        const equip = await this.equipmentService.create({
+    // Equipments to add or update
+    for (const equipmentData of equipmentsToUpdate) {
+      if (equipmentData._id) {
+        // Update existing equipment
+        await this.equipmentService.update(equipmentData._id, {
           ...equipmentData,
-          customer: id,
-          account: accountId,
-          createdBy: customerData.updatedBy || customerData.createdBy,
-          updatedBy: customerData.updatedBy || customerData.createdBy
+          updatedBy: customerData.updatedBy
         });
-        console.log('Created equipment:', equip);
+      } else {
+        // Create new equipment
+        await this.equipmentService.create({
+          ...equipmentData,
+          customer: currentCustomer!._id,
+          account: new Types.ObjectId(accountId),
+          createdBy: customerData.createdBy!,
+          updatedBy: customerData.updatedBy!
+        });
       }
-
-      // Remove equipments from customerData since we've handled it separately
-      delete customerData.equipments;
     }
 
     const updatedCustomer = await this.customerModel

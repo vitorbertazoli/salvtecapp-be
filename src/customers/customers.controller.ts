@@ -38,7 +38,6 @@ export class CustomersController {
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can update customers
   async update(@Param('id') id: string, @Body() updateCustomerDto: any, @Request() req: any) {
     updateCustomerDto.updatedBy = req.user.id;
-    console.log('Update Customer DTO:', updateCustomerDto);
     return this.customersService.updateByAccount(id, updateCustomerDto, req.user.account.toString());
   }
 

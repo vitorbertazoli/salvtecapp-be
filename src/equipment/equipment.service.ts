@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Equipment, EquipmentDocument } from './schemas/equipment.schema';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class EquipmentService {
   }
 
   async findByCustomer(customerId: string): Promise<Equipment[]> {
-    return this.equipmentModel.find({ customer: customerId }).exec();
+    return this.equipmentModel.find({ customer: new Types.ObjectId(customerId) }).exec();
   }
 
   async delete(id: string): Promise<Equipment | null> {
