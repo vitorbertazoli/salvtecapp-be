@@ -2,10 +2,19 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { IAccount } from 'src/accounts/schemas/account.schema';
 import { IAddress } from 'src/accounts/schemas/address.schema';
-import { IEquipment } from 'src/equipment/schemas/equipment.schema';
 import { ITechnician } from 'src/technicians/schemas/technician.schema';
 
 export type CustomerDocument = Customer & Document;
+
+export class Equipment {
+  name: string;
+  room?: string;
+  btus?: number;
+  type: string;
+  subType?: string;
+  maker?: string;
+  model?: string;
+}
 
 @Schema({ timestamps: true })
 export class Customer {
@@ -36,6 +45,22 @@ export class Customer {
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   account: Types.ObjectId;
 
+  @Prop({
+    type: [
+      {
+        name: { type: String, required: true },
+        room: String,
+        btus: Number,
+        type: { type: String, required: true },
+        subType: String,
+        maker: String,
+        model: String
+      }
+    ],
+    default: []
+  })
+  equipments: Equipment[];
+
   @Prop({ required: true })
   createdBy: string;
 
@@ -57,7 +82,7 @@ export interface ICustomer {
   updatedBy: string;
   createdAt?: Date;
   updatedAt?: Date;
-  equipments?: IEquipment[]; // Array of equipment for this customer
+  equipments?: Equipment[]; // Array of equipment for this customer
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

@@ -11,7 +11,6 @@ dotenv.config({ path: resolve(__dirname, '../.env') });
 // Import existing schemas
 import { AccountSchema } from '../src/accounts/schemas/account.schema';
 import { CustomerSchema } from '../src/customers/schemas/customer.schema';
-import { EquipmentSchema } from '../src/equipment/schemas/equipment.schema';
 import { ProductSchema } from '../src/products/schemas/product.schema';
 import { RoleSchema } from '../src/roles/schemas/role.schema';
 import { ServiceSchema } from '../src/services/schemas/service.schema';
@@ -40,7 +39,7 @@ const QuoteSchema = new mongoose.Schema(
   {
     account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
-    equipments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Equipment' }],
+    equipments: [],
     services: [
       {
         service: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
@@ -72,7 +71,7 @@ const ServiceOrderSchema = new mongoose.Schema(
     orderNumber: { type: String, required: true },
     quote: { type: mongoose.Schema.Types.ObjectId, ref: 'Quote' },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
-    equipments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Equipment' }],
+    equipments: [],
     account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', required: true },
     items: [
       {
@@ -238,7 +237,6 @@ async function populateDummyData() {
     const Role = mongoose.model('Role', RoleSchema);
     const User = mongoose.model('User', UserSchema);
     const Customer = mongoose.model('Customer', CustomerSchema);
-    const Equipment = mongoose.model('Equipment', EquipmentSchema);
     const Product = mongoose.model('Product', ProductSchema);
     const Service = mongoose.model('Service', ServiceSchema);
     const Technician = mongoose.model('Technician', TechnicianSchema);
@@ -271,7 +269,6 @@ async function populateDummyData() {
       Event.deleteMany({ account: accountId }),
       ServiceOrder.deleteMany({ account: accountId }),
       Quote.deleteMany({ account: accountId }),
-      Equipment.deleteMany({ account: accountId }),
       Product.deleteMany({ account: accountId }),
       Service.deleteMany({ account: accountId }),
       Customer.deleteMany({ account: accountId }),
@@ -367,8 +364,25 @@ async function populateDummyData() {
     // 2. Create Customers
     console.log(`👥 Creating ${CONFIG.customers} customers...`);
     const customers = [];
+    const equipmentTypes = ['Ar Condicionado Split', 'Ar Condicionado Janela', 'Ar Condicionado Cassete', 'Ar Condicionado Piso Teto'];
+    const rooms = ['Sala', 'Quarto', 'Cozinha', 'Banheiro', 'Escritório', 'Varanda'];
     for (let i = 0; i < CONFIG.customers; i++) {
       const addressId = await createAddress(accountId, createdBy);
+      const numEquipments = faker.number.int(CONFIG.equipmentsPerCustomer);
+      const equipments = [];
+      for (let j = 0; j < numEquipments; j++) {
+        equipments.push({
+          name: `${faker.helpers.arrayElement(equipmentTypes)} - ${faker.helpers.arrayElement(rooms)}`,
+          room: faker.helpers.arrayElement(rooms),
+          btus: faker.helpers.arrayElement([9000, 12000, 18000, 24000]),
+          type: faker.helpers.arrayElement(equipmentTypes),
+          subType: faker.lorem.word(),
+          maker: faker.company.name(),
+          model: faker.vehicle.model(),
+          createdBy,
+          updatedBy: createdBy
+        });
+      }
       const customer = await Customer.create({
         account: accountId,
         name: faker.person.fullName(),
@@ -378,6 +392,7 @@ async function populateDummyData() {
         phoneNumber: generatePhone(),
         technicianResponsible: faker.helpers.arrayElement(technicians)._id,
         address: addressId,
+        equipments,
         createdBy,
         updatedBy: createdBy
       });
@@ -458,40 +473,12 @@ async function populateDummyData() {
     }
     console.log(`✅ Created ${products.length} products\n`);
 
-    // 5. Create Equipment for Customers
-    console.log(`❄️  Creating equipment for customers...`);
-    const equipments = [];
-    const equipmentTypes = ['Ar Condicionado Split', 'Ar Condicionado Janela', 'Ar Condicionado Cassete', 'Ar Condicionado Piso Teto'];
-    const rooms = ['Sala', 'Quarto', 'Escritório', 'Cozinha', 'Hall', 'Recepção'];
-
-    for (const customer of customers) {
-      const numEquipments = faker.number.int(CONFIG.equipmentsPerCustomer);
-      for (let i = 0; i < numEquipments; i++) {
-        const maker = faker.helpers.arrayElement(makers);
-        const equipment = await Equipment.create({
-          account: accountId,
-          customer: customer._id,
-          name: `${faker.helpers.arrayElement(equipmentTypes)} - ${faker.helpers.arrayElement(rooms)}`,
-          room: faker.helpers.arrayElement(rooms),
-          btus: faker.helpers.arrayElement([9000, 12000, 18000, 24000, 30000]),
-          type: faker.helpers.arrayElement(equipmentTypes),
-          subType: faker.helpers.arrayElement(['Inverter', 'Convencional', 'Dual Inverter']),
-          maker,
-          model: `${maker}-${faker.string.alphanumeric(5).toUpperCase()}`,
-          createdBy,
-          updatedBy: createdBy
-        });
-        equipments.push(equipment);
-      }
-    }
-    console.log(`✅ Created ${equipments.length} equipment items\n`);
-
-    // 6. Create Quotes
+    // 5. Create Quotes
     console.log(`💰 Creating ${CONFIG.quotes} quotes...`);
     const quotes = [];
     for (let i = 0; i < CONFIG.quotes; i++) {
       const customer = faker.helpers.arrayElement(customers);
-      const customerEquipments = equipments.filter((e) => e.customer.toString() === customer._id.toString());
+      const customerEquipments = customer.equipments || [];
 
       const numServices = faker.number.int({ min: 1, max: 3 });
       const numProducts = faker.number.int({ min: 0, max: 4 });
@@ -530,7 +517,7 @@ async function populateDummyData() {
       const quote = await Quote.create({
         account: accountId,
         customer: customer._id,
-        equipments: customerEquipments.length > 0 ? [faker.helpers.arrayElement(customerEquipments)._id] : [],
+        equipments: [],
         services: quoteServices,
         products: quoteProducts,
         totalValue,
@@ -554,7 +541,7 @@ async function populateDummyData() {
     for (let i = 0; i < Math.min(CONFIG.serviceOrders, acceptedQuotes.length); i++) {
       const quote = acceptedQuotes[i] || faker.helpers.arrayElement(quotes);
       const customer = customers.find((c) => c._id.toString() === quote.customer.toString())!;
-      const customerEquipments = equipments.filter((e) => e.customer.toString() === customer._id.toString());
+      const customerEquipments = customer.equipments || [];
 
       // Build items array
       const items = [];
@@ -596,7 +583,7 @@ async function populateDummyData() {
         orderNumber: `SO${Math.random().toString().slice(2, 16)}`,
         quote: quote._id,
         customer: customer._id,
-        equipments: customerEquipments.length > 0 ? [faker.helpers.arrayElement(customerEquipments)._id] : [],
+        equipments: [],
         account: accountId,
         items,
         description: quote.description,

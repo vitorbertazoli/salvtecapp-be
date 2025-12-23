@@ -3,15 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Address } from 'src/accounts/schemas/address.schema';
 import { AccountsService } from '../accounts/accounts.service';
-import { EquipmentService } from '../equipment/equipment.service';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 
 @Injectable()
 export class CustomersService {
   constructor(
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
-    private readonly accountsService: AccountsService,
-    private readonly equipmentService: EquipmentService
+    private readonly accountsService: AccountsService
   ) {}
 
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }): Promise<Customer> {
@@ -38,36 +36,18 @@ export class CustomersService {
       throw new Error('Address is required for customers');
     }
 
-    // Handle equipments if provided
+    // Equipments are now embedded in the customer
     const equipments = customerData.equipments || [];
-    delete customerData.equipments; // Remove equipments from customer data
 
     const createdCustomer = new this.customerModel({
       ...customerData,
-      address: addressId
+      address: addressId,
+      equipments: equipments
     });
     const savedCustomer = await createdCustomer.save();
 
-    // Create equipment records for this customer
-    if (equipments.length > 0) {
-      for (const equipmentData of equipments) {
-        await this.equipmentService.create({
-          ...equipmentData,
-          customer: savedCustomer._id,
-          account: customerData.account,
-          createdBy: customerData.createdBy,
-          updatedBy: customerData.updatedBy
-        });
-      }
-    }
-
-    // Fetch equipment for the created customer
-    const createdEquipments = await this.equipmentService.findByCustomer(savedCustomer._id.toString());
     // Return customer with equipments included
-    return {
-      ...savedCustomer.toObject(),
-      equipments: createdEquipments
-    } as any;
+    return savedCustomer.toObject() as any;
   }
 
   async findAll(): Promise<Customer[]> {
@@ -112,18 +92,10 @@ export class CustomersService {
       this.customerModel.countDocuments(searchQuery).exec()
     ]);
 
-    // Fetch equipment for each customer
-    const customersWithEquipment = await Promise.all(
-      customers.map(async (customer) => {
-        const equipment = await this.equipmentService.findByCustomer(customer._id.toString());
-        return { ...customer.toObject(), equipments: equipment };
-      })
-    );
-
     const totalPages = Math.ceil(total / limit);
 
     return {
-      customers: customersWithEquipment,
+      customers: customers.map((c) => c.toObject()),
       total,
       page,
       limit,
@@ -142,16 +114,6 @@ export class CustomersService {
       .populate('address')
       .populate('technicianResponsible', 'name id')
       .exec();
-
-    if (customer) {
-      // Fetch equipment for this customer
-      const equipments = await this.equipmentService.findByCustomer(id);
-      // Return customer with equipments included
-      return {
-        ...customer.toObject(),
-        equipments
-      } as any;
-    }
 
     return customer;
   }
@@ -183,58 +145,13 @@ export class CustomersService {
       delete customerData.address;
     }
 
-    const currentCustomerEquipments = await this.equipmentService.findByCustomer(id);
-    // Compare the currentCustomerEquipments with the customerData.equipments to determine additions, updates, deletions
-    const equipmentsToUpdate = customerData.equipments || [];
-    const equipmentsToUpdateIds = equipmentsToUpdate.filter((eq) => eq._id).map((eq) => eq._id);
-    // const currentEquipmentIds = currentCustomerEquipments.map((eq: any) => eq._id.toString());
-
-    // Equipments to delete
-    const equipmentsToDelete = currentCustomerEquipments.filter((eq: any) => !equipmentsToUpdateIds.includes(eq._id.toString()));
-    for (const equipment of equipmentsToDelete) {
-      await this.equipmentService.delete((equipment as any)._id.toString());
-    }
-
-    // Equipments to add or update
-    for (const equipmentData of equipmentsToUpdate) {
-      if (equipmentData._id) {
-        // Update existing equipment
-        const updatedEquip = await this.equipmentService.update(equipmentData._id, {
-          ...equipmentData,
-          customer: currentCustomer!._id,
-          account: new Types.ObjectId(accountId),
-          updatedBy: customerData.updatedBy
-        });
-        console.log('Updated Equipment:', updatedEquip);
-      } else {
-        // Create new equipment
-        const createdEquip = await this.equipmentService.create({
-          ...equipmentData,
-          customer: currentCustomer!._id,
-          account: new Types.ObjectId(accountId),
-          createdBy: customerData.updatedBy!,
-          updatedBy: customerData.updatedBy!
-        });
-        console.log('Created Equipment:', createdEquip);
-      }
-    }
-
+    // Equipments are now embedded, so just update the customer with the new equipments array
     const updatedCustomer = await this.customerModel
       .findOneAndUpdate(query, customerData, { new: true })
       .populate('account', 'name id')
       .populate('address')
       .populate('technicianResponsible', 'name id')
       .exec();
-
-    if (updatedCustomer) {
-      // Fetch equipment for the updated customer
-      const equipments = await this.equipmentService.findByCustomer(id);
-      // Return customer with equipments included
-      return {
-        ...updatedCustomer.toObject(),
-        equipments
-      } as any;
-    }
 
     return updatedCustomer;
   }
