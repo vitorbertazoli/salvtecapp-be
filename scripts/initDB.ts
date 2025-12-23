@@ -48,7 +48,9 @@ async function initDB() {
     if (!adminRole) {
       adminRole = await Role.create({
         name: 'ADMIN',
-        description: 'Administrator with full account access'
+        description: 'Administrator with full account access',
+        createdBy: 'system',
+        updatedBy: 'system'
       });
       console.log('✅ Created ADMIN role');
     } else {
@@ -58,7 +60,9 @@ async function initDB() {
     if (!supervisorRole) {
       supervisorRole = await Role.create({
         name: 'SUPERVISOR',
-        description: 'Supervisor with limited management access'
+        description: 'Supervisor with limited management access',
+        createdBy: 'system',
+        updatedBy: 'system'
       });
       console.log('✅ Created SUPERVISOR role');
     } else {
@@ -68,7 +72,9 @@ async function initDB() {
     if (!technicianRole) {
       technicianRole = await Role.create({
         name: 'TECHNICIAN',
-        description: 'Technician with access to assigned tasks'
+        description: 'Technician with access to assigned tasks',
+        createdBy: 'system',
+        updatedBy: 'system'
       });
       console.log('✅ Created TECHNICIAN role');
     } else {

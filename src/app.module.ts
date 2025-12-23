@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CustomersModule } from './customers/customers.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { ProductsModule } from './products/products.module';
+import { QuotesModule } from './quotes/quotes.module';
 import { RolesModule } from './roles/roles.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
@@ -32,6 +33,7 @@ import { UsersModule } from './users/users.module';
     ProductsModule,
     TechniciansModule,
     CustomersModule,
+    QuotesModule,
     EquipmentTypeModule
   ],
   controllers: [AppController],

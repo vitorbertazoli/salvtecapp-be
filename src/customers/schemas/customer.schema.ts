@@ -88,7 +88,6 @@ export interface ICustomer {
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
 
 // Create compound unique indexes for account-specific uniqueness
-CustomerSchema.index({ cpf: 1, account: 1 }, { unique: true, sparse: true });
 CustomerSchema.index({ email: 1 });
 CustomerSchema.index({ status: 1 });
 CustomerSchema.index({ technicianResponsible: 1 });
