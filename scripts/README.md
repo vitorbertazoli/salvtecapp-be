@@ -14,8 +14,28 @@ npm run initDB
 ### Generate Dummy Data (`dummyData.ts`)
 Populates the database with realistic test data for development and testing purposes.
 
+**What it does:**
+- Asks for an account name to populate data for
+- Checks if the account exists (must be created with `initDB.ts` first)
+- Deletes all existing data for that account (except users)
+- Creates dummy data including:
+  - Addresses
+  - Technicians
+  - Customers (clients)
+  - Services
+  - Products
+  - Quotes
+  - Service Orders
+  - Events
+  - Follow-ups
+
 ```bash
-npm run seed
+npm run dummyData <account-name>
+```
+
+Example:
+```bash
+npm run dummyData mycompany
 ```
 
 ## Dummy Data Generation
