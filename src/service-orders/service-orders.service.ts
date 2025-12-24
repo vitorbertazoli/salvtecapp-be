@@ -287,4 +287,18 @@ export class ServiceOrdersService {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
     return this.serviceOrderModel.findOneAndDelete(query).exec();
   }
+
+  async findByCustomerAndAccount(customerId: string, accountId: string): Promise<ServiceOrder[]> {
+    return this.serviceOrderModel
+      .find({
+        customer: new Types.ObjectId(customerId),
+        account: new Types.ObjectId(accountId),
+        status: { $in: ['pending', 'scheduled', 'in_progress'] }
+      })
+      .populate('customer', 'name email phoneNumber id')
+      .populate('assignedTechnician', 'name email phoneNumber id')
+      .select('orderNumber description status priority scheduledDate createdAt customer assignedTechnician')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
 }

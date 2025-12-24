@@ -40,6 +40,11 @@ export class ServiceOrdersController {
     return this.serviceOrdersService.findByAccount(req.user.account.toString(), pageNum, limitNum, search, status || undefined);
   }
 
+  @Get('by-customer/:customerId')
+  async findByCustomer(@Param('customerId') customerId: string, @Request() req: any) {
+    return this.serviceOrdersService.findByCustomerAndAccount(customerId, req.user.account.toString());
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req: any) {
     return this.serviceOrdersService.findByIdAndAccount(id, req.user.account.toString());

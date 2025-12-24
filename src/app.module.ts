@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CustomersModule } from './customers/customers.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
+import { EventsModule } from './events/events.module';
 import { ProductsModule } from './products/products.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { RolesModule } from './roles/roles.module';
@@ -36,7 +37,8 @@ import { UsersModule } from './users/users.module';
     CustomersModule,
     QuotesModule,
     EquipmentTypeModule,
-    ServiceOrdersModule
+    ServiceOrdersModule,
+    EventsModule
   ],
   controllers: [AppController],
   providers: [AppService]
