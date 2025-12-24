@@ -114,33 +114,126 @@ export class ServiceOrdersService {
   }> {
     const skip = (page - 1) * limit;
 
-    // Build search query
-    const searchQuery: any = { account: new Types.ObjectId(accountId) };
-    if (search) {
-      searchQuery.$or = [{ orderNumber: { $regex: search, $options: 'i' } }, { description: { $regex: search, $options: 'i' } }];
-    }
+    // Build match conditions
+    const matchConditions: any = { account: new Types.ObjectId(accountId) };
     if (status) {
-      searchQuery.status = status;
+      matchConditions.status = status;
     }
 
-    const [serviceOrders, total] = await Promise.all([
-      this.serviceOrderModel
-        .find(searchQuery)
-        .populate('account', 'name id')
-        .populate('customer', 'name email id')
-        .populate('quote', 'quoteId')
-        .populate('assignedTechnician', 'name email id')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
-      this.serviceOrderModel.countDocuments(searchQuery).exec()
+    // Build search pipeline
+    const pipeline: any[] = [
+      { $match: matchConditions },
+      // Join with customers collection
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'customer',
+          foreignField: '_id',
+          as: 'customer'
+        }
+      },
+      { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
+      // Join with accounts collection
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'account',
+          foreignField: '_id',
+          as: 'account'
+        }
+      },
+      { $unwind: { path: '$account', preserveNullAndEmptyArrays: true } },
+      // Join with quotes collection
+      {
+        $lookup: {
+          from: 'quotes',
+          localField: 'quote',
+          foreignField: '_id',
+          as: 'quote'
+        }
+      },
+      { $unwind: { path: '$quote', preserveNullAndEmptyArrays: true } },
+      // Join with technicians collection
+      {
+        $lookup: {
+          from: 'technicians',
+          localField: 'assignedTechnician',
+          foreignField: '_id',
+          as: 'assignedTechnician'
+        }
+      },
+      { $unwind: { path: '$assignedTechnician', preserveNullAndEmptyArrays: true } }
+    ];
+
+    // Add search filter if search term is provided
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { orderNumber: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { 'customer.name': { $regex: search, $options: 'i' } }
+          ]
+        }
+      });
+    }
+
+    // Add sorting, pagination
+    pipeline.push(
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      // Project to limit fields
+      {
+        $project: {
+          'account.name': 1,
+          'account.id': 1,
+          'customer.name': 1,
+          'customer.email': 1,
+          'customer.id': 1,
+          'quote.quoteId': 1,
+          'assignedTechnician.name': 1,
+          'assignedTechnician.email': 1,
+          'assignedTechnician.id': 1,
+          orderNumber: 1,
+          equipments: 1,
+          items: 1,
+          description: 1,
+          discount: 1,
+          subtotal: 1,
+          totalValue: 1,
+          issuedAt: 1,
+          scheduledDate: 1,
+          startedAt: 1,
+          completedAt: 1,
+          status: 1,
+          priority: 1,
+          notes: 1,
+          customerNotes: 1,
+          paymentStatus: 1,
+          paidAmount: 1,
+          paymentMethod: 1,
+          paymentDate: 1,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      }
+    );
+
+    // Get total count with search filter
+    const countPipeline = [...pipeline];
+    countPipeline.splice(countPipeline.length - 3, 3, { $count: 'total' });
+
+    const [serviceOrders, countResult] = await Promise.all([
+      this.serviceOrderModel.aggregate(pipeline).exec(),
+      search ? this.serviceOrderModel.aggregate(countPipeline).exec() : this.serviceOrderModel.countDocuments(matchConditions).exec()
     ]);
 
+    const total = search && Array.isArray(countResult) && countResult.length > 0 ? countResult[0].total : (countResult as number);
     const totalPages = Math.ceil(total / limit);
 
     return {
-      serviceOrders: serviceOrders.map((so) => so.toObject()),
+      serviceOrders,
       total,
       page,
       limit,
