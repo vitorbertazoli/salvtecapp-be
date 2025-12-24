@@ -73,6 +73,8 @@ export class QuotesService {
       .findOne({ _id: id, account: new Types.ObjectId(accountId) })
       .populate('account', 'name id')
       .populate('customer', 'name email id')
+      .populate('services.service', 'name')
+      .populate('products.product', 'name')
       .exec();
 
     return quote;
