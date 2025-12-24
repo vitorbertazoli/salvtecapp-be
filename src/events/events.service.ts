@@ -108,7 +108,7 @@ export class EventsService {
   }
 
   async updateByAccount(id: string, updateData: Partial<Event>, accountId: string): Promise<Event | null> {
-    const event = await this.eventModel.findOne({ _id: id, account: accountId });
+    const event = await this.eventModel.findOne({ _id: id, account: new Types.ObjectId(accountId) });
 
     if (!event) {
       return null;
@@ -176,7 +176,7 @@ export class EventsService {
   async deleteByAccount(id: string, accountId: string): Promise<boolean> {
     const result = await this.eventModel.findOneAndDelete({
       _id: id,
-      account: accountId
+      account: new Types.ObjectId(accountId)
     });
 
     return !!result;
