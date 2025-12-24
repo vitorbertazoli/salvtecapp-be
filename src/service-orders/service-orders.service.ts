@@ -69,7 +69,7 @@ export class ServiceOrdersService {
 
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.totalValue, 0);
-    const totalValue = subtotal - (quote.discount || 0);
+    const totalValue = subtotal * (1 - (quote.discount || 0) / 100);
 
     // Create service order
     const serviceOrderData = {

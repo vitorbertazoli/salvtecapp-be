@@ -65,7 +65,7 @@ export class Quote {
   @Prop()
   description?: string;
 
-  @Prop()
+  @Prop({ min: 0, max: 100 })
   discount?: number;
 
   @Prop({
