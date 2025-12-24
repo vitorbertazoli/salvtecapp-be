@@ -75,7 +75,8 @@ export class CustomersService {
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { cpf: { $regex: search, $options: 'i' } },
-        { phoneNumber: { $regex: search, $options: 'i' } }
+        { phoneNumber: { $regex: search, $options: 'i' } },
+        { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined }
       ];
     }
 

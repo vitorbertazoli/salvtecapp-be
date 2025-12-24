@@ -172,6 +172,7 @@ export class ServiceOrdersService {
           $or: [
             { orderNumber: { $regex: search, $options: 'i' } },
             { description: { $regex: search, $options: 'i' } },
+            { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined },
             { 'customer.name': { $regex: search, $options: 'i' } }
           ]
         }

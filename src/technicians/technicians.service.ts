@@ -76,7 +76,12 @@ export class TechniciansService {
     // Build search query
     const searchQuery: any = { account: new Types.ObjectId(accountId) };
     if (search) {
-      searchQuery.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }, { cpf: { $regex: search, $options: 'i' } }];
+      searchQuery.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { cpf: { $regex: search, $options: 'i' } },
+        { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined }
+      ];
     }
 
     const [technicians, total] = await Promise.all([
