@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CustomersModule } from './customers/customers.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { EventsModule } from './events/events.module';
 import { FollowUpsModule } from './follow-ups/follow-ups.module';
@@ -40,7 +41,8 @@ import { UsersModule } from './users/users.module';
     EquipmentTypeModule,
     ServiceOrdersModule,
     EventsModule,
-    FollowUpsModule
+    FollowUpsModule,
+    DashboardModule
   ],
   controllers: [AppController],
   providers: [AppService]
