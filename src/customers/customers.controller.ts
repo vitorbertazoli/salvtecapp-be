@@ -21,12 +21,12 @@ export class CustomersController {
   }
 
   @Get()
-  async findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @Request() req: any) {
+  async findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @Query('status') status: string = '', @Request() req: any) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
     // All authenticated users can see customers in their account
-    return this.customersService.findByAccount(req.user.account.toString(), pageNum, limitNum, search);
+    return this.customersService.findByAccount(req.user.account.toString(), pageNum, limitNum, search, status || undefined);
   }
 
   @Get(':id')

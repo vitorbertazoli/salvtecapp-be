@@ -58,7 +58,8 @@ export class CustomersService {
     accountId: string,
     page: number = 1,
     limit: number = 10,
-    search: string = ''
+    search: string = '',
+    status?: string
   ): Promise<{
     customers: Customer[];
     total: number;
@@ -78,6 +79,9 @@ export class CustomersService {
         { phoneNumber: { $regex: search, $options: 'i' } },
         { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined }
       ];
+    }
+    if (status) {
+      searchQuery.status = status;
     }
 
     const [customers, total] = await Promise.all([
