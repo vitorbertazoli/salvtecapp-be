@@ -190,10 +190,12 @@ export class ServiceOrdersService {
           'account.id': 1,
           'customer.name': 1,
           'customer.email': 1,
+          'customer.phoneNumber': 1,
           'customer.id': 1,
           'quote.quoteId': 1,
           'assignedTechnician.name': 1,
           'assignedTechnician.email': 1,
+          'assignedTechnician.phoneNumber': 1,
           'assignedTechnician.id': 1,
           orderNumber: 1,
           equipments: 1,
@@ -249,9 +251,9 @@ export class ServiceOrdersService {
     const serviceOrder = await this.serviceOrderModel
       .findOne({ _id: id, account: new Types.ObjectId(accountId) })
       .populate('account', 'name id')
-      .populate('customer', 'name email id')
+      .populate('customer', 'name email phoneNumber id')
       .populate('quote', 'quoteId')
-      .populate('assignedTechnician', 'name email id')
+      .populate('assignedTechnician', 'name email phoneNumber id')
       .populate('items.service', 'name')
       .populate('items.product', 'name')
       .exec();
