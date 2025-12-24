@@ -27,6 +27,10 @@ export class EventsService {
     // Build title
     eventData.title = `${customer.name} - ${technician.name}`;
 
+    if (eventData.serviceOrderId) {
+      eventData.serviceOrder = new Types.ObjectId(eventData.serviceOrderId);
+    }
+
     const createdEvent = new this.eventModel({
       ...eventData,
       customer,
