@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CustomersModule } from './customers/customers.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { EventsModule } from './events/events.module';
+import { FollowUpsModule } from './follow-ups/follow-ups.module';
 import { ProductsModule } from './products/products.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { RolesModule } from './roles/roles.module';
@@ -38,7 +39,8 @@ import { UsersModule } from './users/users.module';
     QuotesModule,
     EquipmentTypeModule,
     ServiceOrdersModule,
-    EventsModule
+    EventsModule,
+    FollowUpsModule
   ],
   controllers: [AppController],
   providers: [AppService]
