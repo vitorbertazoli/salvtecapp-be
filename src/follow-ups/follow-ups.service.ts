@@ -7,7 +7,8 @@ import { FollowUp, FollowUpDocument } from './schemas/follow-up.schema';
 export class FollowUpsService {
   constructor(@InjectModel(FollowUp.name) private followUpModel: Model<FollowUpDocument>) {}
 
-  async create(followUpData: Partial<FollowUp>): Promise<FollowUp> {
+  async create(followUpData: Partial<FollowUp> & { customerId: string }): Promise<FollowUp> {
+    followUpData.customer = new Types.ObjectId(followUpData.customerId);
     const createdFollowUp = new this.followUpModel(followUpData);
     const savedFollowUp = await createdFollowUp.save();
     return savedFollowUp.toObject() as any;
