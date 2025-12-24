@@ -10,6 +10,7 @@ import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { ProductsModule } from './products/products.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { RolesModule } from './roles/roles.module';
+import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
 import { UsersModule } from './users/users.module';
@@ -34,7 +35,8 @@ import { UsersModule } from './users/users.module';
     TechniciansModule,
     CustomersModule,
     QuotesModule,
-    EquipmentTypeModule
+    EquipmentTypeModule,
+    ServiceOrdersModule
   ],
   controllers: [AppController],
   providers: [AppService]

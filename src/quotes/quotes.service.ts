@@ -81,14 +81,46 @@ export class QuotesService {
   }
 
   async update(id: string, quoteData: Partial<Quote>): Promise<Quote | null> {
-    return this.quoteModel.findByIdAndUpdate(id, quoteData, { new: true }).exec();
+    // Check current quote status
+    const currentQuote = await this.quoteModel.findById(id).exec();
+    if (!currentQuote) {
+      return null;
+    }
+
+    // If quote has been sent or accepted, reset status to draft when updating
+    // But allow status change from 'sent' to 'accepted' (for service order creation)
+    const updateData = { ...quoteData };
+    if (currentQuote.status === 'sent' || currentQuote.status === 'accepted') {
+      // Allow status change from 'sent' to 'accepted', but reset to 'draft' for other updates
+      if (!(quoteData.status === 'accepted' && currentQuote.status === 'sent')) {
+        updateData.status = 'draft';
+      }
+    }
+
+    return this.quoteModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 
   async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: string): Promise<Quote | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
 
+    // Check current quote status
+    const currentQuote = await this.quoteModel.findOne(query).exec();
+    if (!currentQuote) {
+      return null;
+    }
+
+    // If quote has been sent or accepted, reset status to draft when updating
+    // But allow status changes from 'sent' to 'accepted' (for service order creation)
+    const updateData = { ...quoteData };
+    if (currentQuote.status === 'sent' || currentQuote.status === 'accepted') {
+      // Allow status change from 'sent' to 'accepted', but reset to 'draft' for other updates
+      if (!(quoteData.status === 'accepted' && currentQuote.status === 'sent')) {
+        updateData.status = 'draft';
+      }
+    }
+
     const updatedQuote = await this.quoteModel
-      .findOneAndUpdate(query, quoteData, { new: true })
+      .findOneAndUpdate(query, updateData, { new: true })
       .populate('account', 'name id')
       .populate('customer', 'name email id')
       .exec();
