@@ -63,7 +63,8 @@ export class TechniciansService {
     accountId: string,
     page: number = 1,
     limit: number = 10,
-    search: string = ''
+    search: string = '',
+    status?: string
   ): Promise<{
     technicians: Technician[];
     total: number;
@@ -82,6 +83,9 @@ export class TechniciansService {
         { cpf: { $regex: search, $options: 'i' } },
         { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined }
       ];
+    }
+    if (status) {
+      searchQuery.status = status;
     }
 
     const [technicians, total] = await Promise.all([

@@ -12,12 +12,12 @@ import { Event, EventSchema } from './schemas/event.schema';
     MongooseModule.forFeature([
       { name: Event.name, schema: EventSchema },
       { name: Customer.name, schema: CustomerSchema },
-      { name: Technician.name, schema: TechnicianSchema },
+      { name: Technician.name, schema: TechnicianSchema }
     ]),
-    ServiceOrdersModule,
+    ServiceOrdersModule
   ],
   controllers: [EventsController],
   providers: [EventsService],
-  exports: [EventsService],
+  exports: [EventsService]
 })
 export class EventsModule {}

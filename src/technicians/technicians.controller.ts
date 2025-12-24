@@ -33,7 +33,13 @@ export class TechniciansController {
   }
 
   @Get()
-  async findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @Request() req: any) {
+  async findAll(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search: string = '',
+    @Query('status') status: string = '',
+    @Request() req: any
+  ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
@@ -42,7 +48,7 @@ export class TechniciansController {
 
     if (isAdmin) {
       // ADMIN can see all technicians in their account
-      return this.techniciansService.findByAccount(req.user.account.toString(), pageNum, limitNum, search);
+      return this.techniciansService.findByAccount(req.user.account.toString(), pageNum, limitNum, search, status || undefined);
     } else {
       // Regular users cannot access technicians
       return {
