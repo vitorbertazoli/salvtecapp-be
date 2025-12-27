@@ -9,6 +9,16 @@ export class FollowUpsService {
 
   async create(followUpData: Partial<FollowUp> & { customerId: string }): Promise<FollowUp> {
     followUpData.customer = new Types.ObjectId(followUpData.customerId);
+
+    // Ensure notes is an array
+    if (followUpData.notes) {
+      if (typeof followUpData.notes === 'string') {
+        followUpData.notes = [followUpData.notes];
+      } else if (!Array.isArray(followUpData.notes)) {
+        followUpData.notes = [];
+      }
+    }
+
     const createdFollowUp = new this.followUpModel(followUpData);
     const savedFollowUp = await createdFollowUp.save();
     return savedFollowUp.toObject() as any;
@@ -147,6 +157,15 @@ export class FollowUpsService {
 
   async updateByAccount(id: string, followUpData: Partial<FollowUp>, accountId: string): Promise<FollowUp | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
+
+    // Handle notes appending - if notes are provided, append to existing array
+    if (followUpData.notes && Array.isArray(followUpData.notes)) {
+      const existingFollowUp = await this.followUpModel.findOne(query).exec();
+      if (existingFollowUp) {
+        const existingNotes = existingFollowUp.notes || [];
+        followUpData.notes = [...existingNotes, ...followUpData.notes];
+      }
+    }
 
     const updatedFollowUp = await this.followUpModel.findOneAndUpdate(query, followUpData, { new: true }).populate('customer', 'name email phoneNumber').exec();
 

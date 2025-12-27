@@ -29,7 +29,7 @@ export class FollowUp {
   completedBy?: string;
 
   @Prop({ trim: true })
-  notes?: string;
+  notes?: string[];
 
   @Prop({ required: true })
   createdBy: string;
@@ -46,7 +46,7 @@ export interface IFollowUp {
   status: 'pending' | 'completed';
   completedAt?: Date;
   completedBy?: string;
-  notes?: string;
+  notes?: string[];
   createdBy: string;
   updatedBy: string;
   createdAt?: Date;

@@ -780,9 +780,9 @@ async function populateDummyData() {
       if (status === 'completed') {
         completedAt = faker.date.recent({ days: 30 });
         completedBy = userId;
-        notes = faker.lorem.sentences({ min: 1, max: 3 });
+        notes = [faker.lorem.sentences({ min: 1, max: 3 })];
       } else {
-        notes = faker.lorem.sentences({ min: 1, max: 2 });
+        notes = [faker.lorem.sentences({ min: 1, max: 2 })];
       }
 
       followUps.push({
