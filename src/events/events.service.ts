@@ -73,11 +73,11 @@ export class EventsService {
     }
 
     if (filters?.technicianId) {
-      query.technician = filters.technicianId;
+      query.technician = new Types.ObjectId(filters.technicianId);
     }
 
     if (filters?.customerId) {
-      query.customer = filters.customerId;
+      query.customer = new Types.ObjectId(filters.customerId);
     }
 
     if (filters?.status) {
