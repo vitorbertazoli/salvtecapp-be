@@ -729,7 +729,7 @@ async function populateDummyData() {
       const startHour = faker.number.int({ min: 8, max: 17 });
       const duration = faker.number.int({ min: 1, max: 4 });
 
-      const status = faker.helpers.arrayElement(['scheduled', 'completed', 'cancelled']);
+      const status = faker.helpers.arrayElement(['scheduled', 'completed']);
       let completionNotes, completedAt, completedBy;
 
       if (status === 'completed') {
