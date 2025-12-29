@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7-jammy
+    container_name: salvtec-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: salvtec
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - salvtec-network
+
+  # Backend API
+  backend:
+    image: vitorbertazoli/salvtec-backend:latest
+    container_name: salvtec-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=3000
+    depends_on:
+      - mongodb
+    ports:
+      - "3000:3000"
+    networks:
+      - salvtec-network
+    volumes:
+      - ./.env:/app/.env:ro
+
+  # Frontend
+  frontend:
+    image: vitorbertazoli/salvtec-frontend:latest
+    container_name: salvtec-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - salvtec-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  salvtec-network:
+    driver: bridge
