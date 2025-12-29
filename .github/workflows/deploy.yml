@@ -37,7 +37,7 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          cd ~/project/salvtecapp-be
+          cd /root/project/salvtecapp-be
           
           # Pull latest images
           docker pull ${{ secrets.DOCKER_USERNAME }}/salvtec-backend:latest
