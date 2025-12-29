@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UsersService } from '../../users/users.service';
+import { TechniciansService } from 'src/technicians/technicians.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private usersService: UsersService) {
+  constructor(private usersService: UsersService, private techniciansService: TechniciansService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -18,6 +19,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user || user.status !== 'active') {
       return null;
     }
+    // if this user is a TECHNICIAN, ensure their technician id gets added to the user object
+    let technicianId = undefined;
+    if (user.roles.some((role) => (typeof role === 'string' ? role : (role as any).name) === 'TECHNICIAN')) {
+      const technician = await this.techniciansService.findByUserId(user.id);
+      if (technician) {
+        technicianId = technician.id;
+      }
+    }
     return {
       id: user.id,
       account: user.account,
@@ -25,7 +34,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       lastName: user.lastName,
       email: user.email,
       username: user.username,
-      roles: user.roles.map((role) => (typeof role === 'string' ? role : (role as any).name))
+      roles: user.roles.map((role) => (typeof role === 'string' ? role : (role as any).name)),
+      technicianId: technicianId
     };
   }
 }

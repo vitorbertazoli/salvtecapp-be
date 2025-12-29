@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
+import bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import * as path from 'path';
@@ -22,10 +23,10 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 // Configuration for data generation
 const CONFIG = {
   addresses: 1500,
-  technicians: 1000,
+  technicians: 20,
   customers: 1200,
-  services: 1000,
-  products: 1000,
+  services: 200,
+  products: 200,
   quotes: 1500,
   serviceOrders: 1200,
   events: 2000,
@@ -388,6 +389,10 @@ async function populateDummyData() {
 
     console.log('🗑️  Deleting existing data (except users)...\n');
 
+    // select all userIds from the technicians in this account, so we can clean up their user accounts later
+    const technicianUsers = await Technician.find({ account: account._id }).select('user').exec();
+    const technicianUserIds = technicianUsers.map(t => t.user);
+
     // Delete all data except users
     await Promise.all([
       Address.deleteMany({ account: account._id }),
@@ -398,7 +403,9 @@ async function populateDummyData() {
       Quote.deleteMany({ account: account._id }),
       ServiceOrder.deleteMany({ account: account._id }),
       Service.deleteMany({ account: account._id }),
-      Technician.deleteMany({ account: account._id })
+      Technician.deleteMany({ account: account._id }),
+      // Also delete technician user accounts
+      User.deleteMany({ _id: { $in: technicianUserIds } , account: account._id })
     ]);
 
     console.log('✅ Deleted existing data\n');
@@ -431,14 +438,51 @@ async function populateDummyData() {
 
     // Create technicians
     console.log(`Creating ${CONFIG.technicians} technicians...`);
+
+    // Get the TECHNICIAN role
+    const technicianRole = await Role.findOne({ name: 'TECHNICIAN' });
+    if (!technicianRole) {
+      console.log('❌ TECHNICIAN role not found. Please run initDB.ts first.');
+      process.exit(1);
+    }
+
+    // Get default password from environment
+    const defaultPassword = process.env.DEFAULT_TEST_USER_PASSWORD;
+    if (!defaultPassword) {
+      console.log('❌ DEFAULT_TEST_USER_PASSWORD not found in environment variables.');
+      process.exit(1);
+    }
+
     const technicians: any[] = [];
+    const users: any[] = [];
+
     for (let i = 0; i < CONFIG.technicians; i++) {
+      const firstName = faker.person.firstName();
+      const lastName = faker.person.lastName();
+      const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+      const username = faker.internet.username({ firstName, lastName }).toLowerCase();
+
+      // Create user account
+      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+      const user = {
+        account: account._id,
+        firstName,
+        lastName,
+        email,
+        username,
+        passwordHash: hashedPassword,
+        roles: [technicianRole._id],
+        status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
+        createdBy: userId,
+        updatedBy: userId
+      };
+      users.push(user);
+
+      // Create technician linked to user
       technicians.push({
         account: account._id,
-        name: faker.person.fullName(),
-        email: faker.internet.email().toLowerCase(),
+        user: null, // Will be set after user creation
         cpf: generateCPF(),
-        status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
         startDate: faker.date.past({ years: 5 }),
         endDate: faker.helpers.maybe(() => faker.date.recent({ days: 365 }), { probability: 0.1 }),
         address: faker.helpers.arrayElement(createdAddresses)._id,
@@ -447,6 +491,17 @@ async function populateDummyData() {
         updatedBy: userId
       });
     }
+
+    // Create all users first
+    const createdUsers = await User.insertMany(users);
+    console.log(`✅ Created ${createdUsers.length} technician user accounts`);
+
+    // Link users to technicians
+    technicians.forEach((technician, index) => {
+      technician.user = createdUsers[index]._id;
+    });
+
+    // Create technicians
     const createdTechnicians = await Technician.insertMany(technicians);
     console.log(`✅ Created ${createdTechnicians.length} technicians`);
 

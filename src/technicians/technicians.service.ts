@@ -2,19 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
+import { Role } from '../roles/schemas/role.schema';
+import { UsersService } from '../users/users.service';
 import { Technician, TechnicianDocument } from './schemas/technician.schema';
 
 @Injectable()
 export class TechniciansService {
   constructor(
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
-    private readonly accountsService: AccountsService
+    @InjectModel(Role.name) private roleModel: Model<any>,
+    private readonly accountsService: AccountsService,
+    private readonly usersService: UsersService
   ) {}
 
   async create(
     account: string,
-    name: string,
-    email: string,
     cpf: string,
     phoneNumber: string,
     addressData: {
@@ -28,7 +30,15 @@ export class TechniciansService {
       country?: string;
     },
     createdBy: string,
-    updatedBy: string
+    updatedBy: string,
+    userAccountData?: {
+      username: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      roles: string[];
+    }
   ): Promise<Technician> {
     // Create the address first
     const address = await this.accountsService.createAddress(
@@ -45,18 +55,54 @@ export class TechniciansService {
       addressData.country || 'Brazil'
     );
 
-    // Create the technician with the address reference
+    let userId: Types.ObjectId | undefined;
+
+    // Create user account if provided
+    if (userAccountData) {
+      // Check if username or email already exists
+      const existingUser = await this.usersService.findOneByUsernameAndAccount(userAccountData.username, account);
+      if (existingUser) {
+        throw new Error('Username already exists');
+      }
+
+      const existingEmailUser = await this.usersService.findOneByAccountAndEmail(account, userAccountData.email);
+      if (existingEmailUser) {
+        throw new Error('Email already exists');
+      }
+
+      // Get role IDs for the roles
+      const roleIds = await this.getRoleIds(['TECHNICIAN']);
+
+      const user = await this.usersService.create(
+        account,
+        userAccountData.firstName,
+        userAccountData.lastName,
+        userAccountData.email,
+        userAccountData.password,
+        userAccountData.username,
+        roleIds,
+        createdBy,
+        updatedBy
+      );
+      userId = (user as any)._id;
+    }
+
+    // Create the technician with the address and user references
     const createdTechnician = new this.technicianModel({
       account: new Types.ObjectId(account),
-      name,
-      email,
       cpf,
       phoneNumber,
       address: (address as any)._id, // Cast to any to access _id from the saved document
+      user: userId,
       createdBy,
       updatedBy
     });
     return createdTechnician.save();
+  }
+
+  private async getRoleIds(roleNames: string[]): Promise<string[]> {
+    const roles = await this.roleModel.find({ name: { $in: roleNames } }).exec();
+    return roles.map(role => role._id.toString());
   }
 
   async findByAccount(
@@ -74,25 +120,82 @@ export class TechniciansService {
   }> {
     const skip = (page - 1) * limit;
 
-    // Build search query
-    const searchQuery: any = { account: new Types.ObjectId(accountId) };
+    // Build aggregation pipeline for search
+    const pipeline: any[] = [
+      {
+        $match: { account: new Types.ObjectId(accountId) }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: {
+          path: '$user',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $lookup: {
+          from: 'addresses',
+          localField: 'address',
+          foreignField: '_id',
+          as: 'address'
+        }
+      },
+      {
+        $unwind: {
+          path: '$address',
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ];
+
+    // Add search filter if provided
     if (search) {
-      searchQuery.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { cpf: { $regex: search, $options: 'i' } },
-        { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined }
-      ];
+      pipeline.push({
+        $match: {
+          $or: [
+            { cpf: { $regex: search, $options: 'i' } },
+            { 'user.firstName': { $regex: search, $options: 'i' } },
+            { 'user.lastName': { $regex: search, $options: 'i' } },
+            { 'user.email': { $regex: search, $options: 'i' } },
+            ...(Types.ObjectId.isValid(search) ? [{ _id: new Types.ObjectId(search) }] : [])
+          ]
+        }
+      });
     }
+
+    // Add status filter if provided
     if (status) {
-      searchQuery.status = status;
+      pipeline.push({
+        $match: { 'user.status': status }
+      });
     }
 
-    const [technicians, total] = await Promise.all([
-      this.technicianModel.find(searchQuery).populate('account', 'name id').populate('address').sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
-      this.technicianModel.countDocuments(searchQuery).exec()
-    ]);
+    // Add sorting, pagination
+    pipeline.push(
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          technicians: [
+            { $skip: skip },
+            { $limit: limit }
+          ],
+          totalCount: [
+            { $count: "count" }
+          ]
+        }
+      }
+    );
 
+    const result = await this.technicianModel.aggregate(pipeline).exec();
+    const technicians = result[0]?.technicians || [];
+    const total = result[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
     return {
@@ -104,11 +207,11 @@ export class TechniciansService {
     };
   }
 
-  async update(id: string, technicianData: Partial<Technician> & { address?: any }, accountId: string): Promise<Technician | null> {
+  async update(id: string, accountId: string, technicianData: Partial<Technician> & { address?: any; userAccount?: any }, addressData?: any, userAccountData?: any): Promise<Technician | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
 
     // Handle address update if address data is provided
-    if (technicianData.address && typeof technicianData.address === 'object') {
+    if (addressData && typeof addressData === 'object') {
       // First, get the current technician to find the address ID
       const currentTechnician = await this.technicianModel.findOne(query).exec();
       if (currentTechnician && currentTechnician.address) {
@@ -116,17 +219,53 @@ export class TechniciansService {
         await this.accountsService.updateAddress(
           currentTechnician.address.toString(),
           {
-            ...technicianData.address,
+            ...addressData,
             updatedBy: technicianData.updatedBy
           },
           accountId
         );
       }
-      // Remove address from technicianData since we've handled it separately
-      delete technicianData.address;
     }
 
-    return this.technicianModel.findOneAndUpdate(query, technicianData, { new: true }).populate('account', 'name id').populate('address').exec();
+    // Handle user account update if userAccount data is provided
+    if (userAccountData && typeof userAccountData === 'object') {
+      // Get the current technician to find the user ID
+      const currentTechnician = await this.technicianModel.findOne(query).populate('user').exec();
+      if (currentTechnician && currentTechnician.user) {
+        const userId = (currentTechnician.user as any)._id;
+
+        // Prepare user update data
+        const userUpdateData: any = {
+          updatedBy: technicianData.updatedBy
+        };
+
+        // Update user fields if provided
+        if (userAccountData.firstName !== undefined) userUpdateData.firstName = userAccountData.firstName;
+        if (userAccountData.lastName !== undefined) userUpdateData.lastName = userAccountData.lastName;
+        if (userAccountData.email !== undefined) userUpdateData.email = userAccountData.email;
+        if (userAccountData.username !== undefined) userUpdateData.username = userAccountData.username;
+
+        // Always ensure roles is only TECHNICIAN
+        userUpdateData.roles = await this.getRoleIds(['TECHNICIAN']);
+
+        // Handle password update if provided
+        if (userAccountData.password) {
+          userUpdateData.password = userAccountData.password;
+        }
+
+        // Update the user
+        await this.usersService.update(userId, userUpdateData, accountId);
+      }
+    }
+
+    // Remove address and userAccount from technicianData since we've handled them separately
+    const { address: techAddress, userAccount: techUserAccount, ...cleanTechnicianData } = technicianData;
+
+    return this.technicianModel.findOneAndUpdate(query, cleanTechnicianData, { new: true })
+      .populate('account', 'name id')
+      .populate('address')
+      .populate('user', 'username email firstName lastName')
+      .exec();
   }
 
   async delete(id: string, accountId: string): Promise<Technician | null> {
@@ -137,6 +276,15 @@ export class TechniciansService {
   async findByIdAndAccount(id: string, accountId: string): Promise<TechnicianDocument | null> {
     return this.technicianModel
       .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .populate('account', 'name id')
+      .populate('address')
+      .populate('user', 'username email firstName lastName')
+      .exec();
+  }
+
+async findByUserId(userId: string): Promise<TechnicianDocument | null> {
+    return this.technicianModel
+      .findOne({ user: new Types.ObjectId(userId) })
       .populate('account', 'name id')
       .populate('address')
       .exec();

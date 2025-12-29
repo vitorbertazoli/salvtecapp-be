@@ -17,18 +17,17 @@ export class TechniciansController {
     createTechnicianDto.createdBy = req.user.id;
     createTechnicianDto.updatedBy = req.user.id;
 
-    // Extract address data from the body
-    const { address, ...technicianData } = createTechnicianDto;
+    // Extract address and userAccount data from the body
+    const { address, userAccount, ...technicianData } = createTechnicianDto;
 
     return this.techniciansService.create(
       technicianData.account as string,
-      technicianData.name as string,
-      technicianData.email as string,
       technicianData.cpf as string,
       technicianData.phoneNumber as string,
       address, // Pass the address object directly
       technicianData.createdBy as string,
-      technicianData.updatedBy as string
+      technicianData.updatedBy as string,
+      userAccount // Pass the user account data
     );
   }
 
@@ -43,22 +42,7 @@ export class TechniciansController {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
-    // Check if user has ADMIN role
-    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
-
-    if (isAdmin) {
-      // ADMIN can see all technicians in their account
-      return this.techniciansService.findByAccount(req.user.account.toString(), pageNum, limitNum, search, status || undefined);
-    } else {
-      // Regular users cannot access technicians
-      return {
-        technicians: [],
-        total: 0,
-        page: 1,
-        limit: 1,
-        totalPages: 1
-      };
-    }
+    return this.techniciansService.findByAccount(req.user.account.toString(), pageNum, limitNum, search, status || undefined);
   }
 
   @Get(':id')
@@ -78,7 +62,17 @@ export class TechniciansController {
   @Roles('ADMIN') // Only users with ADMIN role can update technicians
   async update(@Param('id') id: string, @Body() updateTechnicianDto: any, @Request() req: any) {
     updateTechnicianDto.updatedBy = req.user.id;
-    return this.techniciansService.update(id, updateTechnicianDto, req.user.account.toString());
+
+    // Extract address and userAccount data from the body
+    const { address, userAccount, ...technicianData } = updateTechnicianDto;
+
+    return this.techniciansService.update(
+      id,
+      req.user.account.toString(),
+      technicianData,
+      address, // Pass the address object directly
+      userAccount // Pass the user account data
+    );
   }
 
   @Delete(':id')

@@ -25,7 +25,8 @@ export class EventsService {
     }
 
     // Build title
-    eventData.title = `${customer.name} - ${technician.name}`;
+    const technicianUser = (technician as any).user;
+    eventData.title = `${customer.name} - ${technicianUser?.firstName || ''} ${technicianUser?.lastName || ''}`.trim();
 
     if (eventData.serviceOrderId) {
       eventData.serviceOrder = new Types.ObjectId(eventData.serviceOrderId);
@@ -90,7 +91,13 @@ export class EventsService {
     return this.eventModel
       .find(query)
       .populate('customer', 'name email phone')
-      .populate('technician', 'name email phone')
+      .populate({
+        path: 'technician',
+        populate: {
+          path: 'user',
+          select: 'firstName lastName email'
+        }
+      })
       .populate('serviceOrder', 'orderNumber status')
       .sort({ date: 1, startTime: 1 })
       .lean()
@@ -101,7 +108,13 @@ export class EventsService {
     return this.eventModel
       .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email phone')
-      .populate('technician', 'name email phone')
+      .populate({
+        path: 'technician',
+        populate: {
+          path: 'user',
+          select: 'firstName lastName email'
+        }
+      })
       .populate('serviceOrder')
       .lean()
       .exec();
@@ -152,7 +165,8 @@ export class EventsService {
       const technician = await this.technicianModel.findById(updateData.technician || event.technician);
 
       if (customer && technician) {
-        event.title = `${customer.name} - ${technician.name}`;
+        const technicianUser = (technician as any).user;
+        event.title = `${customer.name} - ${technicianUser?.firstName || ''} ${technicianUser?.lastName || ''}`.trim();
       }
     }
 

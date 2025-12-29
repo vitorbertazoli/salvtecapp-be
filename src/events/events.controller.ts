@@ -25,14 +25,13 @@ export class EventsController {
     @Request() req: any,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Query('technicianId') technicianId?: string,
     @Query('customerId') customerId?: string,
     @Query('status') status?: string
   ) {
     return this.eventsService.findAll(req.user.account.toString(), {
       startDate,
       endDate,
-      technicianId,
+      technicianId: req.user.technicianId,
       customerId,
       status
     });

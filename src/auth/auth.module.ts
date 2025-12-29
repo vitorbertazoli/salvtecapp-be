@@ -8,10 +8,12 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
+import { TechniciansModule } from 'src/technicians/technicians.module';
 
 @Module({
   imports: [
     UsersModule,
+    TechniciansModule,
     AccountsModule,
     PassportModule,
     JwtModule.register({

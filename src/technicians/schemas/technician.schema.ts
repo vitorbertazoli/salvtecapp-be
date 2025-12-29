@@ -11,12 +11,6 @@ export class Technician {
   account: Types.ObjectId;
 
   @Prop({ required: true })
-  name: string;
-
-  @Prop({ required: true })
-  email: string;
-
-  @Prop({ required: true })
   cpf: string;
 
   @Prop({ enum: ['active', 'inactive', 'suspended'], default: 'active' })
@@ -31,6 +25,9 @@ export class Technician {
   @Prop({ type: Types.ObjectId, ref: 'Address', required: true })
   address: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  user?: Types.ObjectId;
+
   @Prop({ required: true })
   phoneNumber: string;
 
@@ -44,13 +41,12 @@ export class Technician {
 export interface ITechnician {
   id: string;
   account: string | IAccount;
-  name: string;
-  email: string;
   cpf: string;
   status: 'active' | 'inactive' | 'suspended';
   startDate: Date;
   endDate?: Date;
   address: string | IAddress;
+  user?: string;
   phoneNumber: string;
 }
 
