@@ -29,6 +29,9 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy built application
 COPY --from=builder /app/dist ./dist
 
+# Copy scripts directory for initialization
+COPY --from=builder /app/scripts ./scripts
+
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nestjs -u 1001
