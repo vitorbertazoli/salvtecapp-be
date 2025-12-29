@@ -4,6 +4,8 @@ This guide covers deploying the Salvtec application (frontend + backend) to a Li
 
 For automated CI/CD deployment on every merge to main, see [CI_CD_SETUP.md](CI_CD_SETUP.md).
 
+For HTTPS/SSL setup, see [SSL_SETUP.md](SSL_SETUP.md).
+
 ## Prerequisites
 
 - Linux VPS (Ubuntu/Debian or Alpine Linux)
@@ -52,9 +54,10 @@ For automated CI/CD deployment on every merge to main, see [CI_CD_SETUP.md](CI_C
 
 ## Services
 
-- **Frontend:** http://your-server-ip (port 80)
-- **Backend API:** http://your-server-ip/api (port 3000, proxied through frontend)
-- **MongoDB:** localhost:27017 (internal only)
+- **Frontend:** Internal container (port 80, accessed via reverse proxy)
+- **Backend API:** Internal container (port 3000, accessed via reverse proxy)
+- **MongoDB:** Internal Docker network only (not exposed to internet)
+- **Nginx Reverse Proxy:** Host-level (ports 80/443, handles SSL termination)
 
 ## SSL Setup (Let's Encrypt)
 

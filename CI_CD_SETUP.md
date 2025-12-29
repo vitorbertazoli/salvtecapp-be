@@ -31,8 +31,12 @@ ssh-copy-id -i ~/.ssh/github_actions.pub user@your-vps-ip
 Create a `.env` file on your VPS in the `salvtecapp-be` directory:
 ```bash
 cp .env.example .env
-# Edit with your actual values
+# Edit with your actual database credentials
 ```
+
+**Database Options:**
+- **Remote MongoDB**: Use your existing MongoDB instance (recommended for production)
+- **Local Docker MongoDB**: Uncomment the local option in `.env` if you prefer Docker-managed database
 
 **Important**: Never commit the `.env` file to GitHub. Add it to `.gitignore`.
 
@@ -81,6 +85,10 @@ cp .env.example .env
 ### 8. Test the Workflow
 
 Push to the master branch or manually trigger the workflow from GitHub Actions.
+
+### 9. Set up SSL (Optional but Recommended)
+
+For HTTPS support, follow the instructions in `SSL_SETUP.md` to configure host-level SSL with Nginx reverse proxy.
 
 ## Workflow Explanation
 

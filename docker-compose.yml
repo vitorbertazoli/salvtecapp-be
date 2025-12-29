@@ -13,8 +13,6 @@ services:
     volumes:
       - mongodb_data:/data/db
       - ./scripts:/docker-entrypoint-initdb.d
-    ports:
-      - "27017:27017"
     networks:
       - salvtec-network
 
@@ -30,8 +28,8 @@ services:
       - PORT=3000
     depends_on:
       - mongodb
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     networks:
       - salvtec-network
     volumes:
@@ -44,8 +42,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     networks:
       - salvtec-network
 
