@@ -1,11 +1,11 @@
 # GitHub Actions CI/CD Setup
 
-This guide explains how to set up automatic deployment to your VPS when pushing to the main branch.
+This guide explains how to set up automatic deployment to your VPS when pushing to the master branch.
 
 ## Prerequisites
 
 1. **Docker Hub Account**: Create one at https://hub.docker.com/
-2. **GitHub Repository**: Your `salvtecapp-be` repo
+2. **GitHub Repositories**: Your `salvtecapp-be` and `salvtecapp-fe` repos
 3. **VPS Access**: SSH key for deployment
 
 ## Setup Steps
@@ -36,19 +36,30 @@ cp .env.example .env
 
 **Important**: Never commit the `.env` file to GitHub. Add it to `.gitignore`.
 
-### 3. Add GitHub Secrets
+### 3. Add GitHub Secrets to Backend Repository
 
-Go to your GitHub repository → Settings → Secrets and variables → Actions
+Go to your `salvtecapp-be` repository → Settings → Secrets and variables → Actions
 
 Add these secrets:
-
 - `DOCKER_USERNAME`: Your Docker Hub username
 - `DOCKER_PASSWORD`: Your Docker Hub password (or access token)
 - `VPS_HOST`: Your VPS IP address or domain
 - `VPS_USERNAME`: SSH username for your VPS
 - `VPS_SSH_KEY`: The private SSH key content (from `~/.ssh/github_actions`)
 
-### 4. Update Workflow File
+### 4. Add GitHub Secrets to Frontend Repository
+
+Go to your `salvtecapp-fe` repository → Settings → Secrets and variables → Actions
+
+Add these secrets:
+- `DOCKER_USERNAME`: Your Docker Hub username
+- `DOCKER_PASSWORD`: Your Docker Hub password (or access token)
+
+### 5. Set up Frontend Workflow
+
+The frontend workflow file has been moved to your `salvtecapp-fe` repository at `.github/workflows/build.yml`. Make sure it's committed to the frontend repository.
+
+### 6. Update Workflow File
 
 In `.github/workflows/deploy.yml`, update the script path:
 ```yaml
@@ -56,7 +67,7 @@ cd /path/to/your/project/salvtecapp-be
 ```
 Replace with the actual path on your VPS where the repositories are cloned.
 
-### 5. Initial Manual Setup on VPS
+### 7. Initial Manual Setup on VPS
 
 Clone the repositories on your VPS:
 ```bash
@@ -67,18 +78,16 @@ cp .env.example .env
 # Edit .env with your actual values
 ```
 
-### 6. Test the Workflow
+### 8. Test the Workflow
 
-Push to the main branch or manually trigger the workflow from GitHub Actions.
+Push to the master branch or manually trigger the workflow from GitHub Actions.
 
 ## Workflow Explanation
 
-The GitHub Actions workflow will:
+- **Backend Workflow** (`salvtecapp-be`): Builds backend image on BE changes, pulls latest FE image, deploys both
+- **Frontend Workflow** (`salvtecapp-fe`): Builds frontend image on FE changes only
 
-1. **Checkout** both repositories
-2. **Build** Docker images for frontend and backend
-3. **Push** images to Docker Hub
-4. **SSH into VPS** and update containers with new images
+This setup ensures efficient builds - only rebuilding what's changed while always deploying the latest versions of both services.
 
 ## Security Notes
 
