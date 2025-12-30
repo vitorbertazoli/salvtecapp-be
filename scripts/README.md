@@ -2,6 +2,29 @@
 
 This folder contains scripts for managing and populating the database.
 
+### Reset User Password (`resetPassword.ts`)
+Resets a user's password by providing the account name, username, and new password.
+
+```bash
+npm run resetPassword
+```
+
+**What it does:**
+- Asks for the account name
+- Asks for the username within that account
+- Asks for the new password
+- Finds the user in the database
+- Hashes the new password securely
+- Updates the user's password
+
+**Example usage:**
+```bash
+npm run resetPassword
+# Enter account name: mycompany
+# Enter username: admin
+# Enter new password: newSecurePassword123
+```
+
 ## Available Scripts
 
 ### Initialize Database (`initDB.ts`)
