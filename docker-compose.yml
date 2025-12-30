@@ -17,8 +17,6 @@ services:
       - salvtec-network
     expose:
       - "27017"
-    ports:
-      - "27017:27017"
 
   # Backend API
   backend:

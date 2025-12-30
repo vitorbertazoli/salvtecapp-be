@@ -3,10 +3,10 @@ import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import * as path from 'path';
 import * as readline from 'readline';
-import { AccountSchema } from '../dist/accounts/schemas/account.schema';
-import { EquipmentTypeSchema } from '../dist/equipmentType/schemas/equipment-type.schema';
-import { RoleSchema } from '../dist/roles/schemas/role.schema';
-import { UserSchema } from '../dist/users/schemas/user.schema';
+import { AccountSchema } from 'src/accounts/schemas/account.schema';
+import { EquipmentTypeSchema } from 'src/equipmentType/schemas/equipment-type.schema';
+import { RoleSchema } from 'src/roles/schemas/role.schema';
+import { UserSchema } from 'src/users/schemas/user.schema';
 
 // Load environment variables from .env
 dotenv.config({ path: path.join(process.cwd(), '.env') });
