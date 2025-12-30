@@ -43,7 +43,7 @@ services:
     depends_on:
       - backend
     expose:
-      - "8080"
+      - "80"
     networks:
       - salvtec-network
 
