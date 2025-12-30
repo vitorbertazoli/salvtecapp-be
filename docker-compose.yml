@@ -15,6 +15,8 @@ services:
       - ./scripts:/docker-entrypoint-initdb.d
     networks:
       - salvtec-network
+    ports:
+      - "127.0.0.1:27017:27017"
     expose:
       - "27017"
 
@@ -32,6 +34,8 @@ services:
       - mongodb
     expose:
       - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     networks:
       - salvtec-network
     volumes:
