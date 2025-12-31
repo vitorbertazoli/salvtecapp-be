@@ -80,7 +80,7 @@ export class EmailService {
         <p>Thank you for joining Salvtec. Your account has been successfully created.</p>
         <p>You can now access all our features to manage your service business efficiently.</p>
         <div style="margin: 30px 0;">
-          <a href="${this.configService.get<string>('FRONTEND_URL', 'http://localhost:8080')}/login"
+          <a href="${this.configService.get<string>('FRONTEND_URL', 'http://localhost:8080')}"
              style="background-color: #1976d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
             Get Started
           </a>
