@@ -23,4 +23,15 @@ export class AuthController {
     console.log('Refresh token request received', authHeader);
     return this.authService.refreshToken(authHeader.split(' ')[1]);
   }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    const { token, newPassword } = body;
+    return this.authService.resetPassword(token, newPassword);
+  }
 }

@@ -37,6 +37,12 @@ export class User {
 
   @Prop({ required: true })
   updatedBy: string;
+
+  @Prop()
+  resetToken?: string;
+
+  @Prop()
+  resetTokenExpiry?: Date;
 }
 
 export interface IUser {
@@ -47,6 +53,8 @@ export interface IUser {
   email: string;
   username: string;
   roles: string[];
+  resetToken?: string;
+  resetTokenExpiry?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

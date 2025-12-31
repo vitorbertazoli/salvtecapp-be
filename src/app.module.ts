@@ -17,6 +17,7 @@ import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
 import { UsersModule } from './users/users.module';
+import { EmailModule } from './utils/email.module';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { UsersModule } from './users/users.module';
     ServiceOrdersModule,
     EventsModule,
     FollowUpsModule,
-    DashboardModule
+    DashboardModule,
+    EmailModule
   ],
   controllers: [AppController],
   providers: [AppService]

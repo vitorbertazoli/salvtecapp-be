@@ -57,6 +57,57 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Email Configuration (AWS SES)
+
+This application includes email functionality powered by AWS Simple Email Service (SES). To enable email sending, configure the following environment variables:
+
+### Required Environment Variables
+
+```bash
+# AWS Configuration
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+AWS_SES_FROM_EMAIL=noreply@yourdomain.com
+
+# Frontend URL (for email links)
+FRONTEND_URL=http://localhost:8080
+```
+
+### AWS SES Setup
+
+1. **Create an AWS Account** and navigate to the SES console
+2. **Verify your domain or email addresses** for sending
+3. **Create IAM user** with SES permissions or use access keys
+4. **Move out of sandbox** mode for production use (if needed)
+
+### Using the Email Service
+
+The `EmailService` can be injected into any NestJS service or controller:
+
+```typescript
+import { EmailService } from '../utils/email.service';
+
+@Injectable()
+export class UserService {
+  constructor(private emailService: EmailService) {}
+
+  async createUser(userData: CreateUserDto) {
+    // Create user logic...
+    
+    // Send welcome email
+    await this.emailService.sendWelcomeEmail(user.email, user.firstName);
+  }
+}
+```
+
+### Available Email Methods
+
+- `sendEmail(options)` - Send custom emails
+- `sendWelcomeEmail(to, userName)` - Send welcome emails to new users
+- `sendPasswordResetEmail(to, resetToken, userName)` - Send password reset emails
+- `sendQuoteNotification(to, quoteDetails)` - Send quote notifications
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

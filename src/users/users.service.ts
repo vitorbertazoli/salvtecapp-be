@@ -123,4 +123,19 @@ export class UsersService {
       .populate('roles', 'name')
       .exec();
   }
+
+  async updateResetToken(email: string, resetToken: string, resetTokenExpiry: Date): Promise<UserDocument | null> {
+    return this.userModel.findOneAndUpdate(
+      { email },
+      { resetToken, resetTokenExpiry },
+      { new: true }
+    ).exec();
+  }
+
+  async findByResetToken(resetToken: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({
+      resetToken,
+      resetTokenExpiry: { $gt: new Date() }
+    }).exec();
+  }
 }

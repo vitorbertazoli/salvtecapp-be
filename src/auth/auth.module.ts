@@ -9,12 +9,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
 import { TechniciansModule } from 'src/technicians/technicians.module';
+import { EmailModule } from '../utils/email.module';
 
 @Module({
   imports: [
     UsersModule,
     TechniciansModule,
     AccountsModule,
+    EmailModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
