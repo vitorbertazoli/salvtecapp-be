@@ -1,10 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  SESClient,
-  SendEmailCommand,
-  SendEmailCommandInput,
-} from '@aws-sdk/client-ses';
+import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
 
 export interface EmailOptions {
   to: string | string[];
@@ -31,8 +27,8 @@ export class EmailService {
       region,
       credentials: {
         accessKeyId,
-        secretAccessKey,
-      },
+        secretAccessKey
+      }
     });
   }
 
@@ -49,18 +45,18 @@ export class EmailService {
     const emailParams: SendEmailCommandInput = {
       Source: fromEmail,
       Destination: {
-        ToAddresses: toAddresses,
+        ToAddresses: toAddresses
       },
       Message: {
         Subject: {
           Data: subject,
-          Charset: 'UTF-8',
+          Charset: 'UTF-8'
         },
         Body: {
           Html: html ? { Data: html, Charset: 'UTF-8' } : undefined,
-          Text: text ? { Data: text, Charset: 'UTF-8' } : undefined,
-        },
-      },
+          Text: text ? { Data: text, Charset: 'UTF-8' } : undefined
+        }
+      }
     };
 
     try {
@@ -93,7 +89,7 @@ export class EmailService {
     await this.sendEmail({
       to,
       subject,
-      html,
+      html
     });
   }
 
@@ -121,7 +117,7 @@ export class EmailService {
     await this.sendEmail({
       to,
       subject,
-      html,
+      html
     });
   }
 
@@ -149,7 +145,7 @@ export class EmailService {
     await this.sendEmail({
       to,
       subject,
-      html,
+      html
     });
   }
 }

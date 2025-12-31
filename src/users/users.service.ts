@@ -110,17 +110,15 @@ export class UsersService {
   }
 
   async updateResetToken(email: string, resetToken: string, resetTokenExpiry: Date): Promise<UserDocument | null> {
-    return this.userModel.findOneAndUpdate(
-      { email },
-      { resetToken, resetTokenExpiry },
-      { new: true }
-    ).exec();
+    return this.userModel.findOneAndUpdate({ email }, { resetToken, resetTokenExpiry }, { new: true }).exec();
   }
 
   async findByResetToken(resetToken: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({
-      resetToken,
-      resetTokenExpiry: { $gt: new Date() }
-    }).exec();
+    return this.userModel
+      .findOne({
+        resetToken,
+        resetTokenExpiry: { $gt: new Date() }
+      })
+      .exec();
   }
 }

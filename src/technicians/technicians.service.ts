@@ -95,7 +95,7 @@ export class TechniciansService {
 
   private async getRoleIds(roleNames: string[]): Promise<string[]> {
     const roles = await this.roleModel.find({ name: { $in: roleNames } }).exec();
-    return roles.map(role => role._id.toString());
+    return roles.map((role) => role._id.toString());
   }
 
   async findByAccount(
@@ -175,13 +175,8 @@ export class TechniciansService {
       { $sort: { createdAt: -1 } },
       {
         $facet: {
-          technicians: [
-            { $skip: skip },
-            { $limit: limit }
-          ],
-          totalCount: [
-            { $count: "count" }
-          ]
+          technicians: [{ $skip: skip }, { $limit: limit }],
+          totalCount: [{ $count: 'count' }]
         }
       }
     );
@@ -200,7 +195,13 @@ export class TechniciansService {
     };
   }
 
-  async update(id: string, accountId: string, technicianData: Partial<Technician> & { address?: any; userAccount?: any }, addressData?: any, userAccountData?: any): Promise<Technician | null> {
+  async update(
+    id: string,
+    accountId: string,
+    technicianData: Partial<Technician> & { address?: any; userAccount?: any },
+    addressData?: any,
+    userAccountData?: any
+  ): Promise<Technician | null> {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
 
     // Handle address update if address data is provided
@@ -253,7 +254,8 @@ export class TechniciansService {
     // Remove address and userAccount from technicianData since we've handled them separately
     const { address: techAddress, userAccount: techUserAccount, ...cleanTechnicianData } = technicianData;
 
-    return this.technicianModel.findOneAndUpdate(query, cleanTechnicianData, { new: true })
+    return this.technicianModel
+      .findOneAndUpdate(query, cleanTechnicianData, { new: true })
       .populate('account', 'name id')
       .populate('address')
       .populate('user', 'email firstName lastName')
@@ -274,7 +276,7 @@ export class TechniciansService {
       .exec();
   }
 
-async findByUserId(userId: string): Promise<TechnicianDocument | null> {
+  async findByUserId(userId: string): Promise<TechnicianDocument | null> {
     return this.technicianModel
       .findOne({ user: new Types.ObjectId(userId) })
       .populate('account', 'name id')

@@ -119,11 +119,7 @@ export class AuthService {
     await this.usersService.updateResetToken(email, resetToken, resetTokenExpiry);
 
     // Send password reset email
-    await this.emailService.sendPasswordResetEmail(
-      user.email,
-      resetToken,
-      `${user.firstName} ${user.lastName}`
-    );
+    await this.emailService.sendPasswordResetEmail(user.email, resetToken, `${user.firstName} ${user.lastName}`);
 
     return { message: 'If an account with that email exists, a password reset link has been sent.' };
   }
@@ -139,11 +135,15 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update user password and clear reset token
-    await this.usersService.update(user.id, {
-      passwordHash: hashedPassword,
-      resetToken: undefined,
-      resetTokenExpiry: undefined
-    }, user.account.toString());
+    await this.usersService.update(
+      user.id,
+      {
+        passwordHash: hashedPassword,
+        resetToken: undefined,
+        resetTokenExpiry: undefined
+      },
+      user.account.toString()
+    );
 
     return { message: 'Password has been reset successfully' };
   }

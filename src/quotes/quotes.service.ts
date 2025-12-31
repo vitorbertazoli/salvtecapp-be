@@ -32,31 +32,56 @@ export class QuotesService {
   }> {
     const skip = (page - 1) * limit;
 
-    // Build search query
-    const searchQuery: any = { account: new Types.ObjectId(accountId) };
-    if (search) {
-      searchQuery.$or = [{ description: { $regex: search, $options: 'i' } }];
-    }
+    // Build match conditions
+    const matchConditions: any = { account: new Types.ObjectId(accountId) };
     if (status) {
-      searchQuery.status = status;
+      matchConditions.status = status;
     }
 
-    const [quotes, total] = await Promise.all([
-      this.quoteModel
-        .find(searchQuery)
-        .populate('account', 'name id')
-        .populate('customer', 'name email id')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
-      this.quoteModel.countDocuments(searchQuery).exec()
-    ]);
+    // Build aggregation pipeline
+    const pipeline: any[] = [
+      { $match: matchConditions },
+      // Join with customers collection
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'customer',
+          foreignField: '_id',
+          as: 'customer'
+        }
+      },
+      { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } }
+    ];
+
+    // Add search filter if search term is provided
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [{ description: { $regex: search, $options: 'i' } }, { 'customer.name': { $regex: search, $options: 'i' } }]
+        }
+      });
+    }
+
+    // Add sorting, pagination
+    pipeline.push({ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: limit });
+
+    // Get total count
+    let total: number;
+    if (!search) {
+      total = await this.quoteModel.countDocuments(matchConditions).exec();
+    } else {
+      const countPipeline = [...pipeline];
+      countPipeline.splice(countPipeline.length - 2, 2, { $count: 'total' });
+      const countResult = await this.quoteModel.aggregate(countPipeline).exec();
+      total = countResult.length > 0 ? countResult[0].total : 0;
+    }
+
+    const quotes = await this.quoteModel.aggregate(pipeline).exec();
 
     const totalPages = Math.ceil(total / limit);
 
     return {
-      quotes: quotes.map((q) => q.toObject()),
+      quotes,
       total,
       page,
       limit,

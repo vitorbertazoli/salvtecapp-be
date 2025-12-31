@@ -6,7 +6,10 @@ import { TechniciansService } from 'src/technicians/technicians.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private usersService: UsersService, private techniciansService: TechniciansService) {
+  constructor(
+    private usersService: UsersService,
+    private techniciansService: TechniciansService
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
