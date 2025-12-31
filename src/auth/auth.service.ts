@@ -15,14 +15,12 @@ export class AuthService {
     private emailService: EmailService
   ) {}
 
-  async validateUser(accountName: string, username: string, password: string): Promise<any> {
-    // find the account first
-    const account = await this.accountService.findByAccountName(accountName);
-    if (!account) {
+  async validateUser(email: string, password: string): Promise<any> {
+    // Find user by email (globally unique)
+    const user = await this.usersService.findOneByEmail(email);
+    if (!user) {
       return null;
     }
-
-    const user = await this.usersService.findOneByUsernameAndAccount(username, account.id);
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       const { passwordHash: _, ...result } = user.toObject();
@@ -33,11 +31,11 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const account = await this.accountService.findByAccountName(user.accountName);
-    if (!account) {
+    // Find user by email only (globally unique)
+    const userData = await this.usersService.findOneByEmail(user.email);
+    if (!userData) {
       return null;
     }
-    const userData = await this.usersService.findOneByUsernameAndAccount(user.username, account.id);
     const payload = {
       sub: userData?.id,
       id: userData?.id,
@@ -45,7 +43,6 @@ export class AuthService {
       firstName: userData?.firstName,
       lastName: userData?.lastName,
       email: userData?.email,
-      username: userData?.username,
       roles: userData?.roles.map((role: any) => role.name) || []
     };
 
@@ -84,7 +81,6 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        username: user.username,
         roles: user.roles.map((role: any) => role.name) || []
       };
       const refreshPayload = {

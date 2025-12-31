@@ -460,7 +460,6 @@ async function populateDummyData() {
       const firstName = faker.person.firstName();
       const lastName = faker.person.lastName();
       const email = faker.internet.email({ firstName, lastName }).toLowerCase();
-      const username = faker.internet.username({ firstName, lastName }).toLowerCase();
 
       // Create user account
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
@@ -469,7 +468,6 @@ async function populateDummyData() {
         firstName,
         lastName,
         email,
-        username,
         passwordHash: hashedPassword,
         roles: [technicianRole._id],
         status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),

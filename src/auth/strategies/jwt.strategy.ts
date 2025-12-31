@@ -33,7 +33,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      username: user.username,
       roles: user.roles.map((role) => (typeof role === 'string' ? role : (role as any).name)),
       technicianId: technicianId
     };

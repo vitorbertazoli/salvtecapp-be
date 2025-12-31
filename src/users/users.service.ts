@@ -14,7 +14,6 @@ export class UsersService {
     lastName: string,
     email: string,
     password: string,
-    username: string,
     roles: string[] = [],
     createdBy: string,
     updatedBy: string
@@ -26,7 +25,6 @@ export class UsersService {
       lastName,
       email,
       passwordHash: hashedPassword,
-      username,
       roles: roles.map((role) => new Types.ObjectId(role)),
       createdBy,
       updatedBy
@@ -44,18 +42,6 @@ export class UsersService {
 
   async findById(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).populate('roles').exec();
-  }
-
-  async findOneByUsernameAndAccount(username: string, accountId: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findOne({
-        username: username,
-        account: new Types.ObjectId(accountId),
-        status: 'active'
-      })
-      .populate('account', 'name id logoUrl')
-      .populate('roles', 'name')
-      .exec();
   }
 
   async findByAccount(
@@ -78,8 +64,7 @@ export class UsersService {
       searchQuery.$or = [
         { firstName: { $regex: search, $options: 'i' } },
         { lastName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { username: { $regex: search, $options: 'i' } }
+        { email: { $regex: search, $options: 'i' } }
       ];
     }
 

@@ -39,7 +39,6 @@ async function initDB() {
     const firstName = await question('Enter admin first name: ');
     const lastName = await question('Enter admin last name: ');
     const email = await question('Enter admin email: ');
-    const username = await question('Enter admin username: ');
     const password = await question('Enter admin password: ');
 
     console.log('\n📦 Creating database entries...\n');
@@ -115,7 +114,6 @@ async function initDB() {
       lastName,
       email,
       passwordHash,
-      username,
       status: 'active',
       roles: [adminRole._id],
       createdBy: 'system',
@@ -150,7 +148,7 @@ async function initDB() {
     console.log('\n🎉 Database initialization completed successfully!\n');
     console.log('You can now login with:');
     console.log(`  Account: ${accountName}`);
-    console.log(`  Username: ${username}`);
+    console.log(`  Email: ${email}`);
     console.log(`  Password: ${password}\n`);
 
     await mongoose.disconnect();

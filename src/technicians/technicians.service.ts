@@ -32,7 +32,6 @@ export class TechniciansService {
     createdBy: string,
     updatedBy: string,
     userAccountData?: {
-      username: string;
       password: string;
       firstName: string;
       lastName: string;
@@ -59,12 +58,7 @@ export class TechniciansService {
 
     // Create user account if provided
     if (userAccountData) {
-      // Check if username or email already exists
-      const existingUser = await this.usersService.findOneByUsernameAndAccount(userAccountData.username, account);
-      if (existingUser) {
-        throw new Error('Username already exists');
-      }
-
+      // Check if email already exists
       const existingEmailUser = await this.usersService.findOneByAccountAndEmail(account, userAccountData.email);
       if (existingEmailUser) {
         throw new Error('Email already exists');
@@ -79,7 +73,6 @@ export class TechniciansService {
         userAccountData.lastName,
         userAccountData.email,
         userAccountData.password,
-        userAccountData.username,
         roleIds,
         createdBy,
         updatedBy
@@ -243,7 +236,6 @@ export class TechniciansService {
         if (userAccountData.firstName !== undefined) userUpdateData.firstName = userAccountData.firstName;
         if (userAccountData.lastName !== undefined) userUpdateData.lastName = userAccountData.lastName;
         if (userAccountData.email !== undefined) userUpdateData.email = userAccountData.email;
-        if (userAccountData.username !== undefined) userUpdateData.username = userAccountData.username;
 
         // Always ensure roles is only TECHNICIAN
         userUpdateData.roles = await this.getRoleIds(['TECHNICIAN']);
@@ -264,7 +256,7 @@ export class TechniciansService {
     return this.technicianModel.findOneAndUpdate(query, cleanTechnicianData, { new: true })
       .populate('account', 'name id')
       .populate('address')
-      .populate('user', 'username email firstName lastName')
+      .populate('user', 'email firstName lastName')
       .exec();
   }
 
@@ -278,7 +270,7 @@ export class TechniciansService {
       .findOne({ _id: id, account: new Types.ObjectId(accountId) })
       .populate('account', 'name id')
       .populate('address')
-      .populate('user', 'username email firstName lastName')
+      .populate('user', 'email firstName lastName')
       .exec();
   }
 

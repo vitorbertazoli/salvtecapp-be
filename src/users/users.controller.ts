@@ -23,7 +23,6 @@ export class UsersController {
       createUserDto.lastName as string,
       createUserDto.email as string,
       createUserDto.password as string,
-      createUserDto.username as string,
       (createUserDto.roles as string[]) || [],
       createUserDto.createdBy as string,
       createUserDto.updatedBy as string

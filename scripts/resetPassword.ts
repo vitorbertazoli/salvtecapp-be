@@ -32,7 +32,7 @@ async function resetPassword() {
 
     // Get user input
     const accountName = await question('Enter account name: ');
-    const username = await question('Enter username: ');
+    const email = await question('Enter email: ');
     const newPassword = await question('Enter new password: ');
 
     console.log('\n🔍 Finding user...\n');
@@ -46,7 +46,7 @@ async function resetPassword() {
 
     // Find the user within the account
     const user = await User.findOne({
-      username: username,
+      email: email,
       account: account._id
     });
 
@@ -55,7 +55,7 @@ async function resetPassword() {
       return;
     }
 
-    console.log(`✅ Found user: ${user.firstName} ${user.lastName} (${user.username})`);
+    console.log(`✅ Found user: ${user.firstName} ${user.lastName} (${user.email})`);
     console.log('🔒 Hashing new password...\n');
 
     // Hash the new password
@@ -68,7 +68,7 @@ async function resetPassword() {
     });
 
     console.log('✅ Password reset successfully!');
-    console.log(`🔑 New password set for user: ${user.username} in account: ${accountName}`);
+    console.log(`🔑 New password set for user: ${user.email} in account: ${accountName}`);
 
   } catch (error) {
     console.error('❌ Error resetting password:', error);

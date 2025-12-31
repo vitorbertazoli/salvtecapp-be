@@ -23,9 +23,6 @@ export class User {
   @Prop({ required: true })
   passwordHash: string;
 
-  @Prop({ required: true })
-  username: string;
-
   @Prop({ enum: ['active', 'inactive', 'suspended'], default: 'active' })
   status: 'active' | 'inactive' | 'suspended';
 
@@ -51,7 +48,6 @@ export interface IUser {
   firstName: string;
   lastName: string;
   email: string;
-  username: string;
   roles: string[];
   resetToken?: string;
   resetTokenExpiry?: Date;
@@ -59,6 +55,4 @@ export interface IUser {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// Compound index to make username unique per account
-UserSchema.index({ account: 1, username: 1 }, { unique: true });
 UserSchema.index({ roles: 1 });
