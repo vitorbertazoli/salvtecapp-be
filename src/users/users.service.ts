@@ -36,12 +36,12 @@ export class UsersService {
     return this.userModel.findOne({ account, email }).exec();
   }
 
-  async findOneByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).populate('roles').exec();
+  async findOneByEmail(email: string): Promise<UserDocument & { account: any } | null> {
+    return this.userModel.findOne({ email }).populate('account', 'name id logoUrl').populate('roles').exec();
   }
 
-  async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).populate('roles').exec();
+  async findById(id: string): Promise<UserDocument & { account: any } | null> {
+    return this.userModel.findById(id).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
   async findByAccount(
