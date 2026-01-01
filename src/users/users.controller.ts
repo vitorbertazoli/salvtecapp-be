@@ -76,7 +76,10 @@ export class UsersController {
     const isOwnData = req.user.id === id;
 
     if (isAdmin || isOwnData) {
-      // If not admin, prevent updating sensitive fields
+      // Prevent updating sensitive system-level fields
+      delete updateUserDto.isMasterAdmin; // Master admin status can only be set by master admins through secure channels
+
+      // If not admin, prevent updating other sensitive fields
       if (!isAdmin) {
         delete updateUserDto.roles;
         delete updateUserDto.status;

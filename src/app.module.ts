@@ -5,6 +5,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 import { CustomersModule } from './customers/customers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
@@ -31,6 +32,7 @@ import { EmailModule } from './utils/email.module';
       inject: [ConfigService]
     }),
     AuthModule,
+    AdminModule,
     UsersModule,
     AccountsModule,
     RolesModule,

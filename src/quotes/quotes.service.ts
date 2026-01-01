@@ -161,4 +161,8 @@ export class QuotesService {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
     return this.quoteModel.findOneAndDelete(query).exec();
   }
+
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.quoteModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
 }

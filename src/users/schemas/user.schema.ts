@@ -29,6 +29,9 @@ export class User {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Role' }], default: [] })
   roles: Types.ObjectId[];
 
+  @Prop({ type: Boolean, default: false })
+  isMasterAdmin: boolean;
+
   @Prop({ required: true })
   createdBy: string;
 
@@ -49,6 +52,7 @@ export interface IUser {
   lastName: string;
   email: string;
   roles: string[];
+  isMasterAdmin?: boolean;
   resetToken?: string;
   resetTokenExpiry?: Date;
 }

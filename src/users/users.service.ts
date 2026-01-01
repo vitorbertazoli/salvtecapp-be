@@ -121,4 +121,8 @@ export class UsersService {
       })
       .exec();
   }
+
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.userModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
 }

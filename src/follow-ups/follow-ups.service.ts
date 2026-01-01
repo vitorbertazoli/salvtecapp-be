@@ -180,4 +180,8 @@ export class FollowUpsService {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
     return this.followUpModel.findOneAndDelete(query).exec();
   }
+
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.followUpModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
 }

@@ -195,4 +195,8 @@ export class EventsService {
 
     return !!result;
   }
+
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.eventModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
 }

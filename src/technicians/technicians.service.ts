@@ -267,6 +267,10 @@ export class TechniciansService {
     return this.technicianModel.findOneAndDelete(query).exec();
   }
 
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.technicianModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
+
   async findByIdAndAccount(id: string, accountId: string): Promise<TechnicianDocument | null> {
     return this.technicianModel
       .findOne({ _id: id, account: new Types.ObjectId(accountId) })

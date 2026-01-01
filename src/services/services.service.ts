@@ -68,4 +68,8 @@ export class ServicesService {
     const query = accountId ? { _id: id, account: new Types.ObjectId(accountId) } : { _id: id };
     return this.serviceModel.findOneAndDelete(query).exec();
   }
+
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.serviceModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
 }

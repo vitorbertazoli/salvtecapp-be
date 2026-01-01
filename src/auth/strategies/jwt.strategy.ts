@@ -53,7 +53,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       lastName: user.lastName,
       email: user.email,
       roles: user.roles.map((role) => (typeof role === 'string' ? role : (role as any).name)),
-      technicianId: technicianId
+      technicianId: technicianId,
+      ...(payload.isMasterAdmin && { isMasterAdmin: payload.isMasterAdmin })
     };
   }
 }

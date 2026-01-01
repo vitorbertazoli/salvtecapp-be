@@ -71,7 +71,8 @@ export class AuthService {
       lastName: userData?.lastName,
       email: userData?.email,
       roles: userData?.roles.map((role: any) => role.name) || [],
-      technicianId: technicianId
+      technicianId: technicianId,
+      ...(userData?.isMasterAdmin && { isMasterAdmin: userData.isMasterAdmin })
     };
 
     const refreshPayload = {

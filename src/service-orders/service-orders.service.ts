@@ -289,6 +289,10 @@ export class ServiceOrdersService {
     return this.serviceOrderModel.findOneAndDelete(query).exec();
   }
 
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.serviceOrderModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
+
   async findByCustomerAndAccount(customerId: string, accountId: string): Promise<ServiceOrder[]> {
     return this.serviceOrderModel
       .find({

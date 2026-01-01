@@ -169,4 +169,8 @@ export class CustomersService {
     const query = { _id: id, account: new Types.ObjectId(accountId) };
     return this.customerModel.findOneAndDelete(query).exec();
   }
+
+  async deleteAllByAccount(accountId: string): Promise<any> {
+    return this.customerModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+  }
 }

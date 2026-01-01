@@ -2,6 +2,30 @@
 
 This folder contains scripts for managing and populating the database.
 
+### Add Master Admin Flag (`addMasterAdmin.ts`)
+Grants master admin privileges to a specific user by setting the `isMasterAdmin` flag to true.
+
+```bash
+npm run addMasterAdmin
+```
+
+**What it does:**
+- Asks for the user's email address
+- Searches for the user in the database
+- Sets the `isMasterAdmin` flag to true
+- The user will now receive master admin privileges in their JWT token
+
+**Example usage:**
+```bash
+npm run addMasterAdmin
+# Enter user email to grant master admin privileges: admin@company.com
+```
+
+**Notes:**
+- The user must already exist in the database
+- The `isMasterAdmin` flag will be included in the JWT payload only when set to true
+- Master admin users have elevated privileges across the system
+
 ### Reset User Password (`resetPassword.ts`)
 Resets a user's password by providing the account name, username, and new password.
 
