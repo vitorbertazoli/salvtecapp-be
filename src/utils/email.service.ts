@@ -125,6 +125,34 @@ export class EmailService {
     });
   }
 
+  async sendVerificationEmail(to: string, userName: string, verificationToken: string): Promise<void> {
+    const verificationUrl = `${this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173')}/verify-email?token=${verificationToken}`;
+
+    const subject = 'Verifique sua conta no Salvtec';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1976d2;">Verifique sua conta no Salvtec</h2>
+        <p>Olá ${userName},</p>
+        <p>Obrigado por se registrar no Salvtec! Para ativar sua conta, clique no botão abaixo:</p>
+        <div style="margin: 30px 0;">
+          <a href="${verificationUrl}"
+             style="background-color: #1976d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+            Verificar Conta
+          </a>
+        </div>
+        <p>Este link expirará em 24 horas por motivos de segurança.</p>
+        <p>Se você não criou uma conta no Salvtec, ignore este e-mail.</p>
+        <p>Atenciosamente,<br>A Equipe Salvtec</p>
+      </div>
+    `;
+
+    await this.sendEmail({
+      to,
+      subject,
+      html
+    });
+  }
+
   async sendQuoteNotification(to: string, quoteDetails: any): Promise<void> {
     const subject = `Nova Cotação Disponível: ${quoteDetails.title}`;
     const html = `

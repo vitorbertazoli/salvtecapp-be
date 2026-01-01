@@ -24,18 +24,18 @@ export class AuthService {
       return null;
     }
 
-    // // Check if account is active
-    // if (user.account?.status === 'pending') {
-    //   throw new Error('Account not verified. Please check your email for verification instructions.');
-    // }
+    // Check if account is active
+    if (user.account?.status === 'pending') {
+      throw new Error('Account not verified. Please check your email for verification instructions.');
+    }
 
-    // if (user.account?.status === 'suspended') {
-    //   throw new Error('Account is suspended. Please contact support.');
-    // }
+    if (user.account?.status === 'suspended') {
+      throw new Error('Account is suspended. Please contact support.');
+    }
 
-    // if (user.account?.status !== 'active') {
-    //   throw new Error('Account is not active. Please contact support.');
-    // }
+    if (user.account?.status !== 'active') {
+      throw new Error('Account is not active. Please contact support.');
+    }
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       const { passwordHash: _, ...result } = user.toObject();

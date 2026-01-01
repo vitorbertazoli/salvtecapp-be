@@ -23,18 +23,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User not found');
     }
 
-    // // Check if account is active
-    // if (user.account?.status === 'pending') {
-    //   throw new UnauthorizedException('Account not verified. Please check your email for verification instructions.');
-    // }
+    // Check if account is active
+    if (user.account?.status === 'pending') {
+      throw new UnauthorizedException('Account not verified. Please check your email for verification instructions.');
+    }
 
-    // if (user.account?.status === 'suspended') {
-    //   throw new UnauthorizedException('Account is suspended. Please contact support.');
-    // }
+    if (user.account?.status === 'suspended') {
+      throw new UnauthorizedException('Account is suspended. Please contact support.');
+    }
 
-    // if (user.account?.status !== 'active') {
-    //   throw new UnauthorizedException('Account is not active. Please contact support.');
-    // }
+    if (user.account?.status !== 'active') {
+      throw new UnauthorizedException('Account is not active. Please contact support.');
+    }
 
     // if this user is a TECHNICIAN, ensure their technician id gets added to the user object
     let technicianId = undefined;

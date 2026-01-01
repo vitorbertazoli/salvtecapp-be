@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors, UploadedFile, Query } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -9,6 +9,7 @@ import { AccountDocument } from './schemas/account.schema';
 import { RoleDocument } from '../roles/schemas/role.schema';
 import { UserDocument } from '../users/schemas/user.schema';
 import { AccountsService } from './accounts.service';
+import * as crypto from 'crypto';
 
 @Controller('accounts')
 export class AccountsController {
@@ -65,11 +66,18 @@ export class AccountsController {
       throw new Error('User with this email already exists');
     }
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create account
     const account = (await this.accountsService.create({
       name: accountName,
       plan: createAccountDto.plan,
       logoUrl: logo ? `/uploads/logos/${logo.filename}` : undefined,
+      status: 'pending',
+      verificationToken,
+      verificationTokenExpires,
       billingInfo: {},
       createdBy: 'system',
       updatedBy: 'system'
@@ -98,11 +106,11 @@ export class AccountsController {
       'system'
     )) as UserDocument;
 
-    // Send welcome email
+    // Send verification email
     try {
-      await this.emailService.sendWelcomeEmail(createAccountDto.email, `${createAccountDto.firstName} ${createAccountDto.lastName}`);
+      await this.emailService.sendVerificationEmail(createAccountDto.email, `${createAccountDto.firstName} ${createAccountDto.lastName}`, verificationToken);
     } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
+      console.error('Failed to send verification email:', emailError);
       // Don't fail the account creation if email fails
     }
 
@@ -111,6 +119,7 @@ export class AccountsController {
         id: account._id,
         name: account.name,
         plan: account.plan,
+        status: account.status,
         logoUrl: account.logoUrl
       },
       user: {
@@ -118,7 +127,84 @@ export class AccountsController {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email
+      },
+      message: 'Account created successfully. Please check your email to verify your account.'
+    };
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    if (!token) {
+      throw new Error('Verification token is required');
+    }
+
+    const account = await this.accountsService.findByVerificationToken(token);
+    if (!account) {
+      throw new Error('Invalid or expired verification token');
+    }
+
+    if (account.status === 'active') {
+      throw new Error('Account is already verified');
+    }
+
+    if (account.verificationTokenExpires && account.verificationTokenExpires < new Date()) {
+      throw new Error('Verification token has expired');
+    }
+
+    // Update account status to active and clear verification token
+    await this.accountsService.update(account._id.toString(), {
+      status: 'active',
+      verificationToken: undefined,
+      verificationTokenExpires: undefined
+    });
+
+    return {
+      message: 'Email verified successfully. Your account is now active.',
+      account: {
+        id: account._id,
+        name: account.name,
+        status: 'active'
       }
+    };
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body() body: { email: string }) {
+    if (!body.email) {
+      throw new Error('Email is required');
+    }
+
+    // Find user by email
+    const user = await this.usersService.findOneByEmail(body.email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if account is already active
+    if (user.account?.status === 'active') {
+      throw new Error('Account is already verified');
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Update account with new token
+    await this.accountsService.update(user.account._id.toString(), {
+      verificationToken,
+      verificationTokenExpires
+    });
+
+    // Send verification email
+    try {
+      await this.emailService.sendVerificationEmail(user.email, `${user.firstName} ${user.lastName}`, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      throw new Error('Failed to send verification email');
+    }
+
+    return {
+      message: 'Verification email sent successfully. Please check your email.'
     };
   }
 }

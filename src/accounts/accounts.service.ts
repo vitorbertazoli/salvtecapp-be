@@ -29,6 +29,13 @@ export class AccountsService {
     return this.accountModel.findOne({ name: { $regex: name, $options: 'i' } }).exec();
   }
 
+  async findByVerificationToken(token: string): Promise<AccountDocument | null> {
+    return this.accountModel.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: new Date() }
+    }).exec();
+  }
+
   async update(id: string, accountData: Partial<Account>): Promise<Account | null> {
     return this.accountModel.findByIdAndUpdate(id, accountData, { new: true }).exec();
   }

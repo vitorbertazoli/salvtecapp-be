@@ -18,6 +18,19 @@ export class Account {
   })
   plan: 'free' | 'pro' | 'enterprise';
 
+  @Prop({
+    required: true,
+    enum: ['pending', 'active', 'suspended'],
+    default: 'pending'
+  })
+  status: 'pending' | 'active' | 'suspended';
+
+  @Prop()
+  verificationToken?: string;
+
+  @Prop()
+  verificationTokenExpires?: Date;
+
   @Prop()
   expireDate?: Date;
 
@@ -40,6 +53,9 @@ export interface IAccount {
   name: string;
   logoUrl?: string;
   plan: 'free' | 'pro' | 'enterprise';
+  status: 'pending' | 'active' | 'suspended';
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
   expireDate?: Date;
   billingInfo: {
     cardNumber?: string;
