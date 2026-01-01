@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AccountsService } from 'src/accounts/accounts.service';
 import { UsersService } from '../users/users.service';
+import { TechniciansService } from '../technicians/technicians.service';
 import { EmailService } from '../utils/email.service';
 import * as crypto from 'crypto';
 
@@ -12,6 +13,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private accountService: AccountsService,
+    private techniciansService: TechniciansService,
     private emailService: EmailService
   ) {}
 
@@ -21,6 +23,19 @@ export class AuthService {
     if (!user) {
       return null;
     }
+
+    // // Check if account is active
+    // if (user.account?.status === 'pending') {
+    //   throw new Error('Account not verified. Please check your email for verification instructions.');
+    // }
+
+    // if (user.account?.status === 'suspended') {
+    //   throw new Error('Account is suspended. Please contact support.');
+    // }
+
+    // if (user.account?.status !== 'active') {
+    //   throw new Error('Account is not active. Please contact support.');
+    // }
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       const { passwordHash: _, ...result } = user.toObject();
@@ -36,16 +51,27 @@ export class AuthService {
     if (!userData) {
       return null;
     }
+
+    // Check if user is a technician and get technician ID
+    let technicianId = undefined;
+    if (userData.roles.some((role) => (typeof role === 'string' ? role : (role as any).name) === 'TECHNICIAN')) {
+      const technician = await this.techniciansService.findByUserId(userData.id);
+      if (technician) {
+        technicianId = technician.id;
+      }
+    }
+
     const payload = {
       sub: userData?.id,
       id: userData?.id,
-      accountId: userData?.account?.id,
+      account: userData?.account?.id,  // Just the account ID
       accountName: userData?.account?.name,
       logoUrl: userData?.account?.logoUrl,
       firstName: userData?.firstName,
       lastName: userData?.lastName,
       email: userData?.email,
-      roles: userData?.roles.map((role: any) => role.name) || []
+      roles: userData?.roles.map((role: any) => role.name) || [],
+      technicianId: technicianId
     };
 
     const refreshPayload = {
@@ -76,14 +102,26 @@ export class AuthService {
         throw new Error('User not found');
       }
 
+      // Check if user is a technician and get technician ID
+      let technicianId = undefined;
+      if (user.roles.some((role) => (typeof role === 'string' ? role : (role as any).name) === 'TECHNICIAN')) {
+        const technician = await this.techniciansService.findByUserId(user.id);
+        if (technician) {
+          technicianId = technician.id;
+        }
+      }
+
       const accessPayload = {
         sub: user.id,
         id: user.id,
-        account: user.account,
+        account: user.account?.id,  // Just the account ID
+        accountName: user.account?.name,
+        logoUrl: user.account?.logoUrl,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        roles: user.roles.map((role: any) => role.name) || []
+        roles: user.roles.map((role: any) => role.name) || [],
+        technicianId: technicianId
       };
       const refreshPayload = {
         sub: user?.id
