@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccountsModule } from '../accounts/accounts.module';
 import { CustomersModule } from '../customers/customers.module';
+import { UsersModule } from '../users/users.module';
 import { ProductsModule } from '../products/products.module';
 import { QuotesModule } from '../quotes/quotes.module';
 import { ServiceOrdersModule } from '../service-orders/service-orders.module';
@@ -16,6 +17,7 @@ import { MasterAdminGuard } from './guards/master-admin.guard';
   imports: [
     AccountsModule,
     CustomersModule,
+    UsersModule,
     ProductsModule,
     QuotesModule,
     ServiceOrdersModule,

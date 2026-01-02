@@ -24,18 +24,8 @@ export class AuthService {
       return null;
     }
 
-    // Check if account is active
-    if (user.account?.status === 'pending') {
-      throw new Error('Account not verified. Please check your email for verification instructions.');
-    }
-
-    if (user.account?.status === 'suspended') {
-      throw new Error('Account is suspended. Please contact support.');
-    }
-
-    if (user.account?.status !== 'active') {
-      throw new Error('Account is not active. Please contact support.');
-    }
+    // Validate account status
+    this.validateAccountStatus(user.account);
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       const { passwordHash: _, ...result } = user.toObject();
@@ -52,42 +42,15 @@ export class AuthService {
       return null;
     }
 
-    // Check if user is a technician and get technician ID
-    let technicianId = undefined;
-    if (userData.roles.some((role) => (typeof role === 'string' ? role : (role as any).name) === 'TECHNICIAN')) {
-      const technician = await this.techniciansService.findByUserId(userData.id);
-      if (technician) {
-        technicianId = technician.id;
-      }
-    }
+    // Validate account and user status
+    this.validateAccountStatus(userData.account);
+    this.validateUserStatus(userData);
 
-    const payload = {
-      sub: userData?.id,
-      id: userData?.id,
-      account: userData?.account?.id,  // Just the account ID
-      accountName: userData?.account?.name,
-      logoUrl: userData?.account?.logoUrl,
-      firstName: userData?.firstName,
-      lastName: userData?.lastName,
-      email: userData?.email,
-      roles: userData?.roles.map((role: any) => role.name) || [],
-      technicianId: technicianId,
-      ...(userData?.isMasterAdmin && { isMasterAdmin: userData.isMasterAdmin })
-    };
-
-    const refreshPayload = {
-      sub: userData?.id
-    };
+    const payload = await this.createJwtPayload(userData);
+    const tokens = this.generateTokens(payload);
 
     return {
-      access_token: this.jwtService.sign(payload, {
-        secret: process.env.JWT_SECRET,
-        expiresIn: '15m'
-      }),
-      refresh_token: this.jwtService.sign(refreshPayload, {
-        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-        expiresIn: '7d'
-      }),
+      ...tokens,
       user: payload
     };
   }
@@ -103,40 +66,15 @@ export class AuthService {
         throw new Error('User not found');
       }
 
-      // Check if user is a technician and get technician ID
-      let technicianId = undefined;
-      if (user.roles.some((role) => (typeof role === 'string' ? role : (role as any).name) === 'TECHNICIAN')) {
-        const technician = await this.techniciansService.findByUserId(user.id);
-        if (technician) {
-          technicianId = technician.id;
-        }
-      }
+      // Validate account and user status
+      this.validateAccountStatus(user.account);
+      this.validateUserStatus(user);
 
-      const accessPayload = {
-        sub: user.id,
-        id: user.id,
-        account: user.account?.id,  // Just the account ID
-        accountName: user.account?.name,
-        logoUrl: user.account?.logoUrl,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        roles: user.roles.map((role: any) => role.name) || [],
-        technicianId: technicianId
-      };
-      const refreshPayload = {
-        sub: user?.id
-      };
+      const accessPayload = await this.createJwtPayload(user);
+      const tokens = this.generateTokens(accessPayload);
 
       return {
-        access_token: this.jwtService.sign(accessPayload, {
-          secret: process.env.JWT_SECRET,
-          expiresIn: '15m'
-        }),
-        refresh_token: this.jwtService.sign(refreshPayload, {
-          secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
-          expiresIn: '7d'
-        }),
+        ...tokens,
         user: accessPayload
       };
     } catch (error) {
@@ -187,5 +125,84 @@ export class AuthService {
     );
 
     return { message: 'Password has been reset successfully' };
+  }
+
+  /**
+   * Validates account status and throws appropriate errors
+   */
+  private validateAccountStatus(account: any): void {
+    if (account?.status === 'pending') {
+      throw new Error('Account not verified. Please check your email for verification instructions.');
+    }
+
+    if (account?.status === 'suspended') {
+      throw new Error('Account is suspended. Please contact support.');
+    }
+
+    if (account?.status !== 'active') {
+      throw new Error('Account is not active. Please contact support.');
+    }
+  }
+
+  /**
+   * Validates user status and throws appropriate errors
+   */
+  private validateUserStatus(user: any): void {
+    if (user.status !== 'active') {
+      throw new Error('User account is not active');
+    }
+  }
+
+  /**
+   * Creates JWT payload from user data
+   */
+  private async createJwtPayload(user: any): Promise<any> {
+    // Check if user is a technician and get technician ID
+    const technicianId = await this.getTechnicianId(user);
+
+    return {
+      sub: user.id,
+      id: user.id,
+      account: user.account?.id,  // Just the account ID
+      accountName: user.account?.name,
+      logoUrl: user.account?.logoUrl,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      roles: user.roles.map((role: any) => role.name) || [],
+      technicianId: technicianId,
+      ...(user.isMasterAdmin && { isMasterAdmin: user.isMasterAdmin })
+    };
+  }
+
+  /**
+   * Generates access and refresh tokens
+   */
+  private generateTokens(payload: any): { access_token: string; refresh_token: string } {
+    const refreshPayload = {
+      sub: payload.id
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload, {
+        secret: process.env.JWT_SECRET,
+        expiresIn: '15m'
+      }),
+      refresh_token: this.jwtService.sign(refreshPayload, {
+        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+        expiresIn: '7d'
+      })
+    };
+  }
+
+  /**
+   * Gets technician ID if user is a technician
+   */
+  private async getTechnicianId(user: any): Promise<string | undefined> {
+    if (user.roles.some((role: any) => (typeof role === 'string' ? role : role.name) === 'TECHNICIAN')) {
+      const technician = await this.techniciansService.findByUserId(user.id);
+      return technician?.id;
+    }
+    return undefined;
   }
 }
