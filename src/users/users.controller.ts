@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Roles, GetAccount, GetUser } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { User } from './schemas/user.schema';
@@ -8,15 +8,15 @@ import { UsersService } from './users.service';
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create users
-  async create(@Body() createUserDto: any, @Request() req: any) {
+  async create(@Body() createUserDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
-    createUserDto.account = req.user.account;
-    createUserDto.createdBy = req.user.id;
-    createUserDto.updatedBy = req.user.id;
+    createUserDto.account = accountId;
+    createUserDto.createdBy = userId;
+    createUserDto.updatedBy = userId;
     return this.usersService.create(
       createUserDto.account as string,
       createUserDto.firstName as string,
@@ -30,24 +30,24 @@ export class UsersController {
   }
 
   @Get()
-  async findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @Request() req: any) {
+  async findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @GetAccount() accountId: string, @GetUser() user: any) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
-    console.log('Fetching users for account:', req.user);
+    console.log('Fetching users for account:', user);
 
     // Check if user has ADMIN role
-    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
+    const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
 
     if (isAdmin) {
       // ADMIN can see all users in their account
-      return this.usersService.findByAccount(req.user.account.toString(), pageNum, limitNum, search);
+      return this.usersService.findByAccount(accountId, pageNum, limitNum, search);
     } else {
       // Regular users can only see themselves
-      const user = await this.usersService.findByIdAndAccount(req.user.id as string, req.user.account.toString());
+      const userData = await this.usersService.findByIdAndAccount(user.id as string, accountId);
       return {
-        users: user ? [user] : [],
-        total: user ? 1 : 0,
+        users: userData ? [userData] : [],
+        total: userData ? 1 : 0,
         page: 1,
         limit: 1,
         totalPages: 1
@@ -56,13 +56,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req: any) {
+  async findOne(@Param('id') id: string, @GetAccount() accountId: string, @GetUser() user: any) {
     // Check if user has ADMIN role or is requesting their own data
-    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
-    const isOwnData = req.user.id === id;
+    const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
+    const isOwnData = user.id === id;
 
     if (isAdmin || isOwnData) {
-      return this.usersService.findByIdAndAccount(id, req.user.account.toString());
+      return this.usersService.findByIdAndAccount(id, accountId);
     } else {
       // Not authorized
       return null;
@@ -70,10 +70,10 @@ export class UsersController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: any, @Request() req: any) {
+  async update(@Param('id') id: string, @Body() updateUserDto: any, @GetAccount() accountId: string, @GetUser() user: any) {
     // Check if user has ADMIN role or is updating their own data
-    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
-    const isOwnData = req.user.id === id;
+    const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
+    const isOwnData = user.id === id;
 
     if (isAdmin || isOwnData) {
       // Prevent updating sensitive system-level fields
@@ -86,8 +86,8 @@ export class UsersController {
         delete updateUserDto.account;
       }
 
-      updateUserDto.updatedBy = req.user.id;
-      return this.usersService.update(id, updateUserDto as Partial<User>, req.user.account.toString());
+      updateUserDto.updatedBy = user.id;
+      return this.usersService.update(id, updateUserDto as Partial<User>, accountId);
     } else {
       // Not authorized
       return null;
@@ -96,7 +96,7 @@ export class UsersController {
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete users
-  remove(@Param('id') id: string, @Request() req: any) {
-    return this.usersService.delete(id, req.user.account.toString());
+  remove(@Param('id') id: string, @GetAccount() accountId: string) {
+    return this.usersService.delete(id, accountId);
   }
 }

@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Roles, GetAccount, GetUser } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { FollowUpsService } from './follow-ups.service';
@@ -7,15 +7,15 @@ import { FollowUpsService } from './follow-ups.service';
 @Controller('follow-ups')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FollowUpsController {
-  constructor(private readonly followUpsService: FollowUpsService) {}
+  constructor(private readonly followUpsService: FollowUpsService) { }
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  async create(@Body() createFollowUpDto: any, @Request() req: any) {
+  async create(@Body() createFollowUpDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
-    createFollowUpDto.account = req.user.account;
-    createFollowUpDto.createdBy = req.user.id;
-    createFollowUpDto.updatedBy = req.user.id;
+    createFollowUpDto.account = accountId;
+    createFollowUpDto.createdBy = userId;
+    createFollowUpDto.updatedBy = userId;
 
     return this.followUpsService.create(createFollowUpDto);
   }
@@ -29,7 +29,7 @@ export class FollowUpsController {
     @Query('customerId') customerId: string = '',
     @Query('startDate') startDate: string = '',
     @Query('endDate') endDate: string = '',
-    @Request() req: any
+    @GetAccount() accountId: string
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 50;
@@ -38,7 +38,7 @@ export class FollowUpsController {
     const endDateObj = endDate ? new Date(endDate) : undefined;
 
     return this.followUpsService.findByAccount(
-      req.user.account.toString(),
+      accountId,
       pageNum,
       limitNum,
       search,
@@ -50,30 +50,30 @@ export class FollowUpsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req: any) {
-    return this.followUpsService.findByIdAndAccount(id, req.user.account.toString());
+  async findOne(@Param('id') id: string, @GetAccount() accountId: string) {
+    return this.followUpsService.findByIdAndAccount(id, accountId);
   }
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateFollowUpDto: any, @Request() req: any) {
-    updateFollowUpDto.updatedBy = req.user.id;
+  async update(@Param('id') id: string, @Body() updateFollowUpDto: any, @GetUser('id') userId: string, @GetAccount() accountId: string) {
+    updateFollowUpDto.updatedBy = userId;
 
     // Handle status changes for completion tracking
     if (updateFollowUpDto.status === 'completed') {
       updateFollowUpDto.completedAt = new Date();
-      updateFollowUpDto.completedBy = req.user.id;
+      updateFollowUpDto.completedBy = userId;
     } else if (updateFollowUpDto.status === 'pending') {
       updateFollowUpDto.completedAt = undefined;
       updateFollowUpDto.completedBy = undefined;
     }
 
-    return this.followUpsService.updateByAccount(id, updateFollowUpDto, req.user.account.toString());
+    return this.followUpsService.updateByAccount(id, updateFollowUpDto, accountId);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async delete(@Param('id') id: string, @Request() req: any) {
-    return this.followUpsService.deleteByAccount(id, req.user.account.toString());
+  async delete(@Param('id') id: string, @GetAccount() accountId: string) {
+    return this.followUpsService.deleteByAccount(id, accountId);
   }
 }

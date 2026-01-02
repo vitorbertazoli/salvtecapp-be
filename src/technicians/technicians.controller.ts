@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Roles, GetAccount, GetUser } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { TechniciansService } from './technicians.service';
@@ -7,15 +7,15 @@ import { TechniciansService } from './technicians.service';
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TechniciansController {
-  constructor(private readonly techniciansService: TechniciansService) {}
+  constructor(private readonly techniciansService: TechniciansService) { }
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
-  async create(@Body() createTechnicianDto: any, @Request() req: any) {
+  async create(@Body() createTechnicianDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
-    createTechnicianDto.account = req.user.account;
-    createTechnicianDto.createdBy = req.user.id;
-    createTechnicianDto.updatedBy = req.user.id;
+    createTechnicianDto.account = accountId;
+    createTechnicianDto.createdBy = userId;
+    createTechnicianDto.updatedBy = userId;
 
     // Extract address and userAccount data from the body
     const { address, userAccount, ...technicianData } = createTechnicianDto;
@@ -37,21 +37,21 @@ export class TechniciansController {
     @Query('limit') limit: string = '10',
     @Query('search') search: string = '',
     @Query('status') status: string = '',
-    @Request() req: any
+    @GetAccount() accountId: string
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
-    return this.techniciansService.findByAccount(req.user.account.toString(), pageNum, limitNum, search, status || undefined);
+    return this.techniciansService.findByAccount(accountId, pageNum, limitNum, search, status || undefined);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req: any) {
+  async findOne(@Param('id') id: string, @GetAccount() accountId: string, @GetUser() user: any) {
     // Check if user has ADMIN role
-    const isAdmin = req.user.roles?.some((role: any) => role === 'ADMIN');
+    const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
 
     if (isAdmin) {
-      return this.techniciansService.findByIdAndAccount(id, req.user.account.toString());
+      return this.techniciansService.findByIdAndAccount(id, accountId);
     } else {
       // Not authorized
       return null;
@@ -60,15 +60,15 @@ export class TechniciansController {
 
   @Put(':id')
   @Roles('ADMIN') // Only users with ADMIN role can update technicians
-  async update(@Param('id') id: string, @Body() updateTechnicianDto: any, @Request() req: any) {
-    updateTechnicianDto.updatedBy = req.user.id;
+  async update(@Param('id') id: string, @Body() updateTechnicianDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+    updateTechnicianDto.updatedBy = userId;
 
     // Extract address and userAccount data from the body
     const { address, userAccount, ...technicianData } = updateTechnicianDto;
 
     return this.techniciansService.update(
       id,
-      req.user.account.toString(),
+      accountId,
       technicianData,
       address, // Pass the address object directly
       userAccount // Pass the user account data
@@ -77,7 +77,7 @@ export class TechniciansController {
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete technicians
-  remove(@Param('id') id: string, @Request() req: any) {
-    return this.techniciansService.delete(id, req.user.account.toString());
+  remove(@Param('id') id: string, @GetAccount() accountId: string) {
+    return this.techniciansService.delete(id, accountId);
   }
 }
