@@ -22,7 +22,7 @@ export class DashboardService {
     const todayString = today.toISOString().split('T')[0];
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
-    const accountObjId = new Types.ObjectId(accountId);
+    const accountObjId = accountId;
 
     // Get all stats in parallel
     const [customerCount, technicianCount, openQuotesCount, openServiceOrdersCount, todaysEventsCount, monthlySalesData] = await Promise.all([
@@ -69,7 +69,7 @@ export class DashboardService {
     const salesData = await this.serviceOrderModel.aggregate([
       {
         $match: {
-          account: new Types.ObjectId(accountId),
+          account: accountId,
           status: 'completed',
           paymentStatus: 'paid',
           completedAt: { $gte: fromDate }

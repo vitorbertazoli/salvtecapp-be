@@ -70,14 +70,14 @@ export class CustomersService {
     const skip = (page - 1) * limit;
 
     // Build search query
-    const searchQuery: any = { account: new Types.ObjectId(accountId) };
+    const searchQuery: any = { account: accountId };
     if (search) {
       searchQuery.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { cpf: { $regex: search, $options: 'i' } },
         { phoneNumber: { $regex: search, $options: 'i' } },
-        { _id: Types.ObjectId.isValid(search) ? new Types.ObjectId(search) : undefined }
+        { _id: Types.ObjectId.isValid(search) ? search : undefined }
       ];
     }
     if (status) {
@@ -114,7 +114,7 @@ export class CustomersService {
 
   async findByIdAndAccount(id: string, accountId: string): Promise<CustomerDocument | null> {
     const customer = await this.customerModel
-      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
       .populate('address')
       .populate('technicianResponsible', 'name id')
@@ -132,7 +132,7 @@ export class CustomersService {
     customerData: Partial<Customer> & { address?: Partial<Address>; equipments?: any[] },
     accountId: string
   ): Promise<Customer | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
 
     const currentCustomer = await this.customerModel.findOne(query).exec();
 
@@ -166,11 +166,11 @@ export class CustomersService {
   }
 
   async deleteByAccount(id: string, accountId: string): Promise<Customer | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     return this.customerModel.findOneAndDelete(query).exec();
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.customerModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.customerModel.deleteMany({ account: accountId }).exec();
   }
 }

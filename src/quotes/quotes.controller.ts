@@ -11,7 +11,7 @@ export class QuotesController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can create quotes
-  async create(@Body() createQuoteDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async create(@Body() createQuoteDto: any, @GetAccount() accountId: any, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
     createQuoteDto.account = accountId;
     createQuoteDto.createdBy = userId;
@@ -36,13 +36,13 @@ export class QuotesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetAccount() accountId: string) {
+  async findOne(@Param('id') id: string, @GetAccount() accountId: any) {
     return this.quotesService.findByIdAndAccount(id, accountId);
   }
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can update quotes
-  async update(@Param('id') id: string, @Body() updateQuoteDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async update(@Param('id') id: string, @Body() updateQuoteDto: any, @GetAccount() accountId: any, @GetUser('id') userId: string) {
     updateQuoteDto.updatedBy = userId;
     return this.quotesService.updateByAccount(id, updateQuoteDto, accountId);
   }

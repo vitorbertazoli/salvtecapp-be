@@ -47,7 +47,7 @@ export class FollowUpsService {
     const skip = (page - 1) * limit;
 
     // Build match conditions
-    const matchConditions: any = { account: new Types.ObjectId(accountId) };
+    const matchConditions: any = { account: accountId };
     if (status) {
       matchConditions.status = status;
     }
@@ -143,7 +143,7 @@ export class FollowUpsService {
 
   async findByIdAndAccount(id: string, accountId: string): Promise<FollowUpDocument | null> {
     const followUp = await this.followUpModel
-      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email phoneNumber')
       .populate('account', 'name')
       .exec();
@@ -156,7 +156,7 @@ export class FollowUpsService {
   }
 
   async updateByAccount(id: string, followUpData: Partial<FollowUp>, accountId: string): Promise<FollowUp | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
 
     // Handle notes appending - if notes are provided, append to existing array
     if (followUpData.notes && Array.isArray(followUpData.notes)) {
@@ -177,11 +177,11 @@ export class FollowUpsService {
   }
 
   async deleteByAccount(id: string, accountId: string): Promise<FollowUp | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     return this.followUpModel.findOneAndDelete(query).exec();
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.followUpModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.followUpModel.deleteMany({ account: accountId }).exec();
   }
 }

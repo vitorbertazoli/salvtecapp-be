@@ -13,7 +13,7 @@ export class TechniciansService {
     @InjectModel(Role.name) private roleModel: Model<any>,
     private readonly accountsService: AccountsService,
     private readonly usersService: UsersService
-  ) {}
+  ) { }
 
   async create(
     account: string,
@@ -116,7 +116,7 @@ export class TechniciansService {
     // Build aggregation pipeline for search
     const pipeline: any[] = [
       {
-        $match: { account: new Types.ObjectId(accountId) }
+        $match: { account: accountId }
       },
       {
         $lookup: {
@@ -202,7 +202,7 @@ export class TechniciansService {
     addressData?: any,
     userAccountData?: any
   ): Promise<Technician | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
 
     // Handle address update if address data is provided
     if (addressData && typeof addressData === 'object') {
@@ -263,17 +263,17 @@ export class TechniciansService {
   }
 
   async delete(id: string, accountId: string): Promise<Technician | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     return this.technicianModel.findOneAndDelete(query).exec();
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.technicianModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.technicianModel.deleteMany({ account: accountId }).exec();
   }
 
   async findByIdAndAccount(id: string, accountId: string): Promise<TechnicianDocument | null> {
     return this.technicianModel
-      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
       .populate('address')
       .populate('user', 'email firstName lastName')
@@ -292,7 +292,7 @@ export class TechniciansService {
     return this.technicianModel
       .findOne({
         cpf: cpf,
-        account: new Types.ObjectId(accountId)
+        account: accountId
       })
       .populate('account', 'name id')
       .populate('address')

@@ -6,7 +6,7 @@ import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async create(
     account: string,
@@ -59,7 +59,7 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     // Build search query
-    const searchQuery: any = { account: new Types.ObjectId(accountId) };
+    const searchQuery: any = { account: accountId };
     if (search) {
       searchQuery.$or = [
         { firstName: { $regex: search, $options: 'i' } },
@@ -85,7 +85,7 @@ export class UsersService {
   }
 
   async update(id: string, userData: Partial<User> & { password?: string }, accountId: string): Promise<User | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
 
     // Hash password if provided
     if (userData.password) {
@@ -97,13 +97,13 @@ export class UsersService {
   }
 
   async delete(id: string, accountId: string): Promise<User | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     return this.userModel.findOneAndDelete(query).exec();
   }
 
   async findByIdAndAccount(id: string, accountId: string): Promise<UserDocument | null> {
     return this.userModel
-      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .findOne({ _id: id, account: accountId })
       .populate('account', 'name id logoUrl')
       .populate('roles', 'name')
       .exec();
@@ -123,6 +123,6 @@ export class UsersService {
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.userModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.userModel.deleteMany({ account: accountId }).exec();
   }
 }

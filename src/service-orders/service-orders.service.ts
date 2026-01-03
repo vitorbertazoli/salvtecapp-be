@@ -9,7 +9,7 @@ export class ServiceOrdersService {
   constructor(
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
     private quotesService: QuotesService
-  ) {}
+  ) { }
 
   async create(serviceOrderData: Partial<ServiceOrder>): Promise<ServiceOrder> {
     // Generate order number if not provided
@@ -24,7 +24,7 @@ export class ServiceOrdersService {
     return savedServiceOrder.toObject() as any;
   }
 
-  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: string): Promise<ServiceOrder> {
+  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: any): Promise<ServiceOrder> {
     // Fetch the quote with populated services and products
     const quote = await this.quotesService.findByIdAndAccount(quoteId, accountId);
     if (!quote) {
@@ -76,7 +76,7 @@ export class ServiceOrdersService {
       quote: new Types.ObjectId(quoteId),
       customer: quote.customer._id || quote.customer,
       equipments: quote.equipments || [],
-      account: new Types.ObjectId(accountId),
+      account: accountId,
       items,
       description: quote.description,
       discount: quote.discount || 0,
@@ -115,7 +115,7 @@ export class ServiceOrdersService {
     const skip = (page - 1) * limit;
 
     // Build match conditions
-    const matchConditions: any = { account: new Types.ObjectId(accountId) };
+    const matchConditions: any = { account: accountId };
     if (status) {
       matchConditions.status = status;
     }
@@ -250,7 +250,7 @@ export class ServiceOrdersService {
 
   async findByIdAndAccount(id: string, accountId: string): Promise<ServiceOrderDocument | null> {
     const serviceOrder = await this.serviceOrderModel
-      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
       .populate('customer', 'name email phoneNumber id')
       .populate('quote', 'quoteId')
@@ -267,7 +267,7 @@ export class ServiceOrdersService {
   }
 
   async updateByAccount(id: string, serviceOrderData: Partial<ServiceOrder>, accountId: string): Promise<ServiceOrder | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
 
     const updatedServiceOrder = await this.serviceOrderModel
       .findOneAndUpdate(query, serviceOrderData, { new: true })
@@ -285,19 +285,19 @@ export class ServiceOrdersService {
   }
 
   async deleteByAccount(id: string, accountId: string): Promise<ServiceOrder | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     return this.serviceOrderModel.findOneAndDelete(query).exec();
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.serviceOrderModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.serviceOrderModel.deleteMany({ account: accountId }).exec();
   }
 
   async findByCustomerAndAccount(customerId: string, accountId: string): Promise<ServiceOrder[]> {
     return this.serviceOrderModel
       .find({
         customer: new Types.ObjectId(customerId),
-        account: new Types.ObjectId(accountId),
+        account: accountId,
         status: { $in: ['pending', 'scheduled', 'in_progress'] }
       })
       .populate('customer', 'name email phoneNumber id')

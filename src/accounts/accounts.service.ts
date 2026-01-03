@@ -59,7 +59,7 @@ export class AccountsService {
     country: string = 'Brazil'
   ): Promise<Address> {
     const createdAddress = new this.addressModel({
-      account: new Types.ObjectId(accountId),
+      account: accountId,
       street,
       number,
       complement,
@@ -75,12 +75,12 @@ export class AccountsService {
   }
 
   async updateAddress(id: string, addressData: Partial<Address>, accountId: string): Promise<Address | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     const data = await this.addressModel.findOneAndUpdate(query, addressData, { new: true }).exec();
     return data;
   }
 
   async findAddressById(id: string, accountId: string): Promise<AddressDocument | null> {
-    return this.addressModel.findOne({ _id: id, account: new Types.ObjectId(accountId) }).exec();
+    return this.addressModel.findOne({ _id: id, account: accountId }).exec();
   }
 }

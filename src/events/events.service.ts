@@ -64,7 +64,7 @@ export class EventsService {
       status?: string;
     }
   ): Promise<Event[]> {
-    const query: any = { account: new Types.ObjectId(accountId) };
+    const query: any = { account: accountId };
 
     if (filters?.startDate && filters?.endDate) {
       query.date = {
@@ -121,7 +121,7 @@ export class EventsService {
   }
 
   async updateByAccount(id: string, updateData: Partial<Event>, accountId: string): Promise<Event | null> {
-    const event = await this.eventModel.findOne({ _id: id, account: new Types.ObjectId(accountId) });
+    const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
     if (!event) {
       return null;
@@ -190,13 +190,13 @@ export class EventsService {
   async deleteByAccount(id: string, accountId: string): Promise<boolean> {
     const result = await this.eventModel.findOneAndDelete({
       _id: id,
-      account: new Types.ObjectId(accountId)
+      account: accountId
     });
 
     return !!result;
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.eventModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.eventModel.deleteMany({ account: accountId }).exec();
   }
 }

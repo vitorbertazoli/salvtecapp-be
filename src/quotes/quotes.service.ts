@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, ObjectId, Types } from 'mongoose';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
 
 @Injectable()
 export class QuotesService {
-  constructor(@InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>) {}
+  constructor(@InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>) { }
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
     const createdQuote = new this.quoteModel(quoteData);
@@ -33,7 +33,7 @@ export class QuotesService {
     const skip = (page - 1) * limit;
 
     // Build match conditions
-    const matchConditions: any = { account: new Types.ObjectId(accountId) };
+    const matchConditions: any = { account: accountId };
     if (status) {
       matchConditions.status = status;
     }
@@ -93,9 +93,9 @@ export class QuotesService {
     return this.quoteModel.findById(id).exec();
   }
 
-  async findByIdAndAccount(id: string, accountId: string): Promise<QuoteDocument | null> {
+  async findByIdAndAccount(id: string, accountId: ObjectId): Promise<QuoteDocument | null> {
     const quote = await this.quoteModel
-      .findOne({ _id: id, account: new Types.ObjectId(accountId) })
+      .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
       .populate('customer', 'name email id')
       .populate('services.service', 'name')
@@ -125,8 +125,8 @@ export class QuotesService {
     return this.quoteModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 
-  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: string): Promise<Quote | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: ObjectId): Promise<Quote | null> {
+    const query = { _id: id, account: accountId };
 
     // Check current quote status
     const currentQuote = await this.quoteModel.findOne(query).exec();
@@ -158,11 +158,11 @@ export class QuotesService {
   }
 
   async deleteByAccount(id: string, accountId: string): Promise<Quote | null> {
-    const query = { _id: id, account: new Types.ObjectId(accountId) };
+    const query = { _id: id, account: accountId };
     return this.quoteModel.findOneAndDelete(query).exec();
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
-    return this.quoteModel.deleteMany({ account: new Types.ObjectId(accountId) }).exec();
+    return this.quoteModel.deleteMany({ account: accountId }).exec();
   }
 }
