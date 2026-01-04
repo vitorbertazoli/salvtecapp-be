@@ -13,6 +13,17 @@ export class CustomersService {
   ) {}
 
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }): Promise<Customer> {
+    // Ensure type-specific fields are properly set
+    if (customerData.type === 'residential') {
+      customerData.cpf = customerData.cpf || undefined;
+      customerData.cnpj = undefined;
+      customerData.contactName = undefined;
+    } else if (customerData.type === 'commercial') {
+      customerData.cpf = undefined;
+      customerData.cnpj = customerData.cnpj || undefined;
+      customerData.contactName = customerData.contactName || undefined;
+    }
+
     // Handle address creation - address is now required for customers
     let addressId: Types.ObjectId;
     if (customerData.address && typeof customerData.address === 'object') {
@@ -121,10 +132,6 @@ export class CustomersService {
       .exec();
 
     return customer;
-  }
-
-  async update(id: string, customerData: Partial<Customer>): Promise<Customer | null> {
-    return this.customerModel.findByIdAndUpdate(id, customerData, { new: true }).exec();
   }
 
   async updateByAccount(

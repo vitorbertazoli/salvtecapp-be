@@ -24,8 +24,20 @@ export class Customer {
   @Prop({ required: true })
   email: string;
 
+  @Prop({
+    enum: ['residential', 'commercial'],
+    default: 'residential'
+  })
+  type: 'residential' | 'commercial';
+
   @Prop()
   cpf?: string;
+
+  @Prop()
+  cnpj?: string;
+
+  @Prop()
+  contactName?: string;
 
   @Prop({
     enum: ['active', 'inactive', 'suspended'],
@@ -72,7 +84,10 @@ export interface ICustomer {
   id: string;
   name: string;
   email: string;
+  type: 'residential' | 'commercial';
   cpf?: string;
+  cnpj?: string;
+  contactName?: string;
   status: 'active' | 'inactive' | 'suspended';
   phoneNumber: string;
   technicianResponsible?: string | ITechnician;
@@ -86,6 +101,22 @@ export interface ICustomer {
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
+
+// Add custom validation
+CustomerSchema.pre('validate', function (next) {
+  if (this.type === 'residential' && !this.cpf) {
+    this.invalidate('cpf', 'CPF is required for residential customers');
+  }
+  if (this.type === 'commercial') {
+    if (!this.cnpj) {
+      this.invalidate('cnpj', 'CNPJ is required for commercial customers');
+    }
+    if (!this.contactName) {
+      this.invalidate('contactName', 'Contact name is required for commercial customers');
+    }
+  }
+  next();
+});
 
 // Create compound unique indexes for account-specific uniqueness
 CustomerSchema.index({ email: 1 });
