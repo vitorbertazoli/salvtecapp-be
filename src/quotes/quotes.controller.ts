@@ -47,6 +47,12 @@ export class QuotesController {
     return this.quotesService.updateByAccount(id, updateQuoteDto, accountId);
   }
 
+  @Put(':id/send')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async send(@Param('id') id: string, @GetAccount() accountId: any, @GetUser('id') userId: string) {
+    return this.quotesService.sendQuote(id, accountId, userId);
+  }
+
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR') // Only ADMIN and SUPERVISOR can delete quotes
   remove(@Param('id') id: string, @GetAccount() accountId: string) {

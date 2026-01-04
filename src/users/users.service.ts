@@ -96,10 +96,88 @@ export class UsersService {
       searchQuery.$or = searchConditions;
     }
 
-    const [users, total] = await Promise.all([
-      this.userModel.find(searchQuery).populate('account', 'name id logoUrl').populate('roles', 'name').sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
-      this.userModel.countDocuments(searchQuery).exec()
+    // Use aggregation pipeline to exclude TECHNICIAN users
+    const pipeline: any[] = [
+      { $match: searchQuery },
+      // Lookup roles
+      {
+        $lookup: {
+          from: 'roles',
+          localField: 'roles',
+          foreignField: '_id',
+          as: 'userRoles'
+        }
+      },
+      // Filter out users with TECHNICIAN role
+      {
+        $match: {
+          'userRoles.name': { $ne: 'TECHNICIAN' }
+        }
+      },
+      // Populate account
+      {
+        $lookup: {
+          from: 'accounts',
+          localField: 'account',
+          foreignField: '_id',
+          as: 'account'
+        }
+      },
+      { $unwind: { path: '$account', preserveNullAndEmptyArrays: true } },
+      // Project final document structure with populated roles
+      {
+        $project: {
+          _id: 1,
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+          status: 1,
+          account: 1,
+          roles: {
+            $map: {
+              input: '$userRoles',
+              as: 'role',
+              in: {
+                _id: '$$role._id',
+                name: '$$role.name'
+              }
+            }
+          },
+          createdAt: 1,
+          updatedAt: 1
+        }
+      },
+      // Sort and paginate
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    ];
+
+    // Get total count with same filtering
+    const countPipeline = [
+      { $match: searchQuery },
+      {
+        $lookup: {
+          from: 'roles',
+          localField: 'roles',
+          foreignField: '_id',
+          as: 'userRoles'
+        }
+      },
+      {
+        $match: {
+          'userRoles.name': { $ne: 'TECHNICIAN' }
+        }
+      },
+      { $count: 'total' }
+    ];
+
+    const [users, countResult] = await Promise.all([
+      this.userModel.aggregate(pipeline).exec(),
+      this.userModel.aggregate(countPipeline).exec()
     ]);
+
+    const total = countResult.length > 0 ? countResult[0].total : 0;
 
     const totalPages = Math.ceil(total / limit);
 
