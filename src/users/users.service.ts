@@ -202,6 +202,11 @@ export class UsersService {
     return this.userModel.findOneAndUpdate(query, userData, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
+  async updateLanguage(id: string, language: string, accountId: string): Promise<User | null> {
+    const query = { _id: id, account: accountId };
+    return this.userModel.findOneAndUpdate(query, { language }, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
+  }
+
   async delete(id: string, accountId: string): Promise<User | null> {
     const query = { _id: id, account: accountId };
     return this.userModel.findOneAndDelete(query).exec();

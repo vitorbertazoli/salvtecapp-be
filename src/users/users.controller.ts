@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Roles, GetAccount, GetUser } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -90,6 +90,16 @@ export class UsersController {
       // Not authorized
       return null;
     }
+  }
+
+  @Patch(':id')
+  async updateLanguage(@Param('id') id: string, @Body() body: { language: string }, @GetAccount() accountId: string, @GetUser() user: any) {
+    // Users can only update their own language preference
+    if (user.id !== id) {
+      return null;
+    }
+
+    return this.usersService.updateLanguage(id, body.language, accountId);
   }
 
   @Delete(':id')

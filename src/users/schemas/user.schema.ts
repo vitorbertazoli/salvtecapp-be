@@ -43,6 +43,9 @@ export class User {
 
   @Prop()
   resetTokenExpiry?: Date;
+
+  @Prop()
+  language?: string;
 }
 
 export interface IUser {
@@ -55,6 +58,7 @@ export interface IUser {
   isMasterAdmin?: boolean;
   resetToken?: string;
   resetTokenExpiry?: Date;
+  language?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
