@@ -61,11 +61,39 @@ export class UsersService {
     // Build search query
     const searchQuery: any = { account: accountId };
     if (search) {
-      searchQuery.$or = [
+      // Split search term into individual words for better name matching
+      const searchWords = search.trim().split(/\s+/);
+
+      // Create search conditions
+      const searchConditions: any[] = [];
+
+      // If search contains multiple words, try to match first and last name combinations
+      if (searchWords.length >= 2) {
+        // Match "First Last" as firstName + lastName
+        searchConditions.push({
+          $and: [
+            { firstName: { $regex: searchWords[0], $options: 'i' } },
+            { lastName: { $regex: searchWords.slice(1).join(' '), $options: 'i' } }
+          ]
+        });
+
+        // Also match "Last, First" format
+        searchConditions.push({
+          $and: [
+            { firstName: { $regex: searchWords.slice(1).join(' '), $options: 'i' } },
+            { lastName: { $regex: searchWords[0], $options: 'i' } }
+          ]
+        });
+      }
+
+      // Add individual field matches
+      searchConditions.push(
         { firstName: { $regex: search, $options: 'i' } },
         { lastName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
-      ];
+      );
+
+      searchQuery.$or = searchConditions;
     }
 
     const [users, total] = await Promise.all([

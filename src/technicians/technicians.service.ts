@@ -150,15 +150,47 @@ export class TechniciansService {
 
     // Add search filter if provided
     if (search) {
+      // Split search term into individual words for better name matching
+      const searchWords = search.trim().split(/\s+/);
+
+      // Create search conditions with proper typing
+      const searchConditions: any[] = [];
+
+      // If search contains multiple words, try to match first and last name combinations
+      if (searchWords.length >= 2) {
+        // Match "First Last" as firstName + lastName
+        searchConditions.push({
+          $and: [
+            { 'user.firstName': { $regex: searchWords[0], $options: 'i' } },
+            { 'user.lastName': { $regex: searchWords.slice(1).join(' '), $options: 'i' } }
+          ]
+        });
+
+        // Also match "Last, First" format
+        searchConditions.push({
+          $and: [
+            { 'user.firstName': { $regex: searchWords.slice(1).join(' '), $options: 'i' } },
+            { 'user.lastName': { $regex: searchWords[0], $options: 'i' } }
+          ]
+        });
+      }
+
+      // Add individual field matches
+      searchConditions.push(
+        { cpf: { $regex: search, $options: 'i' } },
+        { 'user.firstName': { $regex: search, $options: 'i' } },
+        { 'user.lastName': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } }
+      );
+
+      // Add ObjectId match if valid
+      if (Types.ObjectId.isValid(search)) {
+        searchConditions.push({ _id: new Types.ObjectId(search) });
+      }
+
       pipeline.push({
         $match: {
-          $or: [
-            { cpf: { $regex: search, $options: 'i' } },
-            { 'user.firstName': { $regex: search, $options: 'i' } },
-            { 'user.lastName': { $regex: search, $options: 'i' } },
-            { 'user.email': { $regex: search, $options: 'i' } },
-            ...(Types.ObjectId.isValid(search) ? [{ _id: new Types.ObjectId(search) }] : [])
-          ]
+          $or: searchConditions
         }
       });
     }
@@ -264,10 +296,31 @@ export class TechniciansService {
 
   async delete(id: string, accountId: string): Promise<Technician | null> {
     const query = { _id: id, account: accountId };
+
+    // First, get the technician to find the associated user
+    const technician = await this.technicianModel.findOne(query).exec();
+
+    // If technician has an associated user, delete the user as well
+    if (technician && technician.user) {
+      await this.usersService.delete(technician.user.toString(), accountId);
+    }
+
+    // Delete the technician
     return this.technicianModel.findOneAndDelete(query).exec();
   }
 
   async deleteAllByAccount(accountId: string): Promise<any> {
+    // First, find all technicians for this account to get their user IDs
+    const technicians = await this.technicianModel.find({ account: accountId }).exec();
+
+    // Delete associated users
+    for (const technician of technicians) {
+      if (technician.user) {
+        await this.usersService.delete(technician.user.toString(), accountId);
+      }
+    }
+
+    // Delete all technicians
     return this.technicianModel.deleteMany({ account: accountId }).exec();
   }
 

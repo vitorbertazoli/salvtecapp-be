@@ -34,8 +34,6 @@ export class UsersController {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
-    console.log('Fetching users for account:', user);
-
     // Check if user has ADMIN role
     const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
 
