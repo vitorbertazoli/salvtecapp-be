@@ -32,7 +32,7 @@ export class Contract {
     value: number;
 
     @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
-    client: Types.ObjectId;
+    customer: Types.ObjectId;
 
     @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
     account: Types.ObjectId;
@@ -52,7 +52,7 @@ export interface IContract {
     frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
     terms: string;
     value: number;
-    client: string | ICustomer;
+    customer: string | ICustomer;
     account: string | IAccount;
     createdBy: string;
     updatedBy: string;
@@ -63,7 +63,7 @@ export interface IContract {
 export const ContractSchema = SchemaFactory.createForClass(Contract);
 
 // Create indexes for better query performance
-ContractSchema.index({ client: 1 });
+ContractSchema.index({ customer: 1 });
 ContractSchema.index({ account: 1 });
 ContractSchema.index({ status: 1 });
 ContractSchema.index({ expireDate: 1 });

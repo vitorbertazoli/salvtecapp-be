@@ -46,6 +46,7 @@ export class ContractsController {
     @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can update contracts
     async update(@Param('id') id: string, @Body() updateContractDto: any, @GetUser('id') userId: string, @GetAccount() accountId: string) {
         updateContractDto.updatedBy = userId;
+        updateContractDto.account = accountId;
         return this.contractsService.updateByAccount(id, updateContractDto, accountId);
     }
 

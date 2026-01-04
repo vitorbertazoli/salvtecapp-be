@@ -3,15 +3,26 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
 import { Contract, ContractDocument } from './schemas/contract.schema';
+import { CustomersService } from 'src/customers/customers.service';
 
 @Injectable()
 export class ContractsService {
     constructor(
         @InjectModel(Contract.name) private contractModel: Model<ContractDocument>,
-        private readonly accountsService: AccountsService
+        private readonly customerService: CustomersService
     ) { }
 
-    async create(contractData: Partial<Contract>): Promise<Contract> {
+    async create(contractData: any): Promise<Contract> {
+        // search the customer to make sure it exists
+        const customer = await this.customerService.findByIdAndAccount(
+            contractData.customer,
+            contractData.account
+        );
+
+        if (!customer) {
+            throw new Error('Customer not found for the given account');
+        }
+        contractData.customer = customer;
         const createdContract = new this.contractModel(contractData);
         const savedContract = await createdContract.save();
         return savedContract.toObject() as any;
@@ -36,34 +47,105 @@ export class ContractsService {
     }> {
         const skip = (page - 1) * limit;
 
-        // Build search query
-        const searchQuery: any = { account: accountId };
+        // Use aggregation pipeline to search by customer name
+        const pipeline: any[] = [
+            { $match: { account: accountId } },
+            // Lookup customer information (only name and email)
+            {
+                $lookup: {
+                    from: 'customers',
+                    let: { customerId: '$customer' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$_id', '$$customerId'] } } },
+                        { $project: { name: 1, email: 1 } }
+                    ],
+                    as: 'customer'
+                }
+            },
+            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } }
+        ];
+
+        // Add search filter if search term is provided
         if (search) {
-            searchQuery.$or = [
+            const searchConditions: any[] = [
                 { terms: { $regex: search, $options: 'i' } },
-                { _id: Types.ObjectId.isValid(search) ? search : undefined }
+                { 'customer.name': { $regex: search, $options: 'i' } }
             ];
-        }
-        if (status) {
-            searchQuery.status = status;
+
+            if (Types.ObjectId.isValid(search)) {
+                searchConditions.push({ _id: new Types.ObjectId(search) });
+            }
+
+            pipeline.push({
+                $match: {
+                    $or: searchConditions
+                }
+            });
         }
 
-        const [contracts, total] = await Promise.all([
-            this.contractModel
-                .find(searchQuery)
-                .populate('account', 'name id')
-                .populate('client', 'name email phoneNumber')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit)
-                .exec(),
-            this.contractModel.countDocuments(searchQuery).exec()
+        // Add status filter if provided
+        if (status) {
+            pipeline.push({ $match: { status } });
+        }
+
+        // Add sorting and pagination
+        pipeline.push(
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit }
+        );
+
+        // Get total count with same filtering
+        const countPipeline: any[] = [
+            { $match: { account: accountId } },
+            // Lookup customer information (only name and email)
+            {
+                $lookup: {
+                    from: 'customers',
+                    let: { customerId: '$customer' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$_id', '$$customerId'] } } },
+                        { $project: { name: 1, email: 1 } }
+                    ],
+                    as: 'customer'
+                }
+            },
+            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } }
+        ];
+
+        if (search) {
+            const searchConditions: any[] = [
+                { terms: { $regex: search, $options: 'i' } },
+                { 'customer.name': { $regex: search, $options: 'i' } }
+            ];
+
+            if (Types.ObjectId.isValid(search)) {
+                searchConditions.push({ _id: new Types.ObjectId(search) });
+            }
+
+            countPipeline.push({
+                $match: {
+                    $or: searchConditions
+                }
+            });
+        }
+
+        if (status) {
+            countPipeline.push({ $match: { status } });
+        }
+
+        countPipeline.push({ $count: 'total' });
+
+        const [contracts, countResult] = await Promise.all([
+            this.contractModel.aggregate(pipeline).exec(),
+            this.contractModel.aggregate(countPipeline).exec()
         ]);
 
+        const total = countResult.length > 0 ? countResult[0].total : 0;
         const totalPages = Math.ceil(total / limit);
 
         return {
-            contracts: contracts.map((c) => c.toObject()),
+            contracts,
             total,
             page,
             limit,
@@ -79,27 +161,32 @@ export class ContractsService {
         const contract = await this.contractModel
             .findOne({ _id: id, account: accountId })
             .populate('account', 'name id')
-            .populate('client', 'name email phoneNumber')
+            .populate('customer', 'name email phoneNumber')
             .exec();
 
         return contract;
     }
 
-    async update(id: string, contractData: Partial<Contract>): Promise<Contract | null> {
-        return this.contractModel.findByIdAndUpdate(id, contractData, { new: true }).exec();
-    }
-
     async updateByAccount(
         id: string,
-        contractData: Partial<Contract>,
+        contractData: any,
         accountId: string
     ): Promise<Contract | null> {
+        const customer = await this.customerService.findByIdAndAccount(
+            contractData.customer as string,
+            contractData.account as string
+        );
+
+        if (!customer) {
+            throw new Error('Customer not found for the given account');
+        }
+        contractData.customer = customer;
         const query = { _id: id, account: accountId };
 
         const updatedContract = await this.contractModel
             .findOneAndUpdate(query, contractData, { new: true })
             .populate('account', 'name id')
-            .populate('client', 'name email phoneNumber')
+            .populate('customer', 'name email phoneNumber')
             .exec();
 
         return updatedContract;
