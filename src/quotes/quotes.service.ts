@@ -9,7 +9,7 @@ export class QuotesService {
   constructor(
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
     private emailService: EmailService
-  ) { }
+  ) {}
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
     const createdQuote = new this.quoteModel(quoteData);
@@ -249,11 +249,9 @@ export class QuotesService {
     };
 
     // Calculate totals
-    const servicesTotal = quote.services?.reduce((sum: number, service: any) =>
-      sum + (service.quantity * service.unitValue), 0) || 0;
+    const servicesTotal = quote.services?.reduce((sum: number, service: any) => sum + service.quantity * service.unitValue, 0) || 0;
 
-    const productsTotal = quote.products?.reduce((sum: number, product: any) =>
-      sum + (product.quantity * product.unitValue), 0) || 0;
+    const productsTotal = quote.products?.reduce((sum: number, product: any) => sum + product.quantity * product.unitValue, 0) || 0;
 
     const subtotal = servicesTotal + productsTotal;
     const discountValue = subtotal * ((quote.discount || 0) / 100);
@@ -277,11 +275,15 @@ export class QuotesService {
       equipmentHtml = `
         <h6 style="color: #1976d2; margin: 30px 0 10px 0; font-size: 18px;">Equipamentos</h6>
         <div style="margin-bottom: 20px;">
-          ${quote.customer.equipments.map((equipment: any) => `
+          ${quote.customer.equipments
+            .map(
+              (equipment: any) => `
             <span style="display: inline-block; padding: 4px 12px; margin: 2px 4px 2px 0; border: 1px solid #ddd; border-radius: 16px; font-size: 12px; background-color: #f5f5f5;">
               ${equipment.name}${equipment.room ? ` (${equipment.room})` : ''}
             </span>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
       `;
     }
@@ -300,14 +302,18 @@ export class QuotesService {
             </tr>
           </thead>
           <tbody>
-            ${quote.services.map((service: any) => `
+            ${quote.services
+              .map(
+                (service: any) => `
               <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;">${service.service.name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${service.quantity}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(service.unitValue)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(service.quantity * service.unitValue)}</td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
             <tr style="background-color: #f9f9f9; font-weight: 600;">
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;" colspan="3">Total em Serviços:</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(servicesTotal)}</td>
@@ -331,7 +337,9 @@ export class QuotesService {
             </tr>
           </thead>
           <tbody>
-            ${quote.products.map((product: any) => `
+            ${quote.products
+              .map(
+                (product: any) => `
               <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;">
                   ${product.product.name}
@@ -341,7 +349,9 @@ export class QuotesService {
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(product.unitValue)}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(product.quantity * product.unitValue)}</td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
             <tr style="background-color: #f9f9f9; font-weight: 600;">
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;" colspan="3">Total em Produtos:</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(productsTotal)}</td>
@@ -407,13 +417,17 @@ export class QuotesService {
                 <span><strong>Subtotal:</strong></span>
                 <span><strong>${formatCurrency(subtotal)}</strong></span>
               </div>
-              ${quote.discount ? `
+              ${
+                quote.discount
+                  ? `
               <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                 <span>Desconto (${quote.discount}%):</span>
                 <span style="color: #d32f2f;">-${formatCurrency(discountValue)}</span>
               </div>
               <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
-              ` : ''}
+              `
+                  : ''
+              }
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 18px; font-weight: bold;">Valor Total:</span>
                 <span style="font-size: 18px; font-weight: bold; color: #1976d2;">${formatCurrency(totalValue)}</span>

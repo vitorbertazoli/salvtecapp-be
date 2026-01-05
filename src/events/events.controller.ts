@@ -7,7 +7,7 @@ import { EventsService } from './events.service';
 @Controller('events')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) { }
+  constructor(private readonly eventsService: EventsService) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')

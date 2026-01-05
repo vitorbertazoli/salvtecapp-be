@@ -9,7 +9,7 @@ export class ServiceOrdersService {
   constructor(
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
     private quotesService: QuotesService
-  ) { }
+  ) {}
 
   async create(serviceOrderData: Partial<ServiceOrder>): Promise<ServiceOrder> {
     // Generate order number if not provided

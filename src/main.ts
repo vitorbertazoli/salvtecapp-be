@@ -11,9 +11,7 @@ async function bootstrap() {
   const port = configService.get<number>('PORT') ?? 3000;
 
   // Ensure uploads directory exists
-  const uploadsPath = process.env.NODE_ENV === 'production' 
-    ? join(__dirname, '..', 'uploads')
-    : join(process.cwd(), 'uploads');
+  const uploadsPath = process.env.NODE_ENV === 'production' ? join(__dirname, '..', 'uploads') : join(process.cwd(), 'uploads');
   try {
     mkdirSync(join(uploadsPath, 'logos'), { recursive: true });
   } catch (error) {
@@ -22,7 +20,7 @@ async function bootstrap() {
 
   // Serve static files from uploads directory
   app.useStaticAssets(uploadsPath, {
-    prefix: '/uploads/',
+    prefix: '/uploads/'
   });
 
   // Add /api prefix to all routes

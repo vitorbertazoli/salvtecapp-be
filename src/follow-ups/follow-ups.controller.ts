@@ -7,7 +7,7 @@ import { FollowUpsService } from './follow-ups.service';
 @Controller('follow-ups')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FollowUpsController {
-  constructor(private readonly followUpsService: FollowUpsService) { }
+  constructor(private readonly followUpsService: FollowUpsService) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
@@ -37,16 +37,7 @@ export class FollowUpsController {
     const startDateObj = startDate ? new Date(startDate) : undefined;
     const endDateObj = endDate ? new Date(endDate) : undefined;
 
-    return this.followUpsService.findByAccount(
-      accountId,
-      pageNum,
-      limitNum,
-      search,
-      status || undefined,
-      customerId || undefined,
-      startDateObj,
-      endDateObj
-    );
+    return this.followUpsService.findByAccount(accountId, pageNum, limitNum, search, status || undefined, customerId || undefined, startDateObj, endDateObj);
   }
 
   @Get(':id')

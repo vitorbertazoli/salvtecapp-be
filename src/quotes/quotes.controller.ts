@@ -7,7 +7,7 @@ import { QuotesService } from './quotes.service';
 @Controller('quotes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class QuotesController {
-  constructor(private readonly quotesService: QuotesService) { }
+  constructor(private readonly quotesService: QuotesService) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can create quotes

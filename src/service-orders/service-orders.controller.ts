@@ -7,7 +7,7 @@ import { ServiceOrdersService } from './service-orders.service';
 @Controller('service-orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ServiceOrdersController {
-  constructor(private readonly serviceOrdersService: ServiceOrdersService) { }
+  constructor(private readonly serviceOrdersService: ServiceOrdersService) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')

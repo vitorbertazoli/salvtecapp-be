@@ -25,27 +25,22 @@ export class CustomersService {
     }
 
     // Handle address creation - address is now required for customers
-    let addressId: Types.ObjectId;
-    if (customerData.address && typeof customerData.address === 'object') {
-      const address = await this.accountsService.createAddress(
-        customerData.account!.toString(),
-        customerData.address.street,
-        customerData.address.number,
-        customerData.address.city,
-        customerData.address.state,
-        customerData.address.zipCode,
-        customerData.createdBy!,
-        customerData.updatedBy!,
-        customerData.address.complement,
-        customerData.address.neighborhood,
-        customerData.address.country || 'Brazil'
-      );
-      addressId = (address as any)._id;
-      // Remove address from customerData since we've created it separately
-      delete customerData.address;
-    } else {
-      throw new Error('Address is required for customers');
-    }
+    const address = await this.accountsService.createAddress(
+      customerData.account,
+      customerData.address.street,
+      customerData.address.number,
+      customerData.address.city,
+      customerData.address.state,
+      customerData.address.zipCode,
+      customerData.createdBy!,
+      customerData.updatedBy!,
+      customerData.address.complement,
+      customerData.address.neighborhood,
+      customerData.address.country || 'Brazil'
+    );
+    const addressId = (address as any)._id;
+    // Remove address from customerData since we've created it separately
+    delete customerData.address;
 
     // Equipments are now embedded in the customer
     const equipments = customerData.equipments || [];
@@ -144,7 +139,7 @@ export class CustomersService {
     const currentCustomer = await this.customerModel.findOne(query).exec();
 
     // Handle address update if address data is provided
-    if (currentCustomer && customerData.address && typeof customerData.address === 'object') {
+    if (currentCustomer && customerData.address && typeof customerData.address === 'object' && currentCustomer.address) {
       await this.accountsService.updateAddress(
         currentCustomer.address.toString(),
         {
