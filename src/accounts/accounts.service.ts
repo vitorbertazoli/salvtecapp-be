@@ -48,7 +48,7 @@ export class AccountsService {
 
   // Address methods
   async createAddress(
-    accountId: string,
+    accountId: any,
     street: string,
     number: string,
     city: string,

@@ -10,7 +10,7 @@ export class CustomersService {
   constructor(
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     private readonly accountsService: AccountsService
-  ) { }
+  ) {}
 
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }): Promise<Customer> {
     // Ensure type-specific fields are properly set
@@ -25,9 +25,8 @@ export class CustomersService {
     }
 
     // Handle address creation - address is now required for customers
-    let addressId: Types.ObjectId;
     const address = await this.accountsService.createAddress(
-      customerData.account!.toString(),
+      customerData.account,
       customerData.address.street,
       customerData.address.number,
       customerData.address.city,
@@ -39,7 +38,7 @@ export class CustomersService {
       customerData.address.neighborhood,
       customerData.address.country || 'Brazil'
     );
-    addressId = (address as any)._id;
+    const addressId = (address as any)._id;
     // Remove address from customerData since we've created it separately
     delete customerData.address;
 

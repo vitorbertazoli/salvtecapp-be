@@ -9,11 +9,11 @@ export class Address {
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   account: Types.ObjectId;
 
-  @Prop({ required: true })
-  street: string;
+  @Prop()
+  street?: string;
 
-  @Prop({ required: true })
-  number: string;
+  @Prop()
+  number?: string;
 
   @Prop()
   complement?: string;
@@ -21,14 +21,14 @@ export class Address {
   @Prop()
   neighborhood?: string;
 
-  @Prop({ required: true })
-  city: string;
+  @Prop()
+  city?: string;
 
-  @Prop({ required: true })
-  state: string;
+  @Prop()
+  state?: string;
 
-  @Prop({ required: true })
-  zipCode: string;
+  @Prop()
+  zipCode?: string;
 
   @Prop({ required: true, default: 'Brazil' })
   country: string;
@@ -43,13 +43,13 @@ export class Address {
 export interface IAddress {
   id: string;
   account: string | IAccount;
-  street: string;
-  number: string;
+  street?: string;
+  number?: string;
   complement?: string;
   neighborhood?: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   country: string;
 }
 

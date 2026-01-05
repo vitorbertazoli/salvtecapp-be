@@ -94,6 +94,7 @@ async function initDB() {
       name: accountName,
       plan: 'pro',
       billingInfo: {},
+      status: 'active',
       createdBy: 'system',
       updatedBy: 'system'
     });
