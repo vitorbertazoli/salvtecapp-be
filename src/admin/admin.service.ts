@@ -42,22 +42,16 @@ export class AdminService {
     // Build search query
     const searchQuery: any = {};
     if (search) {
-      searchQuery.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { _id: search.match(/^[0-9a-fA-F]{24}$/) ? search : undefined }
-      ].filter(Boolean);
+      searchQuery.$or = [{ name: { $regex: search, $options: 'i' } }, { _id: search.match(/^[0-9a-fA-F]{24}$/) ? search : undefined }].filter(Boolean);
     }
 
     // Get accounts with pagination
-    const accounts = await this.accountsService.findAll() as (AccountDocument & { createdAt?: Date })[];
+    const accounts = (await this.accountsService.findAll()) as (AccountDocument & { createdAt?: Date })[];
 
     // Apply search filter in memory (since findAll doesn't support search)
     let filteredAccounts = accounts;
     if (search) {
-      filteredAccounts = accounts.filter(account =>
-        account.name.toLowerCase().includes(search.toLowerCase()) ||
-        account._id.toString().includes(search)
-      );
+      filteredAccounts = accounts.filter((account) => account.name.toLowerCase().includes(search.toLowerCase()) || account._id.toString().includes(search));
     }
 
     // Apply pagination
@@ -68,7 +62,7 @@ export class AdminService {
 
     const totalPages = Math.ceil(total / limit);
 
-    const formattedAccounts = paginatedAccounts.map(account => ({
+    const formattedAccounts = paginatedAccounts.map((account) => ({
       id: account._id.toString(),
       name: account.name,
       plan: account.plan,
@@ -88,7 +82,7 @@ export class AdminService {
   }
 
   async updateAccountStatus(accountId: string, status: 'pending' | 'active' | 'suspended') {
-    const updatedAccount = await this.accountsService.update(accountId, { status }) as AccountDocument;
+    const updatedAccount = (await this.accountsService.update(accountId, { status })) as AccountDocument;
 
     if (!updatedAccount) {
       throw new Error('Account not found');
@@ -139,7 +133,7 @@ export class AdminService {
     await this.usersService.deleteAllByAccount(accountId);
 
     // Finally delete the account itself
-    const deletedAccount = await this.accountsService.delete(accountId) as AccountDocument;
+    const deletedAccount = (await this.accountsService.delete(accountId)) as AccountDocument;
 
     if (!deletedAccount) {
       throw new Error('Failed to delete account');

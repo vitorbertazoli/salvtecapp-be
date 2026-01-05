@@ -7,13 +7,9 @@ import { ContractsController } from './contracts.controller';
 import { ContractsService } from './contracts.service';
 
 @Module({
-    imports: [
-        MongooseModule.forFeature([{ name: Contract.name, schema: ContractSchema }]),
-        AccountsModule,
-        CustomersModule
-    ],
-    controllers: [ContractsController],
-    providers: [ContractsService],
-    exports: [ContractsService]
+  imports: [MongooseModule.forFeature([{ name: Contract.name, schema: ContractSchema }]), AccountsModule, CustomersModule],
+  controllers: [ContractsController],
+  providers: [ContractsService],
+  exports: [ContractsService]
 })
-export class ContractsModule { }
+export class ContractsModule {}

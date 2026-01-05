@@ -21,8 +21,8 @@ export class Customer {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true })
-  email: string;
+  @Prop()
+  email?: string;
 
   @Prop({
     enum: ['residential', 'commercial'],
@@ -45,17 +45,17 @@ export class Customer {
   })
   status: 'active' | 'inactive' | 'suspended';
 
-  @Prop({ required: true })
-  phoneNumber: string;
+  @Prop()
+  phoneNumber?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Technician' })
   technicianResponsible?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Address', required: true })
-  address: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Address' })
+  address?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
-  account: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Account' })
+  account?: Types.ObjectId;
 
   @Prop({
     type: [
@@ -83,16 +83,16 @@ export class Customer {
 export interface ICustomer {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   type: 'residential' | 'commercial';
   cpf?: string;
   cnpj?: string;
   contactName?: string;
   status: 'active' | 'inactive' | 'suspended';
-  phoneNumber: string;
+  phoneNumber?: string;
   technicianResponsible?: string | ITechnician;
-  address: string | IAddress;
-  account: string | IAccount;
+  address?: string | IAddress;
+  account?: string | IAccount;
   createdBy: string;
   updatedBy: string;
   createdAt?: Date;
@@ -101,22 +101,6 @@ export interface ICustomer {
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
-
-// Add custom validation
-CustomerSchema.pre('validate', function (next) {
-  if (this.type === 'residential' && !this.cpf) {
-    this.invalidate('cpf', 'CPF is required for residential customers');
-  }
-  if (this.type === 'commercial') {
-    if (!this.cnpj) {
-      this.invalidate('cnpj', 'CNPJ is required for commercial customers');
-    }
-    if (!this.contactName) {
-      this.invalidate('contactName', 'Contact name is required for commercial customers');
-    }
-  }
-  next();
-});
 
 // Create compound unique indexes for account-specific uniqueness
 CustomerSchema.index({ email: 1 });

@@ -30,10 +30,12 @@ export class AccountsService {
   }
 
   async findByVerificationToken(token: string): Promise<AccountDocument | null> {
-    return this.accountModel.findOne({
-      verificationToken: token,
-      verificationTokenExpires: { $gt: new Date() }
-    }).exec();
+    return this.accountModel
+      .findOne({
+        verificationToken: token,
+        verificationTokenExpires: { $gt: new Date() }
+      })
+      .exec();
   }
 
   async update(id: string, accountData: Partial<Account>): Promise<Account | null> {

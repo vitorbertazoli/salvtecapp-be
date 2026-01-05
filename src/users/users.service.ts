@@ -6,7 +6,7 @@ import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   async create(
     account: string,
@@ -36,11 +36,11 @@ export class UsersService {
     return this.userModel.findOne({ account, email }).exec();
   }
 
-  async findOneByEmail(email: string): Promise<UserDocument & { account: any } | null> {
+  async findOneByEmail(email: string): Promise<(UserDocument & { account: any }) | null> {
     return this.userModel.findOne({ email }).populate('account', 'name id logoUrl status').populate('roles').exec();
   }
 
-  async findById(id: string): Promise<UserDocument & { account: any } | null> {
+  async findById(id: string): Promise<(UserDocument & { account: any }) | null> {
     return this.userModel.findById(id).populate('account', 'name id logoUrl status').populate('roles', 'name').exec();
   }
 
@@ -71,18 +71,12 @@ export class UsersService {
       if (searchWords.length >= 2) {
         // Match "First Last" as firstName + lastName
         searchConditions.push({
-          $and: [
-            { firstName: { $regex: searchWords[0], $options: 'i' } },
-            { lastName: { $regex: searchWords.slice(1).join(' '), $options: 'i' } }
-          ]
+          $and: [{ firstName: { $regex: searchWords[0], $options: 'i' } }, { lastName: { $regex: searchWords.slice(1).join(' '), $options: 'i' } }]
         });
 
         // Also match "Last, First" format
         searchConditions.push({
-          $and: [
-            { firstName: { $regex: searchWords.slice(1).join(' '), $options: 'i' } },
-            { lastName: { $regex: searchWords[0], $options: 'i' } }
-          ]
+          $and: [{ firstName: { $regex: searchWords.slice(1).join(' '), $options: 'i' } }, { lastName: { $regex: searchWords[0], $options: 'i' } }]
         });
       }
 
@@ -172,10 +166,7 @@ export class UsersService {
       { $count: 'total' }
     ];
 
-    const [users, countResult] = await Promise.all([
-      this.userModel.aggregate(pipeline).exec(),
-      this.userModel.aggregate(countPipeline).exec()
-    ]);
+    const [users, countResult] = await Promise.all([this.userModel.aggregate(pipeline).exec(), this.userModel.aggregate(countPipeline).exec()]);
 
     const total = countResult.length > 0 ? countResult[0].total : 0;
 
@@ -213,11 +204,7 @@ export class UsersService {
   }
 
   async findByIdAndAccount(id: string, accountId: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findOne({ _id: id, account: accountId })
-      .populate('account', 'name id logoUrl')
-      .populate('roles', 'name')
-      .exec();
+    return this.userModel.findOne({ _id: id, account: accountId }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
   async updateResetToken(email: string, resetToken: string, resetTokenExpiry: Date): Promise<UserDocument | null> {

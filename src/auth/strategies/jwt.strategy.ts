@@ -46,7 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     return {
       id: user.id,
-      account: payload.account,  // Use account ID from JWT payload
+      account: payload.account, // Use account ID from JWT payload
       accountName: payload.accountName,
       logoUrl: payload.logoUrl,
       firstName: user.firstName,

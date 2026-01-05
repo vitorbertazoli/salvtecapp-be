@@ -163,7 +163,7 @@ export class AuthService {
     return {
       sub: user.id,
       id: user.id,
-      account: user.account?.id,  // Just the account ID
+      account: user.account?.id, // Just the account ID
       accountName: user.account?.name,
       logoUrl: user.account?.logoUrl,
       firstName: user.firstName,

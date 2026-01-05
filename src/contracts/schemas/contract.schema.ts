@@ -7,57 +7,57 @@ export type ContractDocument = Contract & Document;
 
 @Schema({ timestamps: true })
 export class Contract {
-    @Prop({ required: true })
-    startDate: Date;
+  @Prop({ required: true })
+  startDate: Date;
 
-    @Prop({ required: true })
-    expireDate: Date;
+  @Prop({ required: true })
+  expireDate: Date;
 
-    @Prop({
-        enum: ['pending', 'active', 'expired', 'cancelled'],
-        default: 'active'
-    })
-    status: 'pending' | 'active' | 'expired' | 'cancelled';
+  @Prop({
+    enum: ['pending', 'active', 'expired', 'cancelled'],
+    default: 'active'
+  })
+  status: 'pending' | 'active' | 'expired' | 'cancelled';
 
-    @Prop({
-        enum: ['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'],
-        required: true
-    })
-    frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
+  @Prop({
+    enum: ['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'],
+    required: true
+  })
+  frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
 
-    @Prop({ required: true })
-    terms: string;
+  @Prop({ required: true })
+  terms: string;
 
-    @Prop({ required: true, type: Number, min: 0 })
-    value: number;
+  @Prop({ required: true, type: Number, min: 0 })
+  value: number;
 
-    @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
-    customer: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
+  customer: Types.ObjectId;
 
-    @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
-    account: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  account: Types.ObjectId;
 
-    @Prop({ required: true })
-    createdBy: string;
+  @Prop({ required: true })
+  createdBy: string;
 
-    @Prop({ required: true })
-    updatedBy: string;
+  @Prop({ required: true })
+  updatedBy: string;
 }
 
 export interface IContract {
-    id: string;
-    startDate: Date;
-    expireDate: Date;
-    status: 'pending' | 'active' | 'expired' | 'cancelled';
-    frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
-    terms: string;
-    value: number;
-    customer: string | ICustomer;
-    account: string | IAccount;
-    createdBy: string;
-    updatedBy: string;
-    createdAt?: Date;
-    updatedAt?: Date;
+  id: string;
+  startDate: Date;
+  expireDate: Date;
+  status: 'pending' | 'active' | 'expired' | 'cancelled';
+  frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
+  terms: string;
+  value: number;
+  customer: string | ICustomer;
+  account: string | IAccount;
+  createdBy: string;
+  updatedBy: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const ContractSchema = SchemaFactory.createForClass(Contract);

@@ -13,7 +13,7 @@ export class TechniciansService {
     @InjectModel(Role.name) private roleModel: Model<any>,
     private readonly accountsService: AccountsService,
     private readonly usersService: UsersService
-  ) { }
+  ) {}
 
   async create(
     account: string,

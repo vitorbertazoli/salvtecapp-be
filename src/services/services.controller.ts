@@ -7,7 +7,7 @@ import { ServicesService } from './services.service';
 @Controller('services')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ServicesController {
-  constructor(private readonly servicesService: ServicesService) { }
+  constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create services
