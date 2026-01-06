@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import * as path from 'path';
 import { AccountSchema } from '../src/accounts/schemas/account.schema';
 import { AddressSchema } from '../src/accounts/schemas/address.schema';
+import { ContractSchema } from '../src/contracts/schemas/contract.schema';
 import { CustomerSchema } from '../src/customers/schemas/customer.schema';
 import { EquipmentTypeSchema } from '../src/equipmentType/schemas/equipment-type.schema';
 import { EventSchema } from '../src/events/schemas/event.schema';
@@ -25,6 +26,7 @@ const CONFIG = {
   addresses: 1500,
   technicians: 20,
   customers: 1200,
+  contracts: 500,
   services: 200,
   products: 200,
   quotes: 1500,
@@ -357,6 +359,7 @@ async function populateDummyData() {
     // Create models
     const Account = mongoose.model('Account', AccountSchema);
     const Address = mongoose.model('Address', AddressSchema);
+    const Contract = mongoose.model('Contract', ContractSchema);
     const Customer = mongoose.model('Customer', CustomerSchema);
     const EquipmentType = mongoose.model('EquipmentType', EquipmentTypeSchema);
     const Event = mongoose.model('Event', EventSchema);
@@ -391,11 +394,12 @@ async function populateDummyData() {
 
     // select all userIds from the technicians in this account, so we can clean up their user accounts later
     const technicianUsers = await Technician.find({ account: account._id }).select('user').exec();
-    const technicianUserIds = technicianUsers.map(t => t.user);
+    const technicianUserIds = technicianUsers.map((t) => t.user);
 
     // Delete all data except users
     await Promise.all([
       Address.deleteMany({ account: account._id }),
+      Contract.deleteMany({ account: account._id }),
       Customer.deleteMany({ account: account._id }),
       Event.deleteMany({ account: account._id }),
       FollowUp.deleteMany({ account: account._id }),
@@ -405,7 +409,7 @@ async function populateDummyData() {
       Service.deleteMany({ account: account._id }),
       Technician.deleteMany({ account: account._id }),
       // Also delete technician user accounts
-      User.deleteMany({ _id: { $in: technicianUserIds } , account: account._id })
+      User.deleteMany({ _id: { $in: technicianUserIds }, account: account._id })
     ]);
 
     console.log('✅ Deleted existing data\n');
@@ -539,6 +543,53 @@ async function populateDummyData() {
     }
     const createdCustomers = await Customer.insertMany(customers);
     console.log(`✅ Created ${createdCustomers.length} customers`);
+
+    // Create contracts
+    console.log(`Creating ${CONFIG.contracts} contracts...`);
+    const contracts: any[] = [];
+    for (let i = 0; i < CONFIG.contracts; i++) {
+      const customer = faker.helpers.arrayElement(createdCustomers);
+      const startDate = faker.date.past({ years: 2 });
+      const frequency = faker.helpers.arrayElement(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual']);
+      let expireDate: Date;
+      switch (frequency) {
+        case 'monthly':
+          expireDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+          break;
+        case 'bimonthly':
+          expireDate = new Date(startDate.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
+          break;
+        case 'quarterly':
+          expireDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+          break;
+        case 'biannual':
+          expireDate = new Date(startDate.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
+          break;
+        case 'annual':
+          expireDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+          break;
+      }
+      const status = faker.helpers.arrayElement(['pending', 'active', 'expired', 'cancelled']);
+      if (status === 'expired') {
+        expireDate = faker.date.past({ years: 1 });
+      }
+      const value = faker.number.float({ min: 100, max: 5000, fractionDigits: 2 });
+      const terms = faker.lorem.sentences({ min: 2, max: 5 });
+      contracts.push({
+        startDate,
+        expireDate,
+        status,
+        frequency,
+        terms,
+        value,
+        customer: customer._id,
+        account: account._id,
+        createdBy: userId,
+        updatedBy: userId
+      });
+    }
+    const createdContracts = await Contract.insertMany(contracts);
+    console.log(`✅ Created ${createdContracts.length} contracts`);
 
     // Create services
     console.log(`Creating ${CONFIG.services} services...`);
@@ -861,6 +912,7 @@ async function populateDummyData() {
     console.log(`- Addresses: ${createdAddresses.length}`);
     console.log(`- Technicians: ${createdTechnicians.length}`);
     console.log(`- Customers: ${createdCustomers.length}`);
+    console.log(`- Contracts: ${createdContracts.length}`);
     console.log(`- Services: ${createdServices.length}`);
     console.log(`- Products: ${createdProducts.length}`);
     console.log(`- Quotes: ${createdQuotes.length}`);
@@ -868,7 +920,7 @@ async function populateDummyData() {
     console.log(`- Events: ${createdEvents.length}`);
     console.log(`- Follow-ups: ${createdFollowUps.length}\n`);
     console.log(
-      `Total records: ${createdAddresses.length + createdTechnicians.length + createdCustomers.length + createdServices.length + createdProducts.length + createdQuotes.length + createdServiceOrders.length + createdEvents.length + createdFollowUps.length}`
+      `Total records: ${createdAddresses.length + createdTechnicians.length + createdCustomers.length + createdContracts.length + createdServices.length + createdProducts.length + createdQuotes.length + createdServiceOrders.length + createdEvents.length + createdFollowUps.length}`
     );
 
     await mongoose.disconnect();

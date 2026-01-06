@@ -120,12 +120,21 @@ export class EventsService {
       .exec();
   }
 
-  async updateByAccount(id: string, updateData: Partial<Event>, accountId: string): Promise<Event | null> {
+  async updateByAccount(
+    id: string,
+    updateData: Partial<Event> & { customerId?: string; technicianId?: string; serviceOrderId?: string },
+    accountId: string
+  ): Promise<Event | null> {
     const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
     if (!event) {
       return null;
     }
+
+    // Convert IDs to ObjectIds
+    if (updateData.customerId) updateData.customer = new Types.ObjectId(updateData.customerId);
+    if (updateData.technicianId) updateData.technician = new Types.ObjectId(updateData.technicianId);
+    if (updateData.serviceOrderId) updateData.serviceOrder = new Types.ObjectId(updateData.serviceOrderId);
 
     // Update fields
     if (updateData.date) event.date = updateData.date;
