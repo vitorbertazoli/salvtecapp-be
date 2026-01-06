@@ -31,9 +31,9 @@ export class ServiceOrdersService {
       throw new Error('Quote not found');
     }
 
-    // Check if quote is in sent status
-    if (quote.status !== 'sent') {
-      throw new Error('Quote must be in sent status to create service order');
+    // Check if quote is in sent or draft status
+    if (quote.status !== 'sent' && quote.status !== 'draft') {
+      throw new Error('Quote must be in sent or draft status to create service order');
     }
 
     // Create service order items from quote services and products
