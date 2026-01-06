@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { AccountsService } from 'src/accounts/accounts.service';
-import { UsersService } from '../users/users.service';
-import { TechniciansService } from '../technicians/technicians.service';
-import { EmailService } from '../utils/email.service';
 import * as crypto from 'crypto';
+import { AccountsService } from 'src/accounts/accounts.service';
+import { TechniciansService } from '../technicians/technicians.service';
+import { UsersService } from '../users/users.service';
+import { EmailService } from '../utils/email.service';
 
 @Injectable()
 export class AuthService {
@@ -55,31 +55,23 @@ export class AuthService {
     };
   }
 
-  async refreshToken(refreshToken: string) {
-    try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
-      });
-
-      const user = await this.usersService.findById(payload.sub);
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      // Validate account and user status
-      this.validateAccountStatus(user.account);
-      this.validateUserStatus(user);
-
-      const accessPayload = await this.createJwtPayload(user);
-      const tokens = this.generateTokens(accessPayload);
-
-      return {
-        ...tokens,
-        user: accessPayload
-      };
-    } catch (error) {
-      throw new Error('Invalid refresh token');
+  async refreshToken(userFromGuard: any) {
+    const user = await this.usersService.findById(userFromGuard.id);
+    if (!user) {
+      throw new Error('User not found');
     }
+
+    // Validate account and user status
+    this.validateAccountStatus(user.account);
+    this.validateUserStatus(user);
+
+    const accessPayload = await this.createJwtPayload(user);
+    const tokens = this.generateTokens(accessPayload);
+
+    return {
+      access_token: tokens.access_token,
+      user: accessPayload
+    };
   }
 
   async forgotPassword(email: string): Promise<{ message: string }> {

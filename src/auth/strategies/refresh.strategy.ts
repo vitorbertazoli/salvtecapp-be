@@ -7,7 +7,12 @@ import { UsersService } from '../../users/users.service';
 export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
   constructor(private usersService: UsersService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req) => {
+          console.log('Refresh strategy extractor - Cookies:', req.cookies);
+          return req?.cookies?.refresh_token;
+        }
+      ]),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'fallback-secret'
     });
