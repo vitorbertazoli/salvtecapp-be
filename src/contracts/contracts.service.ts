@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { AccountsService } from '../accounts/accounts.service';
-import { Contract, ContractDocument } from './schemas/contract.schema';
 import { CustomersService } from 'src/customers/customers.service';
+import { Contract, ContractDocument } from './schemas/contract.schema';
 
 @Injectable()
 export class ContractsService {
@@ -151,7 +150,7 @@ export class ContractsService {
     if (!customer) {
       throw new Error('Customer not found for the given account');
     }
-    contractData.customer = customer;
+    contractData.customer = customer._id;
     const query = { _id: id, account: accountId };
 
     const updatedContract = await this.contractModel
