@@ -9,7 +9,6 @@ import { AuthModule } from './auth/auth.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { CustomersModule } from './customers/customers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { EmailModule } from './utils/email.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { EventsModule } from './events/events.module';
 import { FollowUpsModule } from './follow-ups/follow-ups.module';
@@ -20,6 +19,9 @@ import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
 import { UsersModule } from './users/users.module';
+import { EmailModule } from './utils/email.module';
+import { VehicleUsagesModule } from './vehicle-usages/vehicle-usages.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -48,7 +50,9 @@ import { UsersModule } from './users/users.module';
     EventsModule,
     FollowUpsModule,
     DashboardModule,
-    EmailModule
+    EmailModule,
+    VehiclesModule,
+    VehicleUsagesModule
   ],
   controllers: [AppController],
   providers: [AppService]
