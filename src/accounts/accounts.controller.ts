@@ -1,7 +1,6 @@
-import { Body, Controller, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as crypto from 'crypto';
-import type { MulterFile } from 'multer';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { RolesService } from '../roles/roles.service';
@@ -11,6 +10,18 @@ import { UsersService } from '../users/users.service';
 import { EmailService } from '../utils/email.service';
 import { AccountsService } from './accounts.service';
 import { AccountDocument } from './schemas/account.schema';
+
+interface UploadedFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
 
 @Controller('accounts')
 export class AccountsController {
@@ -52,7 +63,7 @@ export class AccountsController {
       email: string;
       password: string;
     },
-    @UploadedFile() logo?: MulterFile
+    @UploadedFile() logo?: UploadedFile
   ) {
     // Convert account name to lowercase and replace spaces/special chars with dashes
     const accountName = createAccountDto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -147,7 +158,7 @@ export class AccountsController {
     }
 
     if (account.status === 'active') {
-      throw new Error('Account is already verified');
+      throw new BadRequestException('Account is already verified');
     }
 
     if (account.verificationTokenExpires && account.verificationTokenExpires < new Date()) {
