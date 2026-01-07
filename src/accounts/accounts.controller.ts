@@ -1,15 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors, UploadedFile, Query } from '@nestjs/common';
+import { Body, Controller, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import * as crypto from 'crypto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { EmailService } from '../utils/email.service';
+import type * as Express from 'express';
 import { RolesService } from '../roles/roles.service';
-import { UsersService } from '../users/users.service';
-import { AccountDocument } from './schemas/account.schema';
 import { RoleDocument } from '../roles/schemas/role.schema';
 import { UserDocument } from '../users/schemas/user.schema';
+import { UsersService } from '../users/users.service';
+import { EmailService } from '../utils/email.service';
 import { AccountsService } from './accounts.service';
-import * as crypto from 'crypto';
+import { AccountDocument } from './schemas/account.schema';
 
 @Controller('accounts')
 export class AccountsController {

@@ -21,8 +21,7 @@
     "initDB": "ts-node ./scripts/initDB.ts",
     "addMasterAdmin": "ts-node ./scripts/addMasterAdmin.ts",
     "resetPassword": "ts-node ./scripts/resetPassword.ts",
-    "seed": "ts-node ./scripts/dummyData.ts",
-    "prepare": "husky install"
+    "seed": "ts-node ./scripts/dummyData.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.665.0",
