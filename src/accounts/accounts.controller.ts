@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as crypto from 'crypto';
-import type * as Express from 'express';
+import type { MulterFile } from 'multer';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { RolesService } from '../roles/roles.service';
@@ -52,7 +52,7 @@ export class AccountsController {
       email: string;
       password: string;
     },
-    @UploadedFile() logo?: Express.Multer.File
+    @UploadedFile() logo?: MulterFile
   ) {
     // Convert account name to lowercase and replace spaces/special chars with dashes
     const accountName = createAccountDto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
