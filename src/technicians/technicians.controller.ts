@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Roles, GetAccount, GetUser } from '../auth/decorators';
+import { Types } from 'mongoose';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { TechniciansService } from './technicians.service';
@@ -11,7 +12,7 @@ export class TechniciansController {
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
-  async create(@Body() createTechnicianDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async create(@Body() createTechnicianDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
     createTechnicianDto.account = accountId;
     createTechnicianDto.createdBy = userId;
@@ -21,7 +22,7 @@ export class TechniciansController {
     const { address, userAccount, ...technicianData } = createTechnicianDto;
 
     return this.techniciansService.create(
-      technicianData.account as string,
+      technicianData.account,
       technicianData.cpf as string,
       technicianData.phoneNumber as string,
       address, // Pass the address object directly
@@ -37,7 +38,7 @@ export class TechniciansController {
     @Query('limit') limit: string = '10',
     @Query('search') search: string = '',
     @Query('status') status: string = '',
-    @GetAccount() accountId: string
+    @GetAccountId() accountId: Types.ObjectId
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
@@ -46,7 +47,7 @@ export class TechniciansController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetAccount() accountId: string, @GetUser() user: any) {
+  async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     // Check if user has ADMIN role
     const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
 
@@ -60,7 +61,7 @@ export class TechniciansController {
 
   @Put(':id')
   @Roles('ADMIN') // Only users with ADMIN role can update technicians
-  async update(@Param('id') id: string, @Body() updateTechnicianDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async update(@Param('id') id: string, @Body() updateTechnicianDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     updateTechnicianDto.updatedBy = userId;
 
     // Extract address and userAccount data from the body
@@ -77,7 +78,7 @@ export class TechniciansController {
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete technicians
-  remove(@Param('id') id: string, @GetAccount() accountId: string) {
+  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.techniciansService.delete(id, accountId);
   }
 }

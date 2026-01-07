@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { VehicleUsage, VehicleUsageDocument } from './schemas/vehicle-usages.schema';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class VehicleUsagesService {
     return created.save();
   }
 
-  async findAll(accountId?: string): Promise<VehicleUsage[]> {
+  async findAll(accountId?: Types.ObjectId): Promise<VehicleUsage[]> {
     const query = accountId ? { account: accountId } : {};
     return this.vehicleUsageModel
       .find(query)
@@ -30,8 +30,8 @@ export class VehicleUsagesService {
       .exec();
   }
 
-  async findOne(id: string, accountId?: string): Promise<VehicleUsage | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async findOne(id: string, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
+    const query = { _id: id, account: accountId };
     return this.vehicleUsageModel
       .findOne(query)
       .populate({
@@ -47,8 +47,8 @@ export class VehicleUsagesService {
       .exec();
   }
 
-  async update(id: string, updateDto: Partial<VehicleUsage>, accountId?: string): Promise<VehicleUsage | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async update(id: string, updateDto: Partial<VehicleUsage>, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
+    const query = { _id: id, account: accountId };
     const existing = await this.vehicleUsageModel.findOne(query);
     if (!existing) throw new ForbiddenException('Vehicle usage not found');
 
@@ -59,8 +59,9 @@ export class VehicleUsagesService {
     return this.vehicleUsageModel.findOneAndUpdate(query, updateDto, { new: true }).exec();
   }
 
-  async approve(id: string, userId: string): Promise<VehicleUsage | null> {
-    const existing = await this.vehicleUsageModel.findById(id);
+  async approve(id: string, userId: string, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
+    const query = { _id: id, account: accountId };
+    const existing = await this.vehicleUsageModel.findOne(query);
     if (!existing) throw new ForbiddenException('Vehicle usage not found');
 
     if (existing.status === 'approved') {
@@ -70,8 +71,8 @@ export class VehicleUsagesService {
     return this.vehicleUsageModel.findByIdAndUpdate(id, { status: 'approved', approvedBy: userId, approvedAt: new Date() }, { new: true }).exec();
   }
 
-  async remove(id: string, accountId?: string): Promise<VehicleUsage | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async remove(id: string, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
+    const query = { _id: id, account: accountId };
     const existing = await this.vehicleUsageModel.findOne(query);
     if (!existing) throw new ForbiddenException('Vehicle usage not found');
 

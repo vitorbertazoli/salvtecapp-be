@@ -24,7 +24,7 @@ export class ServiceOrdersService {
     return savedServiceOrder.toObject() as any;
   }
 
-  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: any): Promise<ServiceOrder> {
+  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: Types.ObjectId): Promise<ServiceOrder> {
     // Fetch the quote with populated services and products
     const quote = await this.quotesService.findByIdAndAccount(quoteId, accountId);
     if (!quote) {
@@ -95,16 +95,13 @@ export class ServiceOrdersService {
     return serviceOrder;
   }
 
-  async findAll(): Promise<ServiceOrder[]> {
-    return this.serviceOrderModel.find().exec();
-  }
-
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string
+    status?: string,
+    customerId?: string
   ): Promise<{
     serviceOrders: ServiceOrder[];
     total: number;
@@ -118,6 +115,9 @@ export class ServiceOrdersService {
     const matchConditions: any = { account: accountId };
     if (status) {
       matchConditions.status = status;
+    }
+    if (customerId) {
+      matchConditions.customer = new Types.ObjectId(customerId);
     }
 
     // Build search pipeline
@@ -244,11 +244,7 @@ export class ServiceOrdersService {
     };
   }
 
-  async findOne(id: string): Promise<ServiceOrder | null> {
-    return this.serviceOrderModel.findById(id).exec();
-  }
-
-  async findByIdAndAccount(id: string, accountId: string): Promise<ServiceOrderDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<ServiceOrderDocument | null> {
     const serviceOrder = await this.serviceOrderModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
@@ -262,11 +258,7 @@ export class ServiceOrdersService {
     return serviceOrder;
   }
 
-  async update(id: string, serviceOrderData: Partial<ServiceOrder>): Promise<ServiceOrder | null> {
-    return this.serviceOrderModel.findByIdAndUpdate(id, serviceOrderData, { new: true }).exec();
-  }
-
-  async updateByAccount(id: string, serviceOrderData: Partial<ServiceOrder>, accountId: string): Promise<ServiceOrder | null> {
+  async updateByAccount(id: string, serviceOrderData: Partial<ServiceOrder>, accountId: Types.ObjectId): Promise<ServiceOrder | null> {
     const query = { _id: id, account: accountId };
 
     const updatedServiceOrder = await this.serviceOrderModel
@@ -280,20 +272,16 @@ export class ServiceOrdersService {
     return updatedServiceOrder;
   }
 
-  async delete(id: string): Promise<ServiceOrder | null> {
-    return this.serviceOrderModel.findByIdAndDelete(id).exec();
-  }
-
-  async deleteByAccount(id: string, accountId: string): Promise<ServiceOrder | null> {
+  async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<ServiceOrder | null> {
     const query = { _id: id, account: accountId };
     return this.serviceOrderModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.serviceOrderModel.deleteMany({ account: accountId }).exec();
   }
 
-  async findByCustomerAndAccount(customerId: string, accountId: string): Promise<ServiceOrder[]> {
+  async findByCustomerAndAccount(customerId: string, accountId: Types.ObjectId): Promise<ServiceOrder[]> {
     return this.serviceOrderModel
       .find({
         customer: new Types.ObjectId(customerId),

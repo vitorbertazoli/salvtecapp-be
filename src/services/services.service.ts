@@ -12,13 +12,13 @@ export class ServicesService {
     return createdService.save();
   }
 
-  async findOne(id: string, accountId?: string): Promise<Service | null> {
+  async findOne(id: string, accountId?: Types.ObjectId): Promise<Service | null> {
     const query = accountId ? { _id: id, account: accountId } : { _id: id };
     return this.serviceModel.findOne(query).populate('account').exec();
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = ''
@@ -59,17 +59,17 @@ export class ServicesService {
     };
   }
 
-  async update(id: string, serviceData: Partial<Service>, accountId: string): Promise<Service | null> {
+  async update(id: string, serviceData: Partial<Service>, accountId: Types.ObjectId): Promise<Service | null> {
     const query = { _id: id, account: accountId };
     return this.serviceModel.findOneAndUpdate(query, serviceData, { new: true }).populate('account').exec();
   }
 
-  async delete(id: string, accountId?: string): Promise<Service | null> {
+  async delete(id: string, accountId?: Types.ObjectId): Promise<Service | null> {
     const query = accountId ? { _id: id, account: accountId } : { _id: id };
     return this.serviceModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.serviceModel.deleteMany({ account: accountId }).exec();
   }
 }

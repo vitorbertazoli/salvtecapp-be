@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Roles, GetAccount, GetUser } from '../auth/decorators';
+import { Types } from 'mongoose';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { User } from './schemas/user.schema';
@@ -12,13 +13,13 @@ export class UsersController {
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create users
-  async create(@Body() createUserDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async create(@Body() createUserDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
     createUserDto.account = accountId;
     createUserDto.createdBy = userId;
     createUserDto.updatedBy = userId;
     return this.usersService.create(
-      createUserDto.account as string,
+      createUserDto.account,
       createUserDto.firstName as string,
       createUserDto.lastName as string,
       createUserDto.email as string,
@@ -34,7 +35,7 @@ export class UsersController {
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
     @Query('search') search: string = '',
-    @GetAccount() accountId: string,
+    @GetAccountId() accountId: Types.ObjectId,
     @GetUser() user: any
   ) {
     const pageNum = parseInt(page, 10) || 1;
@@ -60,7 +61,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetAccount() accountId: string, @GetUser() user: any) {
+  async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     // Check if user has ADMIN role or is requesting their own data
     const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
     const isOwnData = user.id === id;
@@ -74,7 +75,7 @@ export class UsersController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: any, @GetAccount() accountId: string, @GetUser() user: any) {
+  async update(@Param('id') id: string, @Body() updateUserDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     // Check if user has ADMIN role or is updating their own data
     const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
     const isOwnData = user.id === id;
@@ -99,7 +100,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  async updateLanguage(@Param('id') id: string, @Body() body: { language: string }, @GetAccount() accountId: string, @GetUser() user: any) {
+  async updateLanguage(@Param('id') id: string, @Body() body: { language: string }, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     // Users can only update their own language preference
     if (user.id !== id) {
       return null;
@@ -110,7 +111,7 @@ export class UsersController {
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete users
-  remove(@Param('id') id: string, @GetAccount() accountId: string) {
+  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.usersService.delete(id, accountId);
   }
 }

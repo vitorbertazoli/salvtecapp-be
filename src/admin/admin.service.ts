@@ -10,6 +10,7 @@ import { TechniciansService } from '../technicians/technicians.service';
 import { EventsService } from '../events/events.service';
 import { FollowUpsService } from '../follow-ups/follow-ups.service';
 import { AccountDocument } from '../accounts/schemas/account.schema';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AdminService {
@@ -97,7 +98,7 @@ export class AdminService {
     };
   }
 
-  async deleteAccount(accountId: string) {
+  async deleteAccount(accountId: Types.ObjectId) {
     // First verify the account exists
     const account = await this.accountsService.findOne(accountId);
     if (!account) {

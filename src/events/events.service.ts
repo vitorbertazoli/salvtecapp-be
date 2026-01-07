@@ -15,7 +15,7 @@ export class EventsService {
     private serviceOrdersService: ServiceOrdersService
   ) {}
 
-  async create(eventData: Partial<Event> & { customerId: string; technicianId: string; serviceOrderId?: string }): Promise<Event> {
+  async create(eventData: Partial<Event> & { customerId: string; technicianId: string; serviceOrderId?: string }, accountId: Types.ObjectId): Promise<Event> {
     // Fetch customer and technician to build title
     const customer = await this.customerModel.findById(new Types.ObjectId(eventData.customerId));
     const technician = await this.technicianModel.findById(new Types.ObjectId(eventData.technicianId));
@@ -47,7 +47,7 @@ export class EventsService {
           status: 'scheduled',
           scheduledDate: new Date(`${eventData.date}T${eventData.startTime}`)
         },
-        eventData.account!.toString()
+        accountId
       );
     }
 
@@ -55,7 +55,7 @@ export class EventsService {
   }
 
   async findAll(
-    accountId: string,
+    accountId: Types.ObjectId,
     filters?: {
       startDate?: string;
       endDate?: string;
@@ -104,7 +104,58 @@ export class EventsService {
       .exec();
   }
 
-  async findByIdAndAccount(id: string, accountId: string): Promise<Event | null> {
+  async findAllPaginated(
+    accountId: Types.ObjectId,
+    page: string,
+    limit?: string,
+    customerId?: string
+  ): Promise<{
+    events: Event[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit || '10', 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    const query: any = { account: accountId };
+
+    if (customerId) {
+      query.customer = new Types.ObjectId(customerId);
+    }
+
+    const [events, total] = await Promise.all([
+      this.eventModel
+        .find(query)
+        .populate('customer', 'name email phone')
+        .populate({
+          path: 'technician',
+          populate: {
+            path: 'user',
+            select: 'firstName lastName email'
+          }
+        })
+        .populate('serviceOrder', 'orderNumber status')
+        .sort({ date: 1, startTime: 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean()
+        .exec(),
+      this.eventModel.countDocuments(query)
+    ]);
+
+    return {
+      events,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum)
+    };
+  }
+
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<Event | null> {
     return this.eventModel
       .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email phone')
@@ -123,7 +174,7 @@ export class EventsService {
   async updateByAccount(
     id: string,
     updateData: Partial<Event> & { customerId?: string; technicianId?: string; serviceOrderId?: string },
-    accountId: string
+    accountId: Types.ObjectId
   ): Promise<Event | null> {
     const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
@@ -196,7 +247,7 @@ export class EventsService {
     return this.findByIdAndAccount(id, accountId);
   }
 
-  async deleteByAccount(id: string, accountId: string): Promise<boolean> {
+  async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<boolean> {
     const result = await this.eventModel.findOneAndDelete({
       _id: id,
       account: accountId
@@ -205,7 +256,7 @@ export class EventsService {
     return !!result;
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.eventModel.deleteMany({ account: accountId }).exec();
   }
 }

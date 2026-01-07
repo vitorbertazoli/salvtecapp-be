@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Roles, GetAccount, GetUser } from '../auth/decorators';
+import { Types } from 'mongoose';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ServiceOrdersService } from './service-orders.service';
@@ -11,7 +12,7 @@ export class ServiceOrdersController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  async create(@Body() createServiceOrderDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async create(@Body() createServiceOrderDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
     createServiceOrderDto.account = accountId;
     createServiceOrderDto.createdBy = userId;
@@ -22,7 +23,7 @@ export class ServiceOrdersController {
 
   @Post('from-quote')
   @Roles('ADMIN', 'SUPERVISOR')
-  async createFromQuote(@Body() body: { quoteId: string; priority: 'low' | 'normal' | 'high' | 'urgent' }, @GetAccount() accountId: string) {
+  async createFromQuote(@Body() body: { quoteId: string; priority: 'low' | 'normal' | 'high' | 'urgent' }, @GetAccountId() accountId: Types.ObjectId) {
     return this.serviceOrdersService.createFromQuote(body.quoteId, body.priority, accountId);
   }
 
@@ -32,34 +33,35 @@ export class ServiceOrdersController {
     @Query('limit') limit: string = '10',
     @Query('search') search: string = '',
     @Query('status') status: string = '',
-    @GetAccount() accountId: string
+    @GetAccountId() accountId: Types.ObjectId,
+    @Query('customer') customerId?: string
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
 
-    return this.serviceOrdersService.findByAccount(accountId, pageNum, limitNum, search, status || undefined);
+    return this.serviceOrdersService.findByAccount(accountId, pageNum, limitNum, search, status || undefined, customerId);
   }
 
   @Get('by-customer/:customerId')
-  async findByCustomer(@Param('customerId') customerId: string, @GetAccount() accountId: string) {
+  async findByCustomer(@Param('customerId') customerId: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.serviceOrdersService.findByCustomerAndAccount(customerId, accountId);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetAccount() accountId: string) {
+  async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.serviceOrdersService.findByIdAndAccount(id, accountId);
   }
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateServiceOrderDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async update(@Param('id') id: string, @Body() updateServiceOrderDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     updateServiceOrderDto.updatedBy = userId;
     return this.serviceOrdersService.updateByAccount(id, updateServiceOrderDto, accountId);
   }
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async delete(@Param('id') id: string, @GetAccount() accountId: string) {
+  async delete(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.serviceOrdersService.deleteByAccount(id, accountId);
   }
 }

@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { GetAccount, GetUser, Roles } from '../auth/decorators';
+import { Types } from 'mongoose';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Vehicle } from './schemas/vehicles.schema';
@@ -12,7 +13,7 @@ export class VehiclesController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  create(@Body() createVehicleDto: Partial<Vehicle>, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  create(@Body() createVehicleDto: Partial<Vehicle>, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     createVehicleDto.account = accountId as any;
     createVehicleDto.createdBy = userId;
     createVehicleDto.updatedBy = userId;
@@ -20,7 +21,12 @@ export class VehiclesController {
   }
 
   @Get()
-  findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @GetAccount() accountId: string) {
+  findAll(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search: string = '',
+    @GetAccountId() accountId: Types.ObjectId
+  ) {
     // Always filter by the user's account from JWT token
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
@@ -28,7 +34,7 @@ export class VehiclesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetAccount() accountId: string) {
+  async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     const vehicle = await this.vehiclesService.findOne(id, accountId);
     if (!vehicle) throw new NotFoundException('Vehicle not found');
     return vehicle;
@@ -36,7 +42,7 @@ export class VehiclesController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateVehicleDto: Partial<Vehicle>, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async update(@Param('id') id: string, @Body() updateVehicleDto: Partial<Vehicle>, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     updateVehicleDto.updatedBy = userId;
     const vehicle = await this.vehiclesService.update(id, updateVehicleDto, accountId);
     if (!vehicle) throw new NotFoundException('Vehicle not found');
@@ -45,7 +51,7 @@ export class VehiclesController {
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async remove(@Param('id') id: string, @GetAccount() accountId: string) {
+  async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     const vehicle = await this.vehiclesService.remove(id, accountId);
     if (!vehicle) throw new NotFoundException('Vehicle not found');
     return vehicle;

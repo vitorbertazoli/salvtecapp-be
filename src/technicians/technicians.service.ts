@@ -16,7 +16,7 @@ export class TechniciansService {
   ) {}
 
   async create(
-    account: string,
+    account: Types.ObjectId,
     cpf: string,
     phoneNumber: string,
     addressData: {
@@ -99,7 +99,7 @@ export class TechniciansService {
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = '',
@@ -229,7 +229,7 @@ export class TechniciansService {
 
   async update(
     id: string,
-    accountId: string,
+    accountId: Types.ObjectId,
     technicianData: Partial<Technician> & { address?: any; userAccount?: any },
     addressData?: any,
     userAccountData?: any
@@ -294,7 +294,7 @@ export class TechniciansService {
       .exec();
   }
 
-  async delete(id: string, accountId: string): Promise<Technician | null> {
+  async delete(id: string, accountId: Types.ObjectId): Promise<Technician | null> {
     const query = { _id: id, account: accountId };
 
     // First, get the technician to find the associated user
@@ -309,7 +309,7 @@ export class TechniciansService {
     return this.technicianModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     // First, find all technicians for this account to get their user IDs
     const technicians = await this.technicianModel.find({ account: accountId }).exec();
 
@@ -324,7 +324,7 @@ export class TechniciansService {
     return this.technicianModel.deleteMany({ account: accountId }).exec();
   }
 
-  async findByIdAndAccount(id: string, accountId: string): Promise<TechnicianDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<TechnicianDocument | null> {
     return this.technicianModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
@@ -341,7 +341,7 @@ export class TechniciansService {
       .exec();
   }
 
-  async findOneByCpfAndAccount(cpf: string, accountId: string): Promise<TechnicianDocument | null> {
+  async findOneByCpfAndAccount(cpf: string, accountId: Types.ObjectId): Promise<TechnicianDocument | null> {
     return this.technicianModel
       .findOne({
         cpf: cpf,

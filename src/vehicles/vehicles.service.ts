@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Vehicle, VehicleDocument } from './schemas/vehicles.schema';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class VehiclesService {
   }
 
   async findAll(
-    accountId?: string,
+    accountId?: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = ''
@@ -49,18 +49,18 @@ export class VehiclesService {
     };
   }
 
-  async findOne(id: string, accountId?: string): Promise<Vehicle | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async findOne(id: string, accountId: Types.ObjectId): Promise<Vehicle | null> {
+    const query = { _id: id, account: accountId };
     return this.vehicleModel.findOne(query).exec();
   }
 
-  async update(id: string, updateVehicleDto: Partial<Vehicle>, accountId?: string): Promise<Vehicle | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async update(id: string, updateVehicleDto: Partial<Vehicle>, accountId: Types.ObjectId): Promise<Vehicle | null> {
+    const query = { _id: id, account: accountId };
     return this.vehicleModel.findOneAndUpdate(query, updateVehicleDto, { new: true }).exec();
   }
 
-  async remove(id: string, accountId?: string): Promise<Vehicle | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async remove(id: string, accountId: Types.ObjectId): Promise<Vehicle | null> {
+    const query = { _id: id, account: accountId };
     return this.vehicleModel.findOneAndUpdate(query, { isActive: false }, { new: true }).exec();
   }
 }

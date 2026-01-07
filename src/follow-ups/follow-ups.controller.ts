@@ -1,8 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Roles, GetAccount, GetUser } from '../auth/decorators';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { FollowUpsService } from './follow-ups.service';
+import { Types } from 'mongoose';
 
 @Controller('follow-ups')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -11,7 +12,7 @@ export class FollowUpsController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  async create(@Body() createFollowUpDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  async create(@Body() createFollowUpDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
     createFollowUpDto.account = accountId;
     createFollowUpDto.createdBy = userId;
@@ -29,7 +30,7 @@ export class FollowUpsController {
     @Query('customerId') customerId: string = '',
     @Query('startDate') startDate: string = '',
     @Query('endDate') endDate: string = '',
-    @GetAccount() accountId: string
+    @GetAccountId() accountId: Types.ObjectId
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 50;
@@ -41,13 +42,13 @@ export class FollowUpsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @GetAccount() accountId: string) {
+  async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.followUpsService.findByIdAndAccount(id, accountId);
   }
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateFollowUpDto: any, @GetUser('id') userId: string, @GetAccount() accountId: string) {
+  async update(@Param('id') id: string, @Body() updateFollowUpDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     updateFollowUpDto.updatedBy = userId;
 
     // Handle status changes for completion tracking
@@ -64,7 +65,7 @@ export class FollowUpsController {
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async delete(@Param('id') id: string, @GetAccount() accountId: string) {
+  async delete(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.followUpsService.deleteByAccount(id, accountId);
   }
 }

@@ -98,7 +98,7 @@ export class AccountsController {
 
     // Create admin user
     const user = (await this.usersService.create(
-      account._id.toString(),
+      account._id,
       createAccountDto.firstName,
       createAccountDto.lastName,
       createAccountDto.email,

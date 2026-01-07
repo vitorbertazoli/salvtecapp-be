@@ -29,7 +29,7 @@ export class ContractsService {
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = '',
@@ -134,7 +134,7 @@ export class ContractsService {
     return this.contractModel.findById(id).exec();
   }
 
-  async findByIdAndAccount(id: string, accountId: string): Promise<ContractDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<ContractDocument | null> {
     const contract = await this.contractModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
@@ -144,8 +144,8 @@ export class ContractsService {
     return contract;
   }
 
-  async updateByAccount(id: string, contractData: any, accountId: string): Promise<Contract | null> {
-    const customer = await this.customerService.findByIdAndAccount(contractData.customer as string, contractData.account as string);
+  async updateByAccount(id: string, contractData: any, accountId: Types.ObjectId): Promise<Contract | null> {
+    const customer = await this.customerService.findByIdAndAccount(contractData.customer as string, accountId);
 
     if (!customer) {
       throw new Error('Customer not found for the given account');
@@ -162,16 +162,12 @@ export class ContractsService {
     return updatedContract;
   }
 
-  async delete(id: string): Promise<Contract | null> {
-    return this.contractModel.findByIdAndDelete(id).exec();
-  }
-
-  async deleteByAccount(id: string, accountId: string): Promise<Contract | null> {
+  async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<Contract | null> {
     const query = { _id: id, account: accountId };
     return this.contractModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.contractModel.deleteMany({ account: accountId }).exec();
   }
 }

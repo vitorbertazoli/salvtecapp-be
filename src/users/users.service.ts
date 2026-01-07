@@ -9,7 +9,7 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   async create(
-    account: string,
+    account: Types.ObjectId,
     firstName: string,
     lastName: string,
     email: string,
@@ -36,7 +36,7 @@ export class UsersService {
     return createdUser.save();
   }
 
-  async findOneByAccountAndEmail(account: string, email: string): Promise<UserDocument | null> {
+  async findOneByAccountAndEmail(account: Types.ObjectId, email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ account, email }).exec();
   }
 
@@ -49,7 +49,7 @@ export class UsersService {
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = ''
@@ -185,7 +185,7 @@ export class UsersService {
     };
   }
 
-  async update(id: string, userData: Partial<User> & { password?: string }, accountId: string): Promise<User | null> {
+  async update(id: string, userData: Partial<User> & { password?: string }, accountId: Types.ObjectId): Promise<User | null> {
     const query = { _id: id, account: accountId };
 
     // Hash password if provided
@@ -197,17 +197,17 @@ export class UsersService {
     return this.userModel.findOneAndUpdate(query, userData, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
-  async updateLanguage(id: string, language: string, accountId: string): Promise<User | null> {
+  async updateLanguage(id: string, language: string, accountId: Types.ObjectId): Promise<User | null> {
     const query = { _id: id, account: accountId };
     return this.userModel.findOneAndUpdate(query, { language }, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
-  async delete(id: string, accountId: string): Promise<User | null> {
+  async delete(id: string, accountId: Types.ObjectId): Promise<User | null> {
     const query = { _id: id, account: accountId };
     return this.userModel.findOneAndDelete(query).exec();
   }
 
-  async findByIdAndAccount(id: string, accountId: string): Promise<UserDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<UserDocument | null> {
     return this.userModel.findOne({ _id: id, account: accountId }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
@@ -224,7 +224,7 @@ export class UsersService {
       .exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.userModel.deleteMany({ account: accountId }).exec();
   }
 }

@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Roles, GetAccount, GetUser } from '../auth/decorators';
+import { Types } from 'mongoose';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ProductsService } from './products.service';
@@ -11,7 +12,7 @@ export class ProductsController {
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create products
-  create(@Body() createProductDto: any, @GetAccount() accountId: string, @GetUser('id') userId: string) {
+  create(@Body() createProductDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     // Override account with the one from JWT token
     createProductDto.account = accountId;
     createProductDto.createdBy = userId;
@@ -20,7 +21,12 @@ export class ProductsController {
   }
 
   @Get()
-  findAll(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('search') search: string = '', @GetAccount() accountId: string) {
+  findAll(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search: string = '',
+    @GetAccountId() accountId: Types.ObjectId
+  ) {
     // Always filter by the user's account from JWT token
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
@@ -28,19 +34,19 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @GetAccount() accountId: string) {
+  findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.productsService.findOne(id, accountId);
   }
 
   @Put(':id')
   @Roles('ADMIN') // Only users with ADMIN role can update products
-  update(@Param('id') id: string, @Body() updateProductDto: any, @GetAccount() accountId: string) {
+  update(@Param('id') id: string, @Body() updateProductDto: any, @GetAccountId() accountId: Types.ObjectId) {
     return this.productsService.update(id, updateProductDto, accountId);
   }
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete products
-  remove(@Param('id') id: string, @GetAccount() accountId: string) {
+  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.productsService.delete(id, accountId);
   }
 }

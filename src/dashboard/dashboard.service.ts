@@ -17,7 +17,7 @@ export class DashboardService {
     @InjectModel(Event.name) private eventModel: Model<EventDocument>
   ) {}
 
-  async getStats(accountId: string) {
+  async getStats(accountId: Types.ObjectId) {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     const thirtyDaysAgo = new Date();
@@ -65,7 +65,7 @@ export class DashboardService {
     };
   }
 
-  private async getMonthlySalesData(accountId: string, fromDate: Date) {
+  private async getMonthlySalesData(accountId: Types.ObjectId, fromDate: Date) {
     const salesData = await this.serviceOrderModel.aggregate([
       {
         $match: {

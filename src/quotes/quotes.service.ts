@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId, Types } from 'mongoose';
-import { Quote, QuoteDocument } from './schemas/quote.schema';
+import { Model, Types } from 'mongoose';
 import { EmailService } from '../utils/email.service';
+import { Quote, QuoteDocument } from './schemas/quote.schema';
 
 @Injectable()
 export class QuotesService {
@@ -17,16 +17,13 @@ export class QuotesService {
     return savedQuote.toObject() as any;
   }
 
-  async findAll(): Promise<Quote[]> {
-    return this.quoteModel.find().exec();
-  }
-
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string
+    status?: string,
+    customerId?: string
   ): Promise<{
     quotes: Quote[];
     total: number;
@@ -40,6 +37,9 @@ export class QuotesService {
     const matchConditions: any = { account: accountId };
     if (status) {
       matchConditions.status = status;
+    }
+    if (customerId) {
+      matchConditions.customer = new Types.ObjectId(customerId);
     }
 
     // Build aggregation pipeline
@@ -105,11 +105,7 @@ export class QuotesService {
     };
   }
 
-  async findOne(id: string): Promise<Quote | null> {
-    return this.quoteModel.findById(id).exec();
-  }
-
-  async findByIdAndAccount(id: string, accountId: ObjectId): Promise<QuoteDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<QuoteDocument | null> {
     const quote = await this.quoteModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
@@ -121,27 +117,7 @@ export class QuotesService {
     return quote;
   }
 
-  async update(id: string, quoteData: Partial<Quote>): Promise<Quote | null> {
-    // Check current quote status
-    const currentQuote = await this.quoteModel.findById(id).exec();
-    if (!currentQuote) {
-      return null;
-    }
-
-    // If quote has been sent or accepted, reset status to draft when updating
-    // But allow status change from 'sent' to 'accepted' (for service order creation)
-    const updateData = { ...quoteData };
-    if (currentQuote.status === 'sent' || currentQuote.status === 'accepted') {
-      // Allow status change from 'sent' to 'accepted', but reset to 'draft' for other updates
-      if (!(quoteData.status === 'accepted' && currentQuote.status === 'sent')) {
-        updateData.status = 'draft';
-      }
-    }
-
-    return this.quoteModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
-  }
-
-  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: ObjectId): Promise<Quote | null> {
+  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: Types.ObjectId): Promise<Quote | null> {
     const query = { _id: id, account: accountId };
 
     // Check current quote status
@@ -149,6 +125,8 @@ export class QuotesService {
     if (!currentQuote) {
       return null;
     }
+
+    quoteData.customer = new Types.ObjectId(quoteData.customer);
 
     // If quote has been sent or accepted, reset status to draft when updating
     // But allow status changes from 'sent' to 'accepted' (for service order creation)
@@ -169,20 +147,16 @@ export class QuotesService {
     return updatedQuote;
   }
 
-  async delete(id: string): Promise<Quote | null> {
-    return this.quoteModel.findByIdAndDelete(id).exec();
-  }
-
-  async deleteByAccount(id: string, accountId: string): Promise<Quote | null> {
+  async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<Quote | null> {
     const query = { _id: id, account: accountId };
     return this.quoteModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.quoteModel.deleteMany({ account: accountId }).exec();
   }
 
-  async sendQuote(id: string, accountId: any, userId: string) {
+  async sendQuote(id: string, accountId: Types.ObjectId, userId: string) {
     const query = { _id: id, account: accountId };
 
     // Find the quote with all populated data
@@ -276,14 +250,14 @@ export class QuotesService {
         <h6 style="color: #1976d2; margin: 30px 0 10px 0; font-size: 18px;">Equipamentos</h6>
         <div style="margin-bottom: 20px;">
           ${quote.customer.equipments
-            .map(
-              (equipment: any) => `
+          .map(
+            (equipment: any) => `
             <span style="display: inline-block; padding: 4px 12px; margin: 2px 4px 2px 0; border: 1px solid #ddd; border-radius: 16px; font-size: 12px; background-color: #f5f5f5;">
               ${equipment.name}${equipment.room ? ` (${equipment.room})` : ''}
             </span>
           `
-            )
-            .join('')}
+          )
+          .join('')}
         </div>
       `;
     }
@@ -303,8 +277,8 @@ export class QuotesService {
           </thead>
           <tbody>
             ${quote.services
-              .map(
-                (service: any) => `
+          .map(
+            (service: any) => `
               <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;">${service.service.name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${service.quantity}</td>
@@ -312,8 +286,8 @@ export class QuotesService {
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(service.quantity * service.unitValue)}</td>
               </tr>
             `
-              )
-              .join('')}
+          )
+          .join('')}
             <tr style="background-color: #f9f9f9; font-weight: 600;">
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;" colspan="3">Total em Serviços:</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(servicesTotal)}</td>
@@ -338,8 +312,8 @@ export class QuotesService {
           </thead>
           <tbody>
             ${quote.products
-              .map(
-                (product: any) => `
+          .map(
+            (product: any) => `
               <tr>
                 <td style="border: 1px solid #ddd; padding: 8px;">
                   ${product.product.name}
@@ -350,8 +324,8 @@ export class QuotesService {
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(product.quantity * product.unitValue)}</td>
               </tr>
             `
-              )
-              .join('')}
+          )
+          .join('')}
             <tr style="background-color: #f9f9f9; font-weight: 600;">
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;" colspan="3">Total em Produtos:</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(productsTotal)}</td>
@@ -417,17 +391,16 @@ export class QuotesService {
                 <span><strong>Subtotal:</strong></span>
                 <span><strong>${formatCurrency(subtotal)}</strong></span>
               </div>
-              ${
-                quote.discount
-                  ? `
+              ${quote.discount
+        ? `
               <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                 <span>Desconto (${quote.discount}%):</span>
                 <span style="color: #d32f2f;">-${formatCurrency(discountValue)}</span>
               </div>
               <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
               `
-                  : ''
-              }
+        : ''
+      }
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 18px; font-weight: bold;">Valor Total:</span>
                 <span style="font-size: 18px; font-weight: bold; color: #1976d2;">${formatCurrency(totalValue)}</span>

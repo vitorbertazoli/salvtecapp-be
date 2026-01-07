@@ -113,7 +113,7 @@ export class AuthService {
         resetToken: undefined,
         resetTokenExpiry: undefined
       },
-      user.account.toString()
+      user.account
     );
 
     return { message: 'Password has been reset successfully' };

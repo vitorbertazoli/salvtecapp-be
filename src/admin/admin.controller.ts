@@ -1,8 +1,9 @@
-import { Controller, Get, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { GetAccount } from '../auth/decorators';
+import { Body, Controller, Delete, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { GetAccountId } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { MasterAdminGuard } from './guards/master-admin.guard';
 import { AdminService } from './admin.service';
+import { MasterAdminGuard } from './guards/master-admin.guard';
+import { Types } from 'mongoose';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, MasterAdminGuard)
@@ -23,8 +24,8 @@ export class AdminController {
   }
 
   @Delete('accounts/:id')
-  async deleteAccount(@Param('id') accountId: string, @GetAccount() currentUserAccount: string) {
-    if (currentUserAccount === accountId) {
+  async deleteAccount(@Param('id') accountId: Types.ObjectId, @GetAccountId() currentUserAccount: string) {
+    if (currentUserAccount === accountId.toString()) {
       throw new Error('You cannot delete your own account while logged in.');
     }
     return this.adminService.deleteAccount(accountId);

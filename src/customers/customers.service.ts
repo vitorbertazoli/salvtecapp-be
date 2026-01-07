@@ -12,7 +12,7 @@ export class CustomersService {
     private readonly accountsService: AccountsService
   ) {}
 
-  async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }): Promise<Customer> {
+  async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }, accountId: Types.ObjectId): Promise<Customer> {
     // Ensure type-specific fields are properly set
     if (customerData.type === 'residential') {
       customerData.cpf = customerData.cpf || undefined;
@@ -26,7 +26,7 @@ export class CustomersService {
 
     // Handle address creation - address is now required for customers
     const address = await this.accountsService.createAddress(
-      customerData.account,
+      accountId,
       customerData.address.street,
       customerData.address.number,
       customerData.address.city,
@@ -61,7 +61,7 @@ export class CustomersService {
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = '',
@@ -114,11 +114,7 @@ export class CustomersService {
     };
   }
 
-  async findOne(id: string): Promise<Customer | null> {
-    return this.customerModel.findById(id).exec();
-  }
-
-  async findByIdAndAccount(id: string, accountId: string): Promise<CustomerDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<CustomerDocument | null> {
     const customer = await this.customerModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
@@ -132,7 +128,7 @@ export class CustomersService {
   async updateByAccount(
     id: string,
     customerData: Partial<Customer> & { address?: Partial<Address>; equipments?: any[] },
-    accountId: string
+    accountId: Types.ObjectId
   ): Promise<Customer | null> {
     const query = { _id: id, account: accountId };
 
@@ -163,16 +159,12 @@ export class CustomersService {
     return updatedCustomer;
   }
 
-  async delete(id: string): Promise<Customer | null> {
-    return this.customerModel.findByIdAndDelete(id).exec();
-  }
-
-  async deleteByAccount(id: string, accountId: string): Promise<Customer | null> {
+  async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<Customer | null> {
     const query = { _id: id, account: accountId };
     return this.customerModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.customerModel.deleteMany({ account: accountId }).exec();
   }
 }

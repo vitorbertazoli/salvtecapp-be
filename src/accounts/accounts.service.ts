@@ -20,7 +20,7 @@ export class AccountsService {
     return this.accountModel.find().exec();
   }
 
-  async findOne(id: string): Promise<Account | null> {
+  async findOne(id: Types.ObjectId): Promise<Account | null> {
     return this.accountModel.findById(id).exec();
   }
 
@@ -42,13 +42,13 @@ export class AccountsService {
     return this.accountModel.findByIdAndUpdate(id, accountData, { new: true }).exec();
   }
 
-  async delete(id: string): Promise<Account | null> {
+  async delete(id: Types.ObjectId): Promise<Account | null> {
     return this.accountModel.findByIdAndDelete(id).exec();
   }
 
   // Address methods
   async createAddress(
-    accountId: any,
+    accountId: Types.ObjectId,
     street: string,
     number: string,
     city: string,
@@ -76,13 +76,13 @@ export class AccountsService {
     return createdAddress.save();
   }
 
-  async updateAddress(id: string, addressData: Partial<Address>, accountId: string): Promise<Address | null> {
+  async updateAddress(id: string, addressData: Partial<Address>, accountId: Types.ObjectId): Promise<Address | null> {
     const query = { _id: id, account: accountId };
     const data = await this.addressModel.findOneAndUpdate(query, addressData, { new: true }).exec();
     return data;
   }
 
-  async findAddressById(id: string, accountId: string): Promise<AddressDocument | null> {
+  async findAddressById(id: string, accountId: Types.ObjectId): Promise<AddressDocument | null> {
     return this.addressModel.findOne({ _id: id, account: accountId }).exec();
   }
 }

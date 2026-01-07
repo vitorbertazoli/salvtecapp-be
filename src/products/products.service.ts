@@ -12,13 +12,13 @@ export class ProductsService {
     return createdProduct.save();
   }
 
-  async findOne(id: string, accountId?: string): Promise<Product | null> {
-    const query = accountId ? { _id: id, account: accountId } : { _id: id };
+  async findOne(id: string, accountId: Types.ObjectId): Promise<Product | null> {
+    const query = { _id: id, account: accountId };
     return this.productModel.findOne(query).populate('account').exec();
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
     search: string = ''
@@ -65,17 +65,17 @@ export class ProductsService {
     };
   }
 
-  async update(id: string, productData: Partial<Product>, accountId: string): Promise<Product | null> {
+  async update(id: string, productData: Partial<Product>, accountId: Types.ObjectId): Promise<Product | null> {
     const query = { _id: id, account: accountId };
     return this.productModel.findOneAndUpdate(query, productData, { new: true }).populate('account').exec();
   }
 
-  async delete(id: string, accountId?: string): Promise<Product | null> {
+  async delete(id: string, accountId?: Types.ObjectId): Promise<Product | null> {
     const query = accountId ? { _id: id, account: accountId } : { _id: id };
     return this.productModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.productModel.deleteMany({ account: accountId }).exec();
   }
 }

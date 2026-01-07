@@ -29,7 +29,7 @@ export class FollowUpsService {
   }
 
   async findByAccount(
-    accountId: string,
+    accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 50,
     search: string = '',
@@ -137,11 +137,7 @@ export class FollowUpsService {
     };
   }
 
-  async findOne(id: string): Promise<FollowUp | null> {
-    return this.followUpModel.findById(id).exec();
-  }
-
-  async findByIdAndAccount(id: string, accountId: string): Promise<FollowUpDocument | null> {
+  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<FollowUpDocument | null> {
     const followUp = await this.followUpModel
       .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email phoneNumber')
@@ -151,11 +147,7 @@ export class FollowUpsService {
     return followUp;
   }
 
-  async update(id: string, followUpData: Partial<FollowUp>): Promise<FollowUp | null> {
-    return this.followUpModel.findByIdAndUpdate(id, followUpData, { new: true }).exec();
-  }
-
-  async updateByAccount(id: string, followUpData: Partial<FollowUp>, accountId: string): Promise<FollowUp | null> {
+  async updateByAccount(id: string, followUpData: Partial<FollowUp>, accountId: Types.ObjectId): Promise<FollowUp | null> {
     const query = { _id: id, account: accountId };
 
     // Handle notes appending - if notes are provided, append to existing array
@@ -172,16 +164,12 @@ export class FollowUpsService {
     return updatedFollowUp;
   }
 
-  async delete(id: string): Promise<FollowUp | null> {
-    return this.followUpModel.findByIdAndDelete(id).exec();
-  }
-
-  async deleteByAccount(id: string, accountId: string): Promise<FollowUp | null> {
+  async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<FollowUp | null> {
     const query = { _id: id, account: accountId };
     return this.followUpModel.findOneAndDelete(query).exec();
   }
 
-  async deleteAllByAccount(accountId: string): Promise<any> {
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.followUpModel.deleteMany({ account: accountId }).exec();
   }
 }
