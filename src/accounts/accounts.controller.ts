@@ -1,9 +1,9 @@
 import { Body, Controller, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as crypto from 'crypto';
+import type * as Express from 'express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import type * as Express from 'express';
 import { RolesService } from '../roles/roles.service';
 import { RoleDocument } from '../roles/schemas/role.schema';
 import { UserDocument } from '../users/schemas/user.schema';
