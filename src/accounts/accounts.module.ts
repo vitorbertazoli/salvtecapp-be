@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { EmailModule } from '../utils/email.module';
 import { RolesModule } from '../roles/roles.module';
 import { UsersModule } from '../users/users.module';
+import { EmailModule } from '../utils/email.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
+import { PublicAccountsController } from './public-accounts.controller';
 import { Account, AccountSchema } from './schemas/account.schema';
 import { Address, AddressSchema } from './schemas/address.schema';
 
@@ -18,7 +19,7 @@ import { Address, AddressSchema } from './schemas/address.schema';
     RolesModule,
     EmailModule
   ],
-  controllers: [AccountsController],
+  controllers: [PublicAccountsController, AccountsController],
   providers: [AccountsService],
   exports: [AccountsService]
 })
