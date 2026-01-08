@@ -28,8 +28,20 @@ export class AuthController {
 
   @UseGuards(RefreshAuthGuard)
   @Post('refresh')
-  async refresh(@Request() req) {
-    return this.authService.refreshToken(req.user);
+  async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.refreshToken(req.user);
+    if (!result) {
+      return null;
+    }
+    res.cookie('refresh_token', result.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/api/auth',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    const { refresh_token, ...response } = result;
+    return response;
   }
 
   @Post('forgot-password')
