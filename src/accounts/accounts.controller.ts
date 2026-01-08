@@ -1,6 +1,5 @@
 import { Body, Controller, Get, HttpException, Param, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import * as express from 'express';
 import { Types } from 'mongoose';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -12,6 +11,19 @@ import { UsersService } from '../users/users.service';
 import { EmailService } from '../utils/email.service';
 import { AccountsService } from './accounts.service';
 import { Account } from './schemas/account.schema';
+
+interface UploadedFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
+
 
 @Controller('accounts')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -72,7 +84,7 @@ export class AccountsController {
       },
     })
   )
-  async uploadLogo(@Param('id') id: string, @UploadedFile() file: express.Multer.File, @GetAccountId() accountid: Types.ObjectId) {
+  async uploadLogo(@Param('id') id: string, @UploadedFile() file: UploadedFile, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
       return new HttpException('Access denied', 403)
     }
