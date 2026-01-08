@@ -4,6 +4,8 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { RefreshAuthGuard } from './guards/refresh-auth.guard';
 
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -20,7 +22,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/auth',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: REFRESH_TOKEN_MAX_AGE
     });
     const { refresh_token, ...response } = result;
     return response;
@@ -38,7 +40,7 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/auth',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: REFRESH_TOKEN_MAX_AGE
     });
     const { refresh_token, ...response } = result;
     return response;
