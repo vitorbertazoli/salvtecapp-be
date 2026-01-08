@@ -43,6 +43,12 @@ export class UsersController {
 
     // Check if user has ADMIN role
     const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
+    const isMasterAdmin = user.isMasterAdmin;
+
+    if (isMasterAdmin) {
+      // Master Admin can see all users across all accounts
+      return this.usersService.findAll();
+    }
 
     if (isAdmin) {
       // ADMIN can see all users in their account
@@ -111,7 +117,11 @@ export class UsersController {
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete users
-  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
+  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
+    if (user.isMasterAdmin) {
+      console.log(`Master admin ${user.id} is deleting user ${id} across all accounts.`);
+      return this.usersService.deleteById(id);
+    }
     return this.usersService.delete(id, accountId);
   }
 }

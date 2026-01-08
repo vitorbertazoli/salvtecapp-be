@@ -48,6 +48,23 @@ export class UsersService {
     return this.userModel.findById(id).populate('account', 'name id logoUrl status').populate('roles', 'name').exec();
   }
 
+  async findAll(): Promise<{
+    users: User[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const users = await this.userModel.find().populate('account', 'name id logoUrl').populate('roles', 'name').exec();
+    return {
+      users: users,
+      total: users.length,
+      page: 1,
+      limit: users.length,
+      totalPages: 1
+    };
+  }
+
   async findByAccount(
     accountId: Types.ObjectId,
     page: number = 1,
@@ -204,6 +221,11 @@ export class UsersService {
 
   async delete(id: string, accountId: Types.ObjectId): Promise<User | null> {
     const query = { _id: id, account: accountId };
+    return this.userModel.findOneAndDelete(query).exec();
+  }
+
+  async deleteById(id: string): Promise<User | null> {
+    const query = { _id: id };
     return this.userModel.findOneAndDelete(query).exec();
   }
 
