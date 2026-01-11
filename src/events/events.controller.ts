@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 import { EventsService } from './events.service';
 
 @Controller('events')
@@ -12,13 +14,18 @@ export class EventsController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
-  async create(@Body() createEventDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createEventDto.account = accountId;
-    createEventDto.createdBy = userId;
-    createEventDto.updatedBy = userId;
+  async create(@Body() dto: CreateEventDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const eventData = {
+      ...dto,
+      account: accountId,
+      customer: new Types.ObjectId(dto.customer),
+      technician: new Types.ObjectId(dto.technician),
+      ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
 
-    return this.eventsService.create(createEventDto, accountId);
+    return this.eventsService.create(eventData, accountId);
   }
 
   @Get()
@@ -56,9 +63,14 @@ export class EventsController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
-  async update(@Param('id') id: string, @Body() updateEventDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    updateEventDto.updatedBy = userId;
-    const result = await this.eventsService.updateByAccount(id, updateEventDto, accountId);
+  async update(@Param('id') id: string, @Body() dto: UpdateEventDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const eventData = {
+      ...dto,
+      ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
+      updatedBy: userId
+    } as any;
+
+    const result = await this.eventsService.updateByAccount(id, eventData, accountId);
 
     if (!result) {
       return { message: 'Event not found' };

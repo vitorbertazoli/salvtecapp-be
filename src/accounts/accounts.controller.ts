@@ -10,7 +10,7 @@ import { RolesService } from '../roles/roles.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../utils/email.service';
 import { AccountsService } from './accounts.service';
-import { Account } from './schemas/account.schema';
+import { UpdateAccountDto } from './dto/update-account.dto';
 
 interface UploadedFile {
   fieldname: string;
@@ -23,7 +23,6 @@ interface UploadedFile {
   path: string;
   buffer: Buffer;
 }
-
 
 @Controller('accounts')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -39,7 +38,7 @@ export class AccountsController {
   @Roles('ADMIN')
   async findById(@Param('id') id: string, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
-      return new HttpException('Access denied', 403)
+      return new HttpException('Access denied', 403);
     }
 
     return this.accountsService.findOne(accountid);
@@ -47,22 +46,12 @@ export class AccountsController {
 
   @Put(':id')
   @Roles('ADMIN')
-  async update(@Param('id') id: string, @Body() accountData: Partial<Account>, @GetAccountId() accountid: Types.ObjectId) {
+  async update(@Param('id') id: string, @Body() accountData: UpdateAccountDto, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
-      return new HttpException('Access denied', 403)
+      return new HttpException('Access denied', 403);
     }
 
-    // Only allow updating specific fields for security
-    const allowedFields = ['name', 'billingInfo', 'logoUrl'];
-    const filteredData: Partial<Account> = {};
-
-    for (const field of allowedFields) {
-      if (accountData.hasOwnProperty(field)) {
-        (filteredData as any)[field] = (accountData as any)[field];
-      }
-    }
-
-    return this.accountsService.update(id, filteredData);
+    return this.accountsService.update(id, accountData);
   }
 
   @Post(':id/logo')
@@ -82,11 +71,14 @@ export class AccountsController {
         }
         callback(null, true);
       },
+      limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+      }
     })
   )
   async uploadLogo(@Param('id') id: string, @UploadedFile() file: UploadedFile, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
-      return new HttpException('Access denied', 403)
+      return new HttpException('Access denied', 403);
     }
 
     if (!file) {

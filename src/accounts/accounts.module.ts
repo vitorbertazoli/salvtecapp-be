@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { RolesModule } from '../roles/roles.module';
 import { UsersModule } from '../users/users.module';
 import { EmailModule } from '../utils/email.module';
@@ -17,7 +18,13 @@ import { Address, AddressSchema } from './schemas/address.schema';
     ]),
     UsersModule,
     RolesModule,
-    EmailModule
+    EmailModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10
+      }
+    ])
   ],
   controllers: [PublicAccountsController, AccountsController],
   providers: [AccountsService],

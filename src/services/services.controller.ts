@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateServiceDto } from './dto/create-service.dto';
+import { UpdateServiceDto } from './dto/update-service.dto';
 import { ServicesService } from './services.service';
 
 @Controller('services')
@@ -12,12 +14,14 @@ export class ServicesController {
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create services
-  create(@Body() createServiceDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createServiceDto.account = accountId;
-    createServiceDto.createdBy = userId;
-    createServiceDto.updatedBy = userId;
-    return this.servicesService.create(createServiceDto);
+  create(@Body() createServiceDto: CreateServiceDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const serviceData = {
+      ...createServiceDto,
+      account: accountId,
+      createdBy: userId,
+      updatedBy: userId
+    };
+    return this.servicesService.create(serviceData);
   }
 
   @Get()
@@ -40,8 +44,12 @@ export class ServicesController {
 
   @Put(':id')
   @Roles('ADMIN') // Only users with ADMIN role can update services
-  update(@Param('id') id: string, @Body() updateServiceDto: any, @GetAccountId() accountId: Types.ObjectId) {
-    return this.servicesService.update(id, updateServiceDto, accountId);
+  update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const serviceData = {
+      ...updateServiceDto,
+      updatedBy: userId
+    };
+    return this.servicesService.update(id, serviceData, accountId);
   }
 
   @Delete(':id')

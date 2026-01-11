@@ -1,9 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateFollowUpDto } from './dto/create-follow-up.dto';
+import { UpdateFollowUpDto } from './dto/update-follow-up.dto';
 import { FollowUpsService } from './follow-ups.service';
-import { Types } from 'mongoose';
 
 @Controller('follow-ups')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -12,13 +14,16 @@ export class FollowUpsController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  async create(@Body() createFollowUpDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createFollowUpDto.account = accountId;
-    createFollowUpDto.createdBy = userId;
-    createFollowUpDto.updatedBy = userId;
+  async create(@Body() dto: CreateFollowUpDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const followUpData = {
+      ...dto,
+      account: accountId,
+      customer: new Types.ObjectId(dto.customer),
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
 
-    return this.followUpsService.create(createFollowUpDto);
+    return this.followUpsService.create(followUpData);
   }
 
   @Get()
@@ -48,19 +53,22 @@ export class FollowUpsController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateFollowUpDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    updateFollowUpDto.updatedBy = userId;
+  async update(@Param('id') id: string, @Body() dto: UpdateFollowUpDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const followUpData = {
+      ...dto,
+      updatedBy: userId
+    } as any;
 
     // Handle status changes for completion tracking
-    if (updateFollowUpDto.status === 'completed') {
-      updateFollowUpDto.completedAt = new Date();
-      updateFollowUpDto.completedBy = userId;
-    } else if (updateFollowUpDto.status === 'pending') {
-      updateFollowUpDto.completedAt = undefined;
-      updateFollowUpDto.completedBy = undefined;
+    if (dto.status === 'completed') {
+      followUpData.completedAt = new Date();
+      followUpData.completedBy = userId;
+    } else if (dto.status === 'pending') {
+      followUpData.completedAt = undefined;
+      followUpData.completedBy = undefined;
     }
 
-    return this.followUpsService.updateByAccount(id, updateFollowUpDto, accountId);
+    return this.followUpsService.updateByAccount(id, followUpData, accountId);
   }
 
   @Delete(':id')

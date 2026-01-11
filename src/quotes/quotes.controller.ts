@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateQuoteDto } from './dto/create-quote.dto';
+import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { QuotesService } from './quotes.service';
 
 @Controller('quotes')
@@ -12,13 +14,28 @@ export class QuotesController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can create quotes
-  async create(@Body() createQuoteDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createQuoteDto.account = accountId;
-    createQuoteDto.createdBy = userId;
-    createQuoteDto.updatedBy = userId;
+  async create(@Body() dto: CreateQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const quoteData = {
+      ...dto,
+      account: accountId,
+      customer: new Types.ObjectId(dto.customer),
+      ...(dto.services && {
+        services: dto.services.map((service) => ({
+          ...service,
+          service: new Types.ObjectId(service.service)
+        }))
+      }),
+      ...(dto.products && {
+        products: dto.products.map((product) => ({
+          ...product,
+          product: new Types.ObjectId(product.product)
+        }))
+      }),
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
 
-    return this.quotesService.create(createQuoteDto);
+    return this.quotesService.create(quoteData);
   }
 
   @Get()
@@ -44,9 +61,26 @@ export class QuotesController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can update quotes
-  async update(@Param('id') id: string, @Body() updateQuoteDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    updateQuoteDto.updatedBy = userId;
-    return this.quotesService.updateByAccount(id, updateQuoteDto, accountId);
+  async update(@Param('id') id: string, @Body() dto: UpdateQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const quoteData = {
+      ...dto,
+      ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
+      ...(dto.services && {
+        services: dto.services.map((service) => ({
+          ...service,
+          ...(service.service && { service: new Types.ObjectId(service.service) })
+        }))
+      }),
+      ...(dto.products && {
+        products: dto.products.map((product) => ({
+          ...product,
+          ...(product.product && { product: new Types.ObjectId(product.product) })
+        }))
+      }),
+      updatedBy: userId
+    } as any;
+
+    return this.quotesService.updateByAccount(id, quoteData, accountId);
   }
 
   @Put(':id/send')

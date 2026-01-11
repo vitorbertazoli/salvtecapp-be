@@ -4,6 +4,8 @@ import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CustomersService } from './customers.service';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Controller('customers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -12,13 +14,17 @@ export class CustomersController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create customers
-  async create(@Body() createCustomerDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    // Override account with the one from JWT token
-    createCustomerDto.account = accountId;
-    createCustomerDto.createdBy = userId;
-    createCustomerDto.updatedBy = userId;
+  async create(@Body() dto: CreateCustomerDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const customerData = {
+      ...dto,
+      account: accountId,
+      ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
+      ...(dto.address && { address: new Types.ObjectId(dto.address) }),
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
 
-    return this.customersService.create(createCustomerDto, accountId);
+    return this.customersService.create(customerData, accountId);
   }
 
   @Get()
@@ -43,9 +49,15 @@ export class CustomersController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can update customers
-  async update(@Param('id') id: string, @Body() updateCustomerDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    updateCustomerDto.updatedBy = userId;
-    return this.customersService.updateByAccount(id, updateCustomerDto, accountId);
+  async update(@Param('id') id: string, @Body() dto: UpdateCustomerDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const customerData = {
+      ...dto,
+      ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
+      ...(dto.address && { address: new Types.ObjectId(dto.address) }),
+      updatedBy: userId
+    } as any;
+
+    return this.customersService.updateByAccount(id, customerData, accountId);
   }
 
   @Delete(':id')
