@@ -3,7 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { VehicleUsage } from './schemas/vehicle-usages.schema';
+import { CreateVehicleUsageDto } from './dto/create-vehicle-usage.dto';
+import { UpdateVehicleUsageDto } from './dto/update-vehicle-usage.dto';
 import { VehicleUsagesService } from './vehicle-usages.service';
 
 @Controller('vehicle-usages')
@@ -13,11 +14,17 @@ export class VehicleUsagesController {
 
   @Post()
   @Roles('TECHNICIAN', 'SUPERVISOR', 'ADMIN')
-  async create(@Body() createDto: Partial<VehicleUsage>, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    createDto.createdBy = userId as any;
-    createDto.updatedBy = userId as any;
-    createDto.account = accountId as any;
-    return this.vehicleUsagesService.create(createDto);
+  async create(@Body() dto: CreateVehicleUsageDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const vehicleUsageData = {
+      ...dto,
+      account: accountId,
+      technician: new Types.ObjectId(dto.technician),
+      vehicle: new Types.ObjectId(dto.vehicle),
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
+
+    return this.vehicleUsagesService.create(vehicleUsageData);
   }
 
   @Get()
@@ -34,9 +41,13 @@ export class VehicleUsagesController {
 
   @Patch(':id')
   @Roles('SUPERVISOR', 'ADMIN')
-  async update(@Param('id') id: string, @Body() updateDto: Partial<VehicleUsage>, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    updateDto.updatedBy = userId as any;
-    const usage = await this.vehicleUsagesService.update(id, updateDto, accountId);
+  async update(@Param('id') id: string, @Body() dto: UpdateVehicleUsageDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const vehicleUsageData = {
+      ...dto,
+      updatedBy: userId
+    } as any;
+
+    const usage = await this.vehicleUsagesService.update(id, vehicleUsageData, accountId);
     if (!usage) throw new NotFoundException('Vehicle usage not found');
     return usage;
   }

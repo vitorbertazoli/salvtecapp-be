@@ -1,9 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { GetAccountId } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminService } from './admin.service';
+import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
 import { MasterAdminGuard } from './guards/master-admin.guard';
-import { Types } from 'mongoose';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, MasterAdminGuard)
@@ -19,8 +20,8 @@ export class AdminController {
   }
 
   @Put('accounts/:id/status')
-  async updateAccountStatus(@Param('id') accountId: string, @Body() body: { status: 'pending' | 'active' | 'suspended' }) {
-    return this.adminService.updateAccountStatus(accountId, body.status);
+  async updateAccountStatus(@Param('id') accountId: string, @Body() updateAccountStatusDto: UpdateAccountStatusDto) {
+    return this.adminService.updateAccountStatus(accountId, updateAccountStatusDto.status);
   }
 
   @Delete('accounts/:id')

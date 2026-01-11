@@ -3,7 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Vehicle } from './schemas/vehicles.schema';
+import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehiclesService } from './vehicles.service';
 
 @Controller('vehicles')
@@ -13,11 +14,15 @@ export class VehiclesController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  create(@Body() createVehicleDto: Partial<Vehicle>, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    createVehicleDto.account = accountId as any;
-    createVehicleDto.createdBy = userId;
-    createVehicleDto.updatedBy = userId;
-    return this.vehiclesService.create(createVehicleDto);
+  create(@Body() dto: CreateVehicleDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const vehicleData = {
+      ...dto,
+      account: accountId,
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
+
+    return this.vehiclesService.create(vehicleData);
   }
 
   @Get()
@@ -42,9 +47,13 @@ export class VehiclesController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateVehicleDto: Partial<Vehicle>, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    updateVehicleDto.updatedBy = userId;
-    const vehicle = await this.vehiclesService.update(id, updateVehicleDto, accountId);
+  async update(@Param('id') id: string, @Body() dto: UpdateVehicleDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const vehicleData = {
+      ...dto,
+      updatedBy: userId
+    } as any;
+
+    const vehicle = await this.vehiclesService.update(id, vehicleData, accountId);
     if (!vehicle) throw new NotFoundException('Vehicle not found');
     return vehicle;
   }

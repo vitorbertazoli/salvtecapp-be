@@ -3,20 +3,22 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from './schemas/service-order.schema';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ServiceOrdersService {
   constructor(
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
     private quotesService: QuotesService
-  ) {}
+  ) { }
 
   async create(serviceOrderData: Partial<ServiceOrder>): Promise<ServiceOrder> {
     // Generate order number if not provided
     if (!serviceOrderData.orderNumber) {
       const year = new Date().getFullYear();
-      const count = await this.serviceOrderModel.countDocuments();
-      serviceOrderData.orderNumber = `SO-${year}-${String(count + 1).padStart(6, '0')}`;
+      // generate a 6 digit random string using bcrypt, remove special characters and take first 8 characters
+      const randomString = (await bcrypt.hash(Date.now().toString(), 5)).replace(/\W/g, '').slice(0, 8).toUpperCase();
+      serviceOrderData.orderNumber = `SO-${year}-${randomString}`;
     }
 
     const createdServiceOrder = new this.serviceOrderModel(serviceOrderData);

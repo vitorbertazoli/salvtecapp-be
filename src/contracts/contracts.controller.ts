@@ -4,6 +4,8 @@ import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ContractsService } from './contracts.service';
+import { CreateContractDto } from './dto/create-contract.dto';
+import { UpdateContractDto } from './dto/update-contract.dto';
 
 @Controller('contracts')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -12,13 +14,16 @@ export class ContractsController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create contracts
-  async create(@Body() createContractDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    // Override account with the one from JWT token
-    createContractDto.account = accountId;
-    createContractDto.createdBy = userId;
-    createContractDto.updatedBy = userId;
+  async create(@Body() dto: CreateContractDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const contractData = {
+      ...dto,
+      account: accountId,
+      customer: new Types.ObjectId(dto.customer),
+      createdBy: userId,
+      updatedBy: userId
+    } as any;
 
-    return this.contractsService.create(createContractDto);
+    return this.contractsService.create(contractData);
   }
 
   @Get()
@@ -45,10 +50,14 @@ export class ContractsController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can update contracts
-  async update(@Param('id') id: string, @Body() updateContractDto: any, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    updateContractDto.updatedBy = userId;
-    updateContractDto.account = accountId;
-    return this.contractsService.updateByAccount(id, updateContractDto, accountId);
+  async update(@Param('id') id: string, @Body() dto: UpdateContractDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const contractData = {
+      ...dto,
+      ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
+      updatedBy: userId
+    } as any;
+
+    return this.contractsService.updateByAccount(id, contractData, accountId);
   }
 
   @Delete(':id')

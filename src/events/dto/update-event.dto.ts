@@ -1,0 +1,43 @@
+import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+export class UpdateEventDto {
+  @IsNotEmpty()
+  @IsString()
+  date: string;
+
+  @IsNotEmpty()
+  @IsString()
+  startTime: string;
+
+  @IsNotEmpty()
+  @IsString()
+  endTime: string;
+
+  @IsNotEmpty()
+  @IsMongoId()
+  customer: string;
+
+  @IsNotEmpty()
+  @IsMongoId()
+  technician: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(['scheduled', 'completed', 'cancelled'])
+  status?: 'scheduled' | 'completed' | 'cancelled';
+
+  @IsOptional()
+  @IsString()
+  completionNotes?: string;
+
+  @IsOptional()
+  @IsMongoId()
+  serviceOrder?: string;
+}

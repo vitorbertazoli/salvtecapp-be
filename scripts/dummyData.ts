@@ -4,7 +4,6 @@ import * as dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import * as path from 'path';
 import { AccountSchema } from '../src/accounts/schemas/account.schema';
-import { AddressSchema } from '../src/accounts/schemas/address.schema';
 import { ContractSchema } from '../src/contracts/schemas/contract.schema';
 import { CustomerSchema } from '../src/customers/schemas/customer.schema';
 import { EquipmentTypeSchema } from '../src/equipmentType/schemas/equipment-type.schema';
@@ -23,7 +22,6 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 // Configuration for data generation
 const CONFIG = {
-  addresses: 1500,
   technicians: 20,
   customers: 1200,
   contracts: 500,
@@ -140,6 +138,22 @@ function generatePhone(): string {
 // Helper function to generate Brazilian ZIP code (unformatted)
 function generateZipCode(): string {
   return faker.string.numeric(5) + faker.string.numeric(3);
+}
+
+function generateAddress(): any {
+  const state = faker.helpers.arrayElement(BRAZILIAN_STATES);
+  const city = faker.helpers.arrayElement(CITIES_BY_STATE[state] || ['São Paulo']);
+
+  return {
+    street: faker.location.street(),
+    number: faker.location.buildingNumber(),
+    complement: faker.helpers.maybe(() => faker.location.secondaryAddress(), { probability: 0.3 }),
+    neighborhood: faker.location.county(),
+    city: city,
+    state: state,
+    zipCode: generateZipCode(),
+    country: 'Brazil'
+  };
 }
 
 // Equipment types for HVAC systems
@@ -358,7 +372,6 @@ async function populateDummyData() {
 
     // Create models
     const Account = mongoose.model('Account', AccountSchema);
-    const Address = mongoose.model('Address', AddressSchema);
     const Contract = mongoose.model('Contract', ContractSchema);
     const Customer = mongoose.model('Customer', CustomerSchema);
     const EquipmentType = mongoose.model('EquipmentType', EquipmentTypeSchema);
@@ -398,7 +411,6 @@ async function populateDummyData() {
 
     // Delete all data except users
     await Promise.all([
-      Address.deleteMany({ account: account._id }),
       Contract.deleteMany({ account: account._id }),
       Customer.deleteMany({ account: account._id }),
       Event.deleteMany({ account: account._id }),
@@ -415,30 +427,6 @@ async function populateDummyData() {
     console.log('✅ Deleted existing data\n');
 
     console.log('📦 Creating dummy data...\n');
-
-    // Create addresses
-    console.log(`Creating ${CONFIG.addresses} addresses...`);
-    const addresses: any[] = [];
-    for (let i = 0; i < CONFIG.addresses; i++) {
-      const state = faker.helpers.arrayElement(BRAZILIAN_STATES);
-      const city = faker.helpers.arrayElement(CITIES_BY_STATE[state] || ['São Paulo']);
-
-      addresses.push({
-        account: account._id,
-        street: faker.location.street(),
-        number: faker.location.buildingNumber(),
-        complement: faker.helpers.maybe(() => faker.location.secondaryAddress(), { probability: 0.3 }),
-        neighborhood: faker.location.county(),
-        city: city,
-        state: state,
-        zipCode: generateZipCode(),
-        country: 'Brazil',
-        createdBy: userId,
-        updatedBy: userId
-      });
-    }
-    const createdAddresses = await Address.insertMany(addresses);
-    console.log(`✅ Created ${createdAddresses.length} addresses`);
 
     // Create technicians
     console.log(`Creating ${CONFIG.technicians} technicians...`);
@@ -487,7 +475,7 @@ async function populateDummyData() {
         cpf: generateCPF(),
         startDate: faker.date.past({ years: 5 }),
         endDate: faker.helpers.maybe(() => faker.date.recent({ days: 365 }), { probability: 0.1 }),
-        address: faker.helpers.arrayElement(createdAddresses)._id,
+        address: generateAddress(),
         phoneNumber: generatePhone(),
         createdBy: userId,
         updatedBy: userId
@@ -534,7 +522,7 @@ async function populateDummyData() {
         status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
         phoneNumber: generatePhone(),
         technicianResponsible: faker.helpers.arrayElement(createdTechnicians)._id,
-        address: faker.helpers.arrayElement(createdAddresses)._id,
+        address: generateAddress(),
         account: account._id,
         equipments: equipments,
         createdBy: userId,

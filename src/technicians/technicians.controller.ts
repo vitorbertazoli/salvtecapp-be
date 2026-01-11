@@ -3,32 +3,34 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateTechnicianDto } from './dto/create-technician.dto';
+import { UpdateTechnicianDto } from './dto/update-technician.dto';
+import { Technician } from './schemas/technician.schema';
 import { TechniciansService } from './technicians.service';
 
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TechniciansController {
-  constructor(private readonly techniciansService: TechniciansService) {}
+  constructor(private readonly techniciansService: TechniciansService) { }
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
-  async create(@Body() createTechnicianDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createTechnicianDto.account = accountId;
-    createTechnicianDto.createdBy = userId;
-    createTechnicianDto.updatedBy = userId;
-
-    // Extract address and userAccount data from the body
-    const { address, userAccount, ...technicianData } = createTechnicianDto;
+  async create(@Body() createTechnicianDto: CreateTechnicianDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const userAccount = createTechnicianDto.userAccount
+      ? {
+        ...createTechnicianDto.userAccount,
+        roles: createTechnicianDto.userAccount.roles || []
+      }
+      : undefined;
 
     return this.techniciansService.create(
-      technicianData.account,
-      technicianData.cpf as string,
-      technicianData.phoneNumber as string,
-      address, // Pass the address object directly
-      technicianData.createdBy as string,
-      technicianData.updatedBy as string,
-      userAccount // Pass the user account data
+      accountId,
+      createTechnicianDto.cpf,
+      createTechnicianDto.phoneNumber,
+      createTechnicianDto.address,
+      userId,
+      userId,
+      userAccount
     );
   }
 
@@ -54,26 +56,44 @@ export class TechniciansController {
     if (isAdmin) {
       return this.techniciansService.findByIdAndAccount(id, accountId);
     } else {
-      // Not authorized
-      return null;
+      // return the current user's technician record
+      if (!user.technicianId) {
+        return null;
+      }
+      return this.techniciansService.findByIdAndAccount(user.technicianId, accountId);
     }
   }
 
   @Put(':id')
   @Roles('ADMIN') // Only users with ADMIN role can update technicians
-  async update(@Param('id') id: string, @Body() updateTechnicianDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    updateTechnicianDto.updatedBy = userId;
+  async update(
+    @Param('id') id: string,
+    @Body() updateTechnicianDto: UpdateTechnicianDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    // Prepare technician data, excluding nested objects
+    const { userAccount, ...technicianData } = updateTechnicianDto;
+    const technicianUpdateData: Partial<Technician> & { address?: any; userAccount?: any } = {
+      cpf: technicianData.cpf,
+      phoneNumber: technicianData.phoneNumber,
+      status: technicianData.status,
+      updatedBy: userId,
+      address: technicianData.address,
+      // Convert string dates to Date objects if provided
+      ...(technicianData.startDate && { startDate: new Date(technicianData.startDate) }),
+      ...(technicianData.endDate && { endDate: new Date(technicianData.endDate) }),
+    };
 
-    // Extract address and userAccount data from the body
-    const { address, userAccount, ...technicianData } = updateTechnicianDto;
+    // Handle userAccount - force roles to be TECHNICIAN only
+    const processedUserAccount = userAccount
+      ? {
+        ...userAccount,
+        roles: ['TECHNICIAN'] // Always force TECHNICIAN role
+      }
+      : undefined;
 
-    return this.techniciansService.update(
-      id,
-      accountId,
-      technicianData,
-      address, // Pass the address object directly
-      userAccount // Pass the user account data
-    );
+    return this.techniciansService.update(id, accountId, technicianUpdateData, processedUserAccount);
   }
 
   @Delete(':id')

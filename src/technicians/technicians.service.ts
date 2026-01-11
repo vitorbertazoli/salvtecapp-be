@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { AccountsService } from '../accounts/accounts.service';
 import { Role } from '../roles/schemas/role.schema';
 import { UsersService } from '../users/users.service';
 import { Technician, TechnicianDocument } from './schemas/technician.schema';
@@ -11,9 +10,8 @@ export class TechniciansService {
   constructor(
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
     @InjectModel(Role.name) private roleModel: Model<any>,
-    private readonly accountsService: AccountsService,
     private readonly usersService: UsersService
-  ) {}
+  ) { }
 
   async create(
     account: Types.ObjectId,
@@ -39,21 +37,6 @@ export class TechniciansService {
       roles: string[];
     }
   ): Promise<Technician> {
-    // Create the address first
-    const address = await this.accountsService.createAddress(
-      account,
-      addressData.street,
-      addressData.number,
-      addressData.city,
-      addressData.state,
-      addressData.zipCode,
-      createdBy,
-      updatedBy,
-      addressData.complement,
-      addressData.neighborhood,
-      addressData.country || 'Brazil'
-    );
-
     let userId: Types.ObjectId | undefined;
 
     // Create user account if provided
@@ -80,12 +63,17 @@ export class TechniciansService {
       userId = (user as any)._id;
     }
 
-    // Create the technician with the address and user references
+    // Create the technician with embedded address
+    const address = {
+      ...addressData,
+      country: addressData.country || 'Brazil'
+    };
+
     const createdTechnician = new this.technicianModel({
       account: new Types.ObjectId(account),
       cpf,
       phoneNumber,
-      address: (address as any)._id, // Cast to any to access _id from the saved document
+      address,
       user: userId,
       createdBy,
       updatedBy
@@ -129,20 +117,6 @@ export class TechniciansService {
       {
         $unwind: {
           path: '$user',
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $lookup: {
-          from: 'addresses',
-          localField: 'address',
-          foreignField: '_id',
-          as: 'address'
-        }
-      },
-      {
-        $unwind: {
-          path: '$address',
           preserveNullAndEmptyArrays: true
         }
       }
@@ -231,27 +205,11 @@ export class TechniciansService {
     id: string,
     accountId: Types.ObjectId,
     technicianData: Partial<Technician> & { address?: any; userAccount?: any },
-    addressData?: any,
     userAccountData?: any
   ): Promise<Technician | null> {
     const query = { _id: id, account: accountId };
 
-    // Handle address update if address data is provided
-    if (addressData && typeof addressData === 'object') {
-      // First, get the current technician to find the address ID
-      const currentTechnician = await this.technicianModel.findOne(query).exec();
-      if (currentTechnician && currentTechnician.address) {
-        // Update the existing address
-        await this.accountsService.updateAddress(
-          currentTechnician.address.toString(),
-          {
-            ...addressData,
-            updatedBy: technicianData.updatedBy
-          },
-          accountId
-        );
-      }
-    }
+    // Address is now embedded directly in technicianData, no need for separate handling
 
     // Handle user account update if userAccount data is provided
     if (userAccountData && typeof userAccountData === 'object') {
@@ -284,12 +242,11 @@ export class TechniciansService {
     }
 
     // Remove address and userAccount from technicianData since we've handled them separately
-    const { address: techAddress, userAccount: techUserAccount, ...cleanTechnicianData } = technicianData;
+    const { userAccount: techUserAccount, ...cleanTechnicianData } = technicianData;
 
     return this.technicianModel
       .findOneAndUpdate(query, cleanTechnicianData, { new: true })
       .populate('account', 'name id')
-      .populate('address')
       .populate('user', 'email firstName lastName')
       .exec();
   }
@@ -328,7 +285,6 @@ export class TechniciansService {
     return this.technicianModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
-      .populate('address')
       .populate('user', 'email firstName lastName')
       .exec();
   }
@@ -337,7 +293,6 @@ export class TechniciansService {
     return this.technicianModel
       .findOne({ user: new Types.ObjectId(userId) })
       .populate('account', 'name id')
-      .populate('address')
       .exec();
   }
 

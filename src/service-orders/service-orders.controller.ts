@@ -3,6 +3,9 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateFromQuoteDto } from './dto/create-from-quote.dto';
+import { CreateServiceOrderDto } from './dto/create-service-order.dto';
+import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { ServiceOrdersService } from './service-orders.service';
 
 @Controller('service-orders')
@@ -12,18 +15,19 @@ export class ServiceOrdersController {
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
-  async create(@Body() createServiceOrderDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createServiceOrderDto.account = accountId;
-    createServiceOrderDto.createdBy = userId;
-    createServiceOrderDto.updatedBy = userId;
-
-    return this.serviceOrdersService.create(createServiceOrderDto);
+  async create(@Body() createServiceOrderDto: CreateServiceOrderDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const serviceOrderData = {
+      ...createServiceOrderDto,
+      account: accountId,
+      createdBy: userId,
+      updatedBy: userId
+    };
+    return this.serviceOrdersService.create(serviceOrderData as any);
   }
 
   @Post('from-quote')
   @Roles('ADMIN', 'SUPERVISOR')
-  async createFromQuote(@Body() body: { quoteId: string; priority: 'low' | 'normal' | 'high' | 'urgent' }, @GetAccountId() accountId: Types.ObjectId) {
+  async createFromQuote(@Body() body: CreateFromQuoteDto, @GetAccountId() accountId: Types.ObjectId) {
     return this.serviceOrdersService.createFromQuote(body.quoteId, body.priority, accountId);
   }
 
@@ -54,9 +58,17 @@ export class ServiceOrdersController {
 
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async update(@Param('id') id: string, @Body() updateServiceOrderDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    updateServiceOrderDto.updatedBy = userId;
-    return this.serviceOrdersService.updateByAccount(id, updateServiceOrderDto, accountId);
+  async update(
+    @Param('id') id: string,
+    @Body() updateServiceOrderDto: UpdateServiceOrderDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    const serviceOrderData = {
+      ...updateServiceOrderDto,
+      updatedBy: userId
+    };
+    return this.serviceOrdersService.updateByAccount(id, serviceOrderData as any, accountId);
   }
 
   @Delete(':id')

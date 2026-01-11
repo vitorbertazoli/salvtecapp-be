@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -26,6 +27,15 @@ async function bootstrap() {
   app.useStaticAssets(uploadsPath, {
     prefix: '/uploads/'
   });
+
+  // Enable global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip properties that do not have decorators
+      forbidNonWhitelisted: true, // Throw error if non-whitelisted properties are provided
+      transform: true // Transform payloads to DTO instances
+    })
+  );
 
   // Add /api prefix to all routes
   app.setGlobalPrefix('api');

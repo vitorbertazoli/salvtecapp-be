@@ -1,5 +1,6 @@
-import { BadRequestException, Body, Controller, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import * as crypto from 'crypto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -9,6 +10,7 @@ import { UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../utils/email.service';
 import { AccountsService } from './accounts.service';
+import { CreateAccountDto } from './dto/create-account.dto';
 import { AccountDocument } from './schemas/account.schema';
 
 interface UploadedFile {
@@ -24,6 +26,7 @@ interface UploadedFile {
 }
 
 @Controller('public-accounts')
+@UseGuards(ThrottlerGuard)
 export class PublicAccountsController {
   constructor(
     private readonly accountsService: AccountsService,
@@ -33,6 +36,7 @@ export class PublicAccountsController {
   ) {}
 
   @Post()
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseInterceptors(
     FileInterceptor('logo', {
       storage: diskStorage({
@@ -55,14 +59,7 @@ export class PublicAccountsController {
   )
   async create(
     @Body()
-    createAccountDto: {
-      name: string;
-      plan: 'free' | 'pro' | 'enterprise';
-      firstName: string;
-      lastName: string;
-      email: string;
-      password: string;
-    },
+    createAccountDto: CreateAccountDto,
     @UploadedFile() logo?: UploadedFile
   ) {
     // Convert account name to lowercase and replace spaces/special chars with dashes

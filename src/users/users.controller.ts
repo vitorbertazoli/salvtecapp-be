@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './schemas/user.schema';
 import { UsersService } from './users.service';
 
@@ -13,20 +15,16 @@ export class UsersController {
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create users
-  async create(@Body() createUserDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createUserDto.account = accountId;
-    createUserDto.createdBy = userId;
-    createUserDto.updatedBy = userId;
+  async create(@Body() createUserDto: CreateUserDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     return this.usersService.create(
-      createUserDto.account,
-      createUserDto.firstName as string,
-      createUserDto.lastName as string,
-      createUserDto.email as string,
-      createUserDto.password as string,
-      (createUserDto.roles as string[]) || [],
-      createUserDto.createdBy as string,
-      createUserDto.updatedBy as string
+      accountId,
+      createUserDto.firstName,
+      createUserDto.lastName,
+      createUserDto.email,
+      createUserDto.password,
+      createUserDto.roles || [],
+      userId,
+      userId
     );
   }
 
@@ -81,24 +79,32 @@ export class UsersController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     // Check if user has ADMIN role or is updating their own data
     const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
     const isOwnData = user.id === id;
 
     if (isAdmin || isOwnData) {
-      // Prevent updating sensitive system-level fields
-      delete updateUserDto.isMasterAdmin; // Master admin status can only be set by master admins through secure channels
-
-      // If not admin, prevent updating other sensitive fields
+      // If not admin, prevent updating sensitive fields
       if (!isAdmin) {
         delete updateUserDto.roles;
         delete updateUserDto.status;
-        delete updateUserDto.account;
       }
 
-      updateUserDto.updatedBy = user.id;
-      return this.usersService.update(id, updateUserDto as Partial<User>, accountId);
+      const userData: Partial<User> & { password?: string } = {
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
+        email: updateUserDto.email,
+        password: updateUserDto.password,
+        status: updateUserDto.status,
+        language: updateUserDto.language,
+        updatedBy: user.id,
+        // Convert role strings to ObjectIds if roles are provided
+        ...(updateUserDto.roles && {
+          roles: updateUserDto.roles.map((role) => new Types.ObjectId(role))
+        })
+      };
+      return this.usersService.update(id, userData, accountId);
     } else {
       // Not authorized
       return null;

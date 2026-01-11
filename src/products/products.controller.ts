@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
 @Controller('products')
@@ -12,12 +14,14 @@ export class ProductsController {
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create products
-  create(@Body() createProductDto: any, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    // Override account with the one from JWT token
-    createProductDto.account = accountId;
-    createProductDto.createdBy = userId;
-    createProductDto.updatedBy = userId;
-    return this.productsService.create(createProductDto);
+  create(@Body() createProductDto: CreateProductDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const productData = {
+      ...createProductDto,
+      account: accountId,
+      createdBy: userId,
+      updatedBy: userId
+    };
+    return this.productsService.create(productData);
   }
 
   @Get()
@@ -40,8 +44,12 @@ export class ProductsController {
 
   @Put(':id')
   @Roles('ADMIN') // Only users with ADMIN role can update products
-  update(@Param('id') id: string, @Body() updateProductDto: any, @GetAccountId() accountId: Types.ObjectId) {
-    return this.productsService.update(id, updateProductDto, accountId);
+  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const productData = {
+      ...updateProductDto,
+      updatedBy: userId
+    };
+    return this.productsService.update(id, productData, accountId);
   }
 
   @Delete(':id')
