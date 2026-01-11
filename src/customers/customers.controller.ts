@@ -10,7 +10,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 @Controller('customers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CustomersController {
-  constructor(private readonly customersService: CustomersService) {}
+  constructor(private readonly customersService: CustomersService) { }
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create customers
@@ -19,7 +19,6 @@ export class CustomersController {
       ...dto,
       account: accountId,
       ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
-      ...(dto.address && { address: new Types.ObjectId(dto.address) }),
       createdBy: userId,
       updatedBy: userId
     } as any;
@@ -53,7 +52,6 @@ export class CustomersController {
     const customerData = {
       ...dto,
       ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
-      ...(dto.address && { address: new Types.ObjectId(dto.address) }),
       updatedBy: userId
     } as any;
 

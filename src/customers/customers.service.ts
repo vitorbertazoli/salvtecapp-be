@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Address } from 'src/accounts/schemas/address.schema';
-import { AccountsService } from '../accounts/accounts.service';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 
 @Injectable()
 export class CustomersService {
   constructor(
-    @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
-    private readonly accountsService: AccountsService
-  ) {}
+    @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>
+  ) { }
 
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }, accountId: Types.ObjectId): Promise<Customer> {
     // Ensure type-specific fields are properly set
@@ -24,31 +21,20 @@ export class CustomersService {
       customerData.contactName = customerData.contactName || undefined;
     }
 
-    // Handle address creation - address is now required for customers
-    const address = await this.accountsService.createAddress(
-      accountId,
-      customerData.address.street,
-      customerData.address.number,
-      customerData.address.city,
-      customerData.address.state,
-      customerData.address.zipCode,
-      customerData.createdBy!,
-      customerData.updatedBy!,
-      customerData.address.complement,
-      customerData.address.neighborhood,
-      customerData.address.country || 'Brazil'
-    );
-    const addressId = (address as any)._id;
-    // Remove address from customerData since we've created it separately
-    delete customerData.address;
+    // Address is now embedded directly in the customer
+    const address = customerData.address ? {
+      ...customerData.address,
+      country: customerData.address.country || 'Brazil'
+    } : undefined;
 
     // Equipments are now embedded in the customer
     const equipments = customerData.equipments || [];
 
     const createdCustomer = new this.customerModel({
       ...customerData,
-      address: addressId,
-      equipments: equipments
+      address,
+      equipments,
+      account: accountId
     });
     const savedCustomer = await createdCustomer.save();
 
@@ -94,7 +80,6 @@ export class CustomersService {
       this.customerModel
         .find(searchQuery)
         .populate('account', 'name id')
-        .populate('address')
         .populate('technicianResponsible', 'name id')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -118,7 +103,6 @@ export class CustomersService {
     const customer = await this.customerModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
-      .populate('address')
       .populate('technicianResponsible', 'name id')
       .exec();
 
@@ -127,32 +111,23 @@ export class CustomersService {
 
   async updateByAccount(
     id: string,
-    customerData: Partial<Customer> & { address?: Partial<Address>; equipments?: any[] },
+    customerData: Partial<Customer> & { address?: any; equipments?: any[] },
     accountId: Types.ObjectId
   ): Promise<Customer | null> {
     const query = { _id: id, account: accountId };
 
-    const currentCustomer = await this.customerModel.findOne(query).exec();
-
-    // Handle address update if address data is provided
-    if (currentCustomer && customerData.address && typeof customerData.address === 'object' && currentCustomer.address) {
-      await this.accountsService.updateAddress(
-        currentCustomer.address.toString(),
-        {
-          ...customerData.address,
-          updatedBy: customerData.updatedBy
-        },
-        accountId
-      );
-      // Remove address from customerData since we've handled it separately
-      delete customerData.address;
+    // Handle address update - address is now embedded directly
+    if (customerData.address && typeof customerData.address === 'object') {
+      customerData.address = {
+        ...customerData.address,
+        country: customerData.address.country || 'Brazil'
+      };
     }
 
     // Equipments are now embedded, so just update the customer with the new equipments array
     const updatedCustomer = await this.customerModel
       .findOneAndUpdate(query, customerData, { new: true })
       .populate('account', 'name id')
-      .populate('address')
       .populate('technicianResponsible', 'name id')
       .exec();
 

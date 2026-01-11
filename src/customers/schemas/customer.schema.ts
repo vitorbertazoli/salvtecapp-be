@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { IAccount } from 'src/accounts/schemas/account.schema';
-import { IAddress } from 'src/accounts/schemas/address.schema';
 import { ITechnician } from 'src/technicians/schemas/technician.schema';
 
 export type CustomerDocument = Customer & Document;
@@ -14,6 +13,17 @@ export class Equipment {
   subType?: string;
   maker?: string;
   model?: string;
+}
+
+export class Address {
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
 }
 
 @Schema({ timestamps: true })
@@ -51,8 +61,19 @@ export class Customer {
   @Prop({ type: Types.ObjectId, ref: 'Technician' })
   technicianResponsible?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Address' })
-  address?: Types.ObjectId;
+  @Prop({
+    type: {
+      street: String,
+      number: String,
+      complement: String,
+      neighborhood: String,
+      city: String,
+      state: String,
+      zipCode: String,
+      country: { type: String, default: 'Brazil' }
+    }
+  })
+  address?: Address;
 
   @Prop({ type: Types.ObjectId, ref: 'Account' })
   account?: Types.ObjectId;
@@ -91,7 +112,7 @@ export interface ICustomer {
   status: 'active' | 'inactive' | 'suspended';
   phoneNumber?: string;
   technicianResponsible?: string | ITechnician;
-  address?: string | IAddress;
+  address?: Address;
   account?: string | IAccount;
   createdBy: string;
   updatedBy: string;

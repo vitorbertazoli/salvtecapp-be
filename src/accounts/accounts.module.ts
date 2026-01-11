@@ -8,13 +8,11 @@ import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { PublicAccountsController } from './public-accounts.controller';
 import { Account, AccountSchema } from './schemas/account.schema';
-import { Address, AddressSchema } from './schemas/address.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Account.name, schema: AccountSchema },
-      { name: Address.name, schema: AddressSchema }
+      { name: Account.name, schema: AccountSchema }
     ]),
     UsersModule,
     RolesModule,
@@ -30,4 +28,4 @@ import { Address, AddressSchema } from './schemas/address.schema';
   providers: [AccountsService],
   exports: [AccountsService]
 })
-export class AccountsModule {}
+export class AccountsModule { }

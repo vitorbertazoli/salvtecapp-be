@@ -1,9 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { IAccount } from 'src/accounts/schemas/account.schema';
-import { IAddress } from 'src/accounts/schemas/address.schema';
 
 export type TechnicianDocument = Technician & Document;
+
+export class Address {
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
 
 @Schema({ timestamps: true })
 export class Technician {
@@ -22,8 +32,20 @@ export class Technician {
   @Prop()
   endDate?: Date;
 
-  @Prop({ type: Types.ObjectId, ref: 'Address', required: true })
-  address: Types.ObjectId;
+  @Prop({
+    type: {
+      street: String,
+      number: String,
+      complement: String,
+      neighborhood: String,
+      city: String,
+      state: String,
+      zipCode: String,
+      country: { type: String, default: 'Brazil' }
+    },
+    required: true
+  })
+  address: Address;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   user?: Types.ObjectId;
@@ -45,7 +67,7 @@ export interface ITechnician {
   status: 'active' | 'inactive' | 'suspended';
   startDate: Date;
   endDate?: Date;
-  address: string | IAddress;
+  address: Address;
   user?: string;
   phoneNumber: string;
 }

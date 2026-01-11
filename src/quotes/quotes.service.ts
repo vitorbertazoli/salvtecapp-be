@@ -126,8 +126,6 @@ export class QuotesService {
       return null;
     }
 
-    quoteData.customer = new Types.ObjectId(quoteData.customer);
-
     // If quote has been sent or accepted, reset status to draft when updating
     // But allow status changes from 'sent' to 'accepted' (for service order creation)
     const updateData = { ...quoteData };

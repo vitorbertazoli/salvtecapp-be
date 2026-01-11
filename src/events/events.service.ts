@@ -13,12 +13,12 @@ export class EventsService {
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
     private serviceOrdersService: ServiceOrdersService
-  ) {}
+  ) { }
 
-  async create(eventData: Partial<Event> & { customerId: string; technicianId: string; serviceOrderId?: string }, accountId: Types.ObjectId): Promise<Event> {
+  async create(eventData: Partial<Event> & { customer: string; technician: string; serviceOrder?: string }, accountId: Types.ObjectId): Promise<Event> {
     // Fetch customer and technician to build title
-    const customer = await this.customerModel.findById(new Types.ObjectId(eventData.customerId));
-    const technician = await this.technicianModel.findById(new Types.ObjectId(eventData.technicianId));
+    const customer = await this.customerModel.findById(eventData.customer);
+    const technician = await this.technicianModel.findById(eventData.technician);
 
     if (!customer || !technician) {
       throw new Error('Invalid customer or technician');
@@ -28,10 +28,6 @@ export class EventsService {
     const technicianUser = (technician as any).user;
     eventData.title = `${customer.name} - ${technicianUser?.firstName || ''} ${technicianUser?.lastName || ''}`.trim();
 
-    if (eventData.serviceOrderId) {
-      eventData.serviceOrder = new Types.ObjectId(eventData.serviceOrderId);
-    }
-
     const createdEvent = new this.eventModel({
       ...eventData,
       customer,
@@ -40,9 +36,9 @@ export class EventsService {
     const savedEvent = await createdEvent.save();
 
     // Update service order status to 'scheduled' if a service order is linked
-    if (eventData.serviceOrderId) {
+    if (eventData.serviceOrder) {
       await this.serviceOrdersService.updateByAccount(
-        eventData.serviceOrderId,
+        eventData.serviceOrder,
         {
           status: 'scheduled',
           scheduledDate: new Date(`${eventData.date}T${eventData.startTime}`)

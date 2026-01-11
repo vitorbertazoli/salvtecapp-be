@@ -29,6 +29,10 @@ class EquipmentDto {
   @IsOptional()
   @IsString()
   model?: string;
+
+  @IsOptional()
+  @IsMongoId()
+  _id?: string;
 }
 
 class ServiceItemDto {

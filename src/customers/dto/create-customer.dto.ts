@@ -31,6 +31,40 @@ class EquipmentDto {
   model?: string;
 }
 
+class AddressDto {
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  number?: string;
+
+  @IsOptional()
+  @IsString()
+  complement?: string;
+
+  @IsOptional()
+  @IsString()
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  zipCode?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+}
+
 export class CreateCustomerDto {
   @IsNotEmpty()
   @IsString()
@@ -69,8 +103,9 @@ export class CreateCustomerDto {
   technicianResponsible?: string;
 
   @IsOptional()
-  @IsMongoId()
-  address?: string;
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
 
   @IsOptional()
   @IsArray()
