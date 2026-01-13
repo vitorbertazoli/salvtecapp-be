@@ -515,19 +515,28 @@ async function populateDummyData() {
         });
       }
 
-      customers.push({
+      const customerData: any = {
         name: isCompany ? faker.company.name() : faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
-        cpf: isCompany ? undefined : generateCPF(),
+        type: isCompany ? 'commercial' : 'residential',
         status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
-        phoneNumber: generatePhone(),
+        phoneNumbers: [generatePhone()],
         technicianResponsible: faker.helpers.arrayElement(createdTechnicians)._id,
         address: generateAddress(),
         account: account._id,
         equipments: equipments,
         createdBy: userId,
         updatedBy: userId
-      });
+      };
+
+      if (isCompany) {
+        // Generate a basic CNPJ-like number (14 digits)
+        customerData.cnpj = faker.string.numeric(14);
+      } else {
+        customerData.cpf = generateCPF();
+      }
+
+      customers.push(customerData);
     }
     const createdCustomers = await Customer.insertMany(customers);
     console.log(`✅ Created ${createdCustomers.length} customers`);
@@ -897,7 +906,6 @@ async function populateDummyData() {
 
     console.log('\n🎉 Dummy data population completed successfully!\n');
     console.log('Summary:');
-    console.log(`- Addresses: ${createdAddresses.length}`);
     console.log(`- Technicians: ${createdTechnicians.length}`);
     console.log(`- Customers: ${createdCustomers.length}`);
     console.log(`- Contracts: ${createdContracts.length}`);
@@ -908,7 +916,7 @@ async function populateDummyData() {
     console.log(`- Events: ${createdEvents.length}`);
     console.log(`- Follow-ups: ${createdFollowUps.length}\n`);
     console.log(
-      `Total records: ${createdAddresses.length + createdTechnicians.length + createdCustomers.length + createdContracts.length + createdServices.length + createdProducts.length + createdQuotes.length + createdServiceOrders.length + createdEvents.length + createdFollowUps.length}`
+      `Total records: ${createdTechnicians.length + createdCustomers.length + createdContracts.length + createdServices.length + createdProducts.length + createdQuotes.length + createdServiceOrders.length + createdEvents.length + createdFollowUps.length}`
     );
 
     await mongoose.disconnect();
