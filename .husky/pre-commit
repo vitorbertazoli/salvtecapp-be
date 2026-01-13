@@ -1,1 +1,8 @@
+#!/bin/sh
+. "$(dirname -- "$0")/_/husky.sh"
+
 npm run build
+if [ $? -ne 0 ]; then
+  echo "Build failed. Aborting commit."
+  exit 1
+fi
