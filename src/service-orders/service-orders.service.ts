@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from './schemas/service-order.schema';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ServiceOrdersService {
   constructor(
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
     private quotesService: QuotesService
-  ) { }
+  ) {}
 
   async create(serviceOrderData: Partial<ServiceOrder>): Promise<ServiceOrder> {
     // Generate order number if not provided
@@ -193,7 +193,7 @@ export class ServiceOrdersService {
           'account.id': 1,
           'customer.name': 1,
           'customer.email': 1,
-          'customer.phoneNumber': 1,
+          'customer.phoneNumbers': 1,
           'customer.id': 1,
           'quote.quoteId': 1,
           'assignedTechnician.name': 1,
@@ -250,7 +250,7 @@ export class ServiceOrdersService {
     const serviceOrder = await this.serviceOrderModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
-      .populate('customer', 'name email phoneNumber id')
+      .populate('customer', 'name email phoneNumbers id')
       .populate('quote', 'quoteId')
       .populate('assignedTechnician', 'name email phoneNumber id')
       .populate('items.service', 'name')
@@ -290,7 +290,7 @@ export class ServiceOrdersService {
         account: accountId,
         status: { $in: ['pending', 'scheduled', 'in_progress'] }
       })
-      .populate('customer', 'name email phoneNumber id')
+      .populate('customer', 'name email phoneNumbers id')
       .populate('assignedTechnician', 'name email phoneNumber id')
       .select('orderNumber description status priority scheduledDate createdAt customer assignedTechnician')
       .sort({ createdAt: -1 })

@@ -23,7 +23,7 @@ export class ProductsController {
     };
     return this.productsService.create(productData);
   }
-
+  213
   @Get()
   findAll(
     @Query('page') page: string = '1',

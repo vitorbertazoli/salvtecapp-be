@@ -100,7 +100,7 @@ export class FollowUpsService {
             _id: '$customer._id',
             name: '$customer.name',
             email: '$customer.email',
-            phoneNumber: '$customer.phoneNumber'
+            phoneNumbers: '$customer.phoneNumbers'
           },
           account: 1,
           startDate: 1,
@@ -140,7 +140,7 @@ export class FollowUpsService {
   async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<FollowUpDocument | null> {
     const followUp = await this.followUpModel
       .findOne({ _id: id, account: accountId })
-      .populate('customer', 'name email phoneNumber')
+      .populate('customer', 'name email phoneNumbers')
       .populate('account', 'name')
       .exec();
 
@@ -159,7 +159,7 @@ export class FollowUpsService {
       }
     }
 
-    const updatedFollowUp = await this.followUpModel.findOneAndUpdate(query, followUpData, { new: true }).populate('customer', 'name email phoneNumber').exec();
+    const updatedFollowUp = await this.followUpModel.findOneAndUpdate(query, followUpData, { new: true }).populate('customer', 'name email phoneNumbers').exec();
 
     return updatedFollowUp;
   }

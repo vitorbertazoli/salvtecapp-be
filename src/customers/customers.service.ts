@@ -5,9 +5,7 @@ import { Customer, CustomerDocument } from './schemas/customer.schema';
 
 @Injectable()
 export class CustomersService {
-  constructor(
-    @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>
-  ) { }
+  constructor(@InjectModel(Customer.name) private customerModel: Model<CustomerDocument>) {}
 
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }, accountId: Types.ObjectId): Promise<Customer> {
     // Ensure type-specific fields are properly set
@@ -22,10 +20,12 @@ export class CustomersService {
     }
 
     // Address is now embedded directly in the customer
-    const address = customerData.address ? {
-      ...customerData.address,
-      country: customerData.address.country || 'Brazil'
-    } : undefined;
+    const address = customerData.address
+      ? {
+        ...customerData.address,
+        country: customerData.address.country || 'Brazil'
+      }
+      : undefined;
 
     // Equipments are now embedded in the customer
     const equipments = customerData.equipments || [];
@@ -68,7 +68,7 @@ export class CustomersService {
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { cpf: { $regex: search, $options: 'i' } },
-        { phoneNumber: { $regex: search, $options: 'i' } },
+        { phoneNumbers: { $elemMatch: { $regex: search, $options: 'i' } } },
         { _id: Types.ObjectId.isValid(search) ? search : undefined }
       ];
     }

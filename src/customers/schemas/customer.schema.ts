@@ -55,8 +55,11 @@ export class Customer {
   })
   status: 'active' | 'inactive' | 'suspended';
 
+  @Prop({ type: [String], default: [] })
+  phoneNumbers: string[];
+
   @Prop()
-  phoneNumber?: string;
+  notes?: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Technician' })
   technicianResponsible?: Types.ObjectId;
@@ -81,6 +84,7 @@ export class Customer {
   @Prop({
     type: [
       {
+        _id: false,
         name: { type: String, required: true },
         room: String,
         btus: Number,
@@ -110,7 +114,8 @@ export interface ICustomer {
   cnpj?: string;
   contactName?: string;
   status: 'active' | 'inactive' | 'suspended';
-  phoneNumber?: string;
+  phoneNumbers?: string[];
+  notes?: string;
   technicianResponsible?: string | ITechnician;
   address?: Address;
   account?: string | IAccount;

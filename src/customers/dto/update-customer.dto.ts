@@ -95,8 +95,13 @@ export class UpdateCustomerDto {
   status?: 'active' | 'inactive' | 'suspended';
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  phoneNumbers?: string[];
+
+  @IsOptional()
   @IsString()
-  phoneNumber?: string;
+  notes?: string;
 
   @IsOptional()
   @IsMongoId()
