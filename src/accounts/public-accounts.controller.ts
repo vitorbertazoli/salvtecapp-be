@@ -115,7 +115,7 @@ export class PublicAccountsController {
       [adminRole._id.toString()],
       'system',
       'system'
-    )) as UserDocument;
+    )) as unknown as UserDocument;
 
     // Send verification email
     try {

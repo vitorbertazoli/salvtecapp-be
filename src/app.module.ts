@@ -17,6 +17,7 @@ import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
 import { UsersModule } from './users/users.module';
+import { PaymentsModule } from './payments/payments.module';
 import { EmailModule } from './utils/email.module';
 import { VehicleUsagesModule } from './vehicle-usages/vehicle-usages.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
@@ -48,6 +49,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     EventsModule,
     FollowUpsModule,
     DashboardModule,
+    PaymentsModule,
     EmailModule,
     VehiclesModule,
     VehicleUsagesModule
