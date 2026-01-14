@@ -67,6 +67,17 @@ class ProductItemDto {
   unitValue: number;
 }
 
+class OtherDiscountDto {
+  @IsNotEmpty()
+  @IsString()
+  description: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  amount: number;
+}
+
 export class CreateQuoteDto {
   @IsNotEmpty()
   @IsMongoId()
@@ -104,6 +115,12 @@ export class CreateQuoteDto {
   @Min(0)
   @Max(100)
   discount?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OtherDiscountDto)
+  otherDiscounts?: OtherDiscountDto[];
 
   @IsOptional()
   @IsEnum(['draft', 'sent', 'accepted', 'rejected'])

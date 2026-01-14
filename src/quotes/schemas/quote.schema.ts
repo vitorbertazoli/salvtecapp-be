@@ -69,6 +69,20 @@ export class Quote {
   discount?: number;
 
   @Prop({
+    type: [
+      {
+        description: { type: String, required: true },
+        amount: { type: Number, required: true }
+      }
+    ],
+    default: []
+  })
+  otherDiscounts?: {
+    description: string;
+    amount: number;
+  }[];
+
+  @Prop({
     type: String,
     enum: ['draft', 'sent', 'accepted', 'rejected'],
     default: 'draft'
@@ -106,6 +120,10 @@ export interface IQuote {
   totalValue: number;
   description?: string;
   discount?: number;
+  otherDiscounts?: {
+    description: string;
+    amount: number;
+  }[];
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   validUntil: Date;
   issuedAt: Date;

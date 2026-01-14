@@ -67,6 +67,21 @@ class ProductItemDto {
   unitValue?: number;
 }
 
+class OtherDiscountDto {
+  @IsOptional()
+  @IsMongoId()
+  _id?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  amount?: number;
+}
+
 export class UpdateQuoteDto {
   @IsOptional()
   @IsMongoId()
@@ -104,6 +119,12 @@ export class UpdateQuoteDto {
   @Min(0)
   @Max(100)
   discount?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OtherDiscountDto)
+  otherDiscounts?: OtherDiscountDto[];
 
   @IsOptional()
   @IsEnum(['draft', 'sent', 'accepted', 'rejected'])
