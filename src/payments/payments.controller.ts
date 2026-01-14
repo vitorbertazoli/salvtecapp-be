@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -22,9 +22,11 @@ export class PaymentsController {
   async findAll(
     @GetAccountId() accountId: Types.ObjectId,
     @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10
+    @Query('limit') limit: number = 10,
+    @Query('search') search: string = '',
+    @Query('status') status: string = ''
   ): Promise<{ data: PaymentOrder[]; total: number }> {
-    return this.paymentsService.findAll(accountId, page, limit);
+    return this.paymentsService.findAll(accountId, page, limit, search, status);
   }
 
   @Get(':id')

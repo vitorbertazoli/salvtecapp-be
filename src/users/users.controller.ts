@@ -13,10 +13,20 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  private sanitizeUser(user: any): any {
+    if (!user) return user;
+    const { passwordHash, resetToken, resetTokenExpiry, ...sanitized } = user.toObject ? user.toObject() : user;
+    return sanitized;
+  }
+
+  private sanitizeUsers(users: any[]): any[] {
+    return users.map(user => this.sanitizeUser(user));
+  }
+
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create users
   async create(@Body() createUserDto: CreateUserDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    return this.usersService.create(
+    const createdUser = await this.usersService.create(
       accountId,
       createUserDto.firstName,
       createUserDto.lastName,
@@ -26,6 +36,7 @@ export class UsersController {
       userId,
       userId
     );
+    return this.sanitizeUser(createdUser);
   }
 
   @Get()
@@ -45,17 +56,25 @@ export class UsersController {
 
     if (isMasterAdmin) {
       // Master Admin can see all users across all accounts
-      return this.usersService.findAll();
+      const result = await this.usersService.findAll();
+      return {
+        ...result,
+        users: this.sanitizeUsers(result.users)
+      };
     }
 
     if (isAdmin) {
       // ADMIN can see all users in their account
-      return this.usersService.findByAccount(accountId, pageNum, limitNum, search);
+      const result = await this.usersService.findByAccount(accountId, pageNum, limitNum, search);
+      return {
+        ...result,
+        users: this.sanitizeUsers(result.users)
+      };
     } else {
       // Regular users can only see themselves
       const userData = await this.usersService.findByIdAndAccount(user.id as string, accountId);
       return {
-        users: userData ? [userData] : [],
+        users: userData ? [this.sanitizeUser(userData)] : [],
         total: userData ? 1 : 0,
         page: 1,
         limit: 1,
@@ -71,7 +90,8 @@ export class UsersController {
     const isOwnData = user.id === id;
 
     if (isAdmin || isOwnData) {
-      return this.usersService.findByIdAndAccount(id, accountId);
+      const userData = await this.usersService.findByIdAndAccount(id, accountId);
+      return this.sanitizeUser(userData);
     } else {
       // Not authorized
       return null;
@@ -104,7 +124,8 @@ export class UsersController {
           roles: updateUserDto.roles.map((role) => new Types.ObjectId(role))
         })
       };
-      return this.usersService.update(id, userData, accountId);
+      await this.usersService.update(id, userData, accountId);
+      return { message: 'User updated successfully' };
     } else {
       // Not authorized
       return null;
@@ -118,16 +139,18 @@ export class UsersController {
       return null;
     }
 
-    return this.usersService.updateLanguage(id, body.language, accountId);
+    await this.usersService.updateLanguage(id, body.language, accountId);
+    return { message: 'Language updated successfully' };
   }
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete users
-  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
+  async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     if (user.isMasterAdmin) {
       console.log(`Master admin ${user.id} is deleting user ${id} across all accounts.`);
       return this.usersService.deleteById(id);
     }
-    return this.usersService.delete(id, accountId);
+    await this.usersService.delete(id, accountId);
+    return { message: 'User deleted successfully' };
   }
 }
