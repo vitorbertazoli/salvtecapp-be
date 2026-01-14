@@ -13,7 +13,7 @@ export class EventsService {
     @InjectModel(Customer.name) private customerModel: Model<CustomerDocument>,
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
     private serviceOrdersService: ServiceOrdersService
-  ) { }
+  ) {}
 
   async create(eventData: Partial<Event> & { customer: string; technician: string; serviceOrder?: string }, accountId: Types.ObjectId): Promise<Event> {
     // Fetch customer and technician to build title

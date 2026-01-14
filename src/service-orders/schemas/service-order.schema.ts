@@ -98,10 +98,10 @@ export class ServiceOrder {
 
   @Prop({
     required: true,
-    enum: ['pending', 'scheduled', 'in_progress', 'completed', 'cancelled'],
+    enum: ['pending', 'scheduled', 'in_progress', 'completed', 'payment_order_created', 'cancelled'],
     default: 'pending'
   })
-  status: 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'payment_order_created' | 'cancelled';
 
   @Prop({
     required: true,
@@ -115,22 +115,6 @@ export class ServiceOrder {
 
   @Prop()
   customerNotes?: string;
-
-  @Prop({
-    required: true,
-    enum: ['pending', 'partial', 'paid', 'refunded'],
-    default: 'pending'
-  })
-  paymentStatus: 'pending' | 'partial' | 'paid' | 'refunded';
-
-  @Prop({ default: 0, min: 0 })
-  paidAmount: number;
-
-  @Prop()
-  paymentMethod?: string;
-
-  @Prop()
-  paymentDate?: Date;
 }
 
 export const ServiceOrderSchema = SchemaFactory.createForClass(ServiceOrder);

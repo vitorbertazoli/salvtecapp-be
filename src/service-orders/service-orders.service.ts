@@ -215,10 +215,6 @@ export class ServiceOrdersService {
           priority: 1,
           notes: 1,
           customerNotes: 1,
-          paymentStatus: 1,
-          paidAmount: 1,
-          paymentMethod: 1,
-          paymentDate: 1,
           createdAt: 1,
           updatedAt: 1
         }

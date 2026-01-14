@@ -11,9 +11,7 @@ import { Account, AccountSchema } from './schemas/account.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Account.name, schema: AccountSchema }
-    ]),
+    MongooseModule.forFeature([{ name: Account.name, schema: AccountSchema }]),
     UsersModule,
     RolesModule,
     EmailModule,
@@ -28,4 +26,4 @@ import { Account, AccountSchema } from './schemas/account.schema';
   providers: [AccountsService],
   exports: [AccountsService]
 })
-export class AccountsModule { }
+export class AccountsModule {}

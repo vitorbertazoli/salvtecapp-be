@@ -128,21 +128,4 @@ export class CreateServiceOrderDto {
   @IsOptional()
   @IsString()
   customerNotes?: string;
-
-  @IsOptional()
-  @IsEnum(['pending', 'partial', 'paid', 'refunded'])
-  paymentStatus?: 'pending' | 'partial' | 'paid' | 'refunded';
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  paidAmount?: number;
-
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string;
-
-  @IsOptional()
-  @IsDateString()
-  paymentDate?: string;
 }

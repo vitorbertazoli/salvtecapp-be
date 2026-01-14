@@ -22,9 +22,9 @@ export class CustomersService {
     // Address is now embedded directly in the customer
     const address = customerData.address
       ? {
-        ...customerData.address,
-        country: customerData.address.country || 'Brazil'
-      }
+          ...customerData.address,
+          country: customerData.address.country || 'Brazil'
+        }
       : undefined;
 
     // Equipments are now embedded in the customer

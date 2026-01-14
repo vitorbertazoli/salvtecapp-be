@@ -126,8 +126,8 @@ export class UpdateServiceOrderDto {
   assignedTechnician?: string;
 
   @IsOptional()
-  @IsEnum(['pending', 'scheduled', 'in_progress', 'completed', 'cancelled'])
-  status?: 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  @IsEnum(['pending', 'scheduled', 'in_progress', 'completed', 'payment_order_created', 'cancelled'])
+  status?: 'pending' | 'scheduled' | 'in_progress' | 'completed' | 'payment_order_created' | 'cancelled';
 
   @IsOptional()
   @IsEnum(['low', 'normal', 'high', 'urgent'])
@@ -140,21 +140,4 @@ export class UpdateServiceOrderDto {
   @IsOptional()
   @IsString()
   customerNotes?: string;
-
-  @IsOptional()
-  @IsEnum(['pending', 'partial', 'paid', 'refunded'])
-  paymentStatus?: 'pending' | 'partial' | 'paid' | 'refunded';
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  paidAmount?: number;
-
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string;
-
-  @IsOptional()
-  @IsDateString()
-  paymentDate?: string;
 }

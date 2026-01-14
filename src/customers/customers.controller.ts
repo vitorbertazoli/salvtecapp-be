@@ -10,7 +10,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 @Controller('customers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CustomersController {
-  constructor(private readonly customersService: CustomersService) { }
+  constructor(private readonly customersService: CustomersService) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create customers

@@ -11,7 +11,7 @@ export class TechniciansService {
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
     @InjectModel(Role.name) private roleModel: Model<any>,
     private readonly usersService: UsersService
-  ) { }
+  ) {}
 
   async create(
     account: Types.ObjectId,
@@ -282,11 +282,7 @@ export class TechniciansService {
   }
 
   async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<TechnicianDocument | null> {
-    return this.technicianModel
-      .findOne({ _id: id, account: accountId })
-      .populate('account', 'name id')
-      .populate('user', 'email firstName lastName')
-      .exec();
+    return this.technicianModel.findOne({ _id: id, account: accountId }).populate('account', 'name id').populate('user', 'email firstName lastName').exec();
   }
 
   async findByUserId(userId: string): Promise<TechnicianDocument | null> {
