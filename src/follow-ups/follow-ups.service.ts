@@ -169,7 +169,10 @@ export class FollowUpsService {
       }
     }
 
-    const updatedFollowUp = await this.followUpModel.findOneAndUpdate(query, followUpData, { new: true }).populate('customer', 'name email phoneNumbers').exec();
+    const updatedFollowUp = await this.followUpModel
+      .findOneAndUpdate(query, followUpData, { new: true })
+      .populate('customer', 'name email phoneNumbers')
+      .exec();
 
     return updatedFollowUp;
   }

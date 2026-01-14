@@ -11,16 +11,16 @@ import { TechniciansService } from './technicians.service';
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TechniciansController {
-  constructor(private readonly techniciansService: TechniciansService) { }
+  constructor(private readonly techniciansService: TechniciansService) {}
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
   async create(@Body() createTechnicianDto: CreateTechnicianDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const userAccount = createTechnicianDto.userAccount
       ? {
-        ...createTechnicianDto.userAccount,
-        roles: createTechnicianDto.userAccount.roles || []
-      }
+          ...createTechnicianDto.userAccount,
+          roles: createTechnicianDto.userAccount.roles || []
+        }
       : undefined;
 
     return this.techniciansService.create(
@@ -82,15 +82,15 @@ export class TechniciansController {
       address: technicianData.address,
       // Convert string dates to Date objects if provided
       ...(technicianData.startDate && { startDate: new Date(technicianData.startDate) }),
-      ...(technicianData.endDate && { endDate: new Date(technicianData.endDate) }),
+      ...(technicianData.endDate && { endDate: new Date(technicianData.endDate) })
     };
 
     // Handle userAccount - force roles to be TECHNICIAN only
     const processedUserAccount = userAccount
       ? {
-        ...userAccount,
-        roles: ['TECHNICIAN'] // Always force TECHNICIAN role
-      }
+          ...userAccount,
+          roles: ['TECHNICIAN'] // Always force TECHNICIAN role
+        }
       : undefined;
 
     return this.techniciansService.update(id, accountId, technicianUpdateData, processedUserAccount);

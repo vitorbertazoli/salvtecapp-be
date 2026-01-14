@@ -5,9 +5,7 @@ import { Account, AccountDocument } from './schemas/account.schema';
 
 @Injectable()
 export class AccountsService {
-  constructor(
-    @InjectModel(Account.name) private accountModel: Model<AccountDocument>
-  ) { }
+  constructor(@InjectModel(Account.name) private accountModel: Model<AccountDocument>) {}
 
   async create(accountData: Partial<Account>): Promise<Account> {
     const createdAccount = new this.accountModel(accountData);
