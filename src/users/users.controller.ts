@@ -20,7 +20,7 @@ export class UsersController {
   }
 
   private sanitizeUsers(users: any[]): any[] {
-    return users.map(user => this.sanitizeUser(user));
+    return users.map((user) => this.sanitizeUser(user));
   }
 
   @Post()
