@@ -1,14 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { CustomersService } from 'src/customers/customers.service';
 import { FollowUp, FollowUpDocument } from './schemas/follow-up.schema';
 
 @Injectable()
 export class FollowUpsService {
-  constructor(@InjectModel(FollowUp.name) private followUpModel: Model<FollowUpDocument>) {}
+  constructor(
+    @InjectModel(FollowUp.name) private followUpModel: Model<FollowUpDocument>,
+    private customersService: CustomersService
+  ) {}
 
-  async create(followUpData: Partial<FollowUp> & { customerId: string }): Promise<FollowUp> {
-    followUpData.customer = new Types.ObjectId(followUpData.customerId);
+  async create(followUpData: Partial<FollowUp> & { customer: string }): Promise<FollowUp> {
+    const customerId = followUpData.customer;
+
+    // check if customer exists
+    const customerExists = await this.customersService.findByIdAndAccount(customerId, followUpData.account!);
+    if (!customerExists) {
+      throw new NotFoundException('Customer not found');
+    }
 
     // Ensure notes is an array
     if (followUpData.notes) {
