@@ -45,16 +45,8 @@ jobs:
         script: |
           cd /root/project/salvtecapp-be
 
-          # Pull latest images
+          # Pull latest backend image
           docker pull ${{ secrets.DOCKER_USERNAME }}/salvtec-backend:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/salvtec-frontend:latest
 
-          # Stop and remove old containers
-          docker compose down
-
-          # Start with new images
-          docker compose up -d
-
-          # Optional: Run database initialization if needed
-          # docker compose exec backend npm run initDB
-          # docker compose exec backend npm run seed
+          # Restart only the backend container
+          docker compose restart backend
