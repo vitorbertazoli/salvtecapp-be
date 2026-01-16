@@ -66,6 +66,8 @@ export class EventsController {
   async update(@Param('id') id: string, @Body() dto: UpdateEventDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     const eventData = {
       ...dto,
+      ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
+      ...(dto.technician && { technician: new Types.ObjectId(dto.technician) }),
       ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
       updatedBy: userId
     } as any;
