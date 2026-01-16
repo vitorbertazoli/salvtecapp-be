@@ -206,16 +206,10 @@ export class QuotesService {
     };
 
     const formatDate = (date: Date) => {
-      return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
-    };
-
-    const formatDateTime = (date: Date) => {
       return new Intl.DateTimeFormat('pt-BR', {
         year: '2-digit',
         month: '2-digit',
         day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
         hour12: false
       }).format(new Date(date));
     };
@@ -359,8 +353,8 @@ export class QuotesService {
           <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
             <div style="width: 48%;">
               <p style="margin: 5px 0; font-size: 14px;"><strong>ID do Orçamento:</strong> ${quote._id.toString().slice(-8)}</p>
-              <p style="margin: 5px 0; font-size: 14px;"><strong>Emitido Em:</strong> ${formatDateTime(quote.issuedAt)}</p>
-              <p style="margin: 5px 0; font-size: 14px;"><strong>Válido Até:</strong> ${formatDateTime(quote.validUntil)}</p>
+              <p style="margin: 5px 0; font-size: 14px;"><strong>Emitido Em:</strong> ${formatDate(quote.issuedAt)}</p>
+              <p style="margin: 5px 0; font-size: 14px;"><strong>Válido Até:</strong> ${formatDate(quote.validUntil)}</p>
             </div>
             <div style="width: 48%;">
               <p style="margin: 5px 0; font-size: 14px;"><strong>Cliente:</strong> ${quote.customer.name}</p>
@@ -410,7 +404,7 @@ export class QuotesService {
 
         <div style="text-align: center; color: #666; font-size: 14px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
           <p style="margin: 5px 0;">Obrigado pelo seu negócio!</p>
-          <p style="margin: 5px 0;">Este orçamento é válido até ${formatDateTime(quote.validUntil)}.</p>
+          <p style="margin: 5px 0;">Este orçamento é válido até ${formatDate(quote.validUntil)}.</p>
           <p style="margin: 5px 0;">Para aceitar este orçamento, entre em contato conosco.</p>
           <p style="margin: 15px 0 0 0; font-weight: bold;">${quote.account.name}</p>
         </div>
