@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
@@ -254,5 +254,32 @@ export class EventsService {
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.eventModel.deleteMany({ account: accountId }).exec();
+  }
+
+  async completeByAccount(id: string, userId: string, accountId: Types.ObjectId) {
+    const event = await this.eventModel.findOne({ _id: id, account: accountId });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    event.status = 'completed';
+    event.completedAt = new Date();
+    event.completedBy = userId;
+
+    await event.save();
+
+    // Update linked service order if exists
+    if (event.serviceOrder) {
+      await this.serviceOrdersService.updateByAccount(
+        event.serviceOrder.toString(),
+        {
+          status: 'completed',
+          completedAt: new Date()
+        },
+        accountId
+      );
+    }
+
+    return this.findByIdAndAccount(id, accountId);
   }
 }

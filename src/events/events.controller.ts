@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -89,5 +89,17 @@ export class EventsController {
     }
 
     return { message: 'Event deleted successfully' };
+  }
+
+  @Patch(':id/complete')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
+  async complete(@Param('id') id: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const result = await this.eventsService.completeByAccount(id, userId, accountId);
+
+    if (!result) {
+      return { message: 'Event not found' };
+    }
+
+    return result;
   }
 }
