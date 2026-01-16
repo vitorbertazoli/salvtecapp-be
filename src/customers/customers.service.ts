@@ -8,6 +8,11 @@ export class CustomersService {
   constructor(@InjectModel(Customer.name) private customerModel: Model<CustomerDocument>) {}
 
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }, accountId: Types.ObjectId): Promise<Customer> {
+    // Set default type if not provided
+    if (!customerData.type) {
+      customerData.type = 'residential';
+    }
+
     // Ensure type-specific fields are properly set
     if (customerData.type === 'residential') {
       customerData.cpf = customerData.cpf || undefined;
@@ -69,7 +74,7 @@ export class CustomersService {
         { email: { $regex: search, $options: 'i' } },
         { cpf: { $regex: search, $options: 'i' } },
         { phoneNumbers: { $elemMatch: { $regex: search, $options: 'i' } } },
-        { _id: Types.ObjectId.isValid(search) ? search : undefined }
+        ...(Types.ObjectId.isValid(search) ? [{ _id: search }] : [])
       ];
     }
     if (status) {
@@ -91,7 +96,7 @@ export class CustomersService {
     const totalPages = Math.ceil(total / limit);
 
     return {
-      customers: customers.map((c) => c.toObject()),
+      customers: customers.map((c) => (c.toObject ? c.toObject() : c)),
       total,
       page,
       limit,

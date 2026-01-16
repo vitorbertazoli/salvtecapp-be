@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { AccountsService } from 'src/accounts/accounts.service';
+import { AccountsService } from '../accounts/accounts.service';
 import { TechniciansService } from '../technicians/technicians.service';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../utils/email.service';
@@ -26,6 +26,8 @@ export class AuthService {
 
     // Validate account status
     this.validateAccountStatus(user.account);
+    // Validate user status
+    this.validateUserStatus(user);
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
       const { passwordHash: _, ...result } = user.toObject();

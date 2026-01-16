@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CustomersService } from 'src/customers/customers.service';
+import { CustomersService } from '../customers/customers.service';
 import { Contract, ContractDocument } from './schemas/contract.schema';
 
 @Injectable()
@@ -145,12 +145,14 @@ export class ContractsService {
   }
 
   async updateByAccount(id: string, contractData: any, accountId: Types.ObjectId): Promise<Contract | null> {
-    const customer = await this.customerService.findByIdAndAccount(contractData.customer as string, accountId);
+    if (contractData.customer) {
+      const customer = await this.customerService.findByIdAndAccount(contractData.customer as string, accountId);
 
-    if (!customer) {
-      throw new Error('Customer not found for the given account');
+      if (!customer) {
+        throw new Error('Customer not found for the given account');
+      }
+      contractData.customer = customer._id;
     }
-    contractData.customer = customer._id;
     const query = { _id: id, account: accountId };
 
     const updatedContract = await this.contractModel
