@@ -7,7 +7,6 @@ import { CreateTechnicianDto } from './dto/create-technician.dto';
 import { UpdateTechnicianDto } from './dto/update-technician.dto';
 import { Technician } from './schemas/technician.schema';
 import { TechniciansService } from './technicians.service';
-import { use } from 'passport';
 
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -20,11 +19,11 @@ export class TechniciansController {
     if (!createTechnicianDto.userAccount) {
       throw new BadRequestException('User account data is required to create a technician');
     }
-    
+
     const userAccount = {
-          ...createTechnicianDto.userAccount,
-          roles: createTechnicianDto.userAccount.roles || []
-        };
+      ...createTechnicianDto.userAccount,
+      roles: createTechnicianDto.userAccount.roles || []
+    };
 
     return this.techniciansService.create(
       accountId,

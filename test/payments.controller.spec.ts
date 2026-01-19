@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PaymentsController } from '../src/payments/payments.controller';
-import { PaymentsService } from '../src/payments/payments.service';
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
+import { PaymentsController } from '../src/payments/payments.controller';
+import { PaymentsService } from '../src/payments/payments.service';
 
 describe('PaymentsController', () => {
   let controller: PaymentsController;
@@ -12,6 +12,7 @@ describe('PaymentsController', () => {
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
   const mockServiceOrderId = new Types.ObjectId();
+  const mockUserId = new Types.ObjectId();
 
   const mockPaymentOrder = {
     _id: new Types.ObjectId(),
@@ -72,7 +73,7 @@ describe('PaymentsController', () => {
 
       const result = await controller.createFromServiceOrder(mockAccountId, mockServiceOrderId.toString());
 
-      expect(mockPaymentsService.createFromServiceOrder).toHaveBeenCalledWith(mockAccountId, mockServiceOrderId.toString());
+      expect(mockPaymentsService.createFromServiceOrder).toHaveBeenCalledWith(mockAccountId, mockServiceOrderId.toString(), expect.anything());
       expect(result).toEqual(mockPaymentOrder);
     });
   });

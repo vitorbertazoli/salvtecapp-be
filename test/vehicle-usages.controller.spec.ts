@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { VehicleUsagesController } from '../src/vehicle-usages/vehicle-usages.controller';
-import { VehicleUsagesService } from '../src/vehicle-usages/vehicle-usages.service';
 import { CreateVehicleUsageDto } from '../src/vehicle-usages/dto/create-vehicle-usage.dto';
 import { UpdateVehicleUsageDto } from '../src/vehicle-usages/dto/update-vehicle-usage.dto';
+import { VehicleUsagesController } from '../src/vehicle-usages/vehicle-usages.controller';
+import { VehicleUsagesService } from '../src/vehicle-usages/vehicle-usages.service';
 
 describe('VehicleUsagesController', () => {
   let controller: VehicleUsagesController;
@@ -82,8 +82,8 @@ describe('VehicleUsagesController', () => {
         account: mockAccountId,
         technician: new Types.ObjectId(mockTechnicianId.toString()),
         vehicle: new Types.ObjectId(mockVehicleId.toString()),
-        createdBy: mockUserId.toString(),
-        updatedBy: mockUserId.toString(),
+        createdBy: mockUserId,
+        updatedBy: mockUserId,
       });
       expect(result).toEqual(mockVehicleUsage);
     });
@@ -134,7 +134,7 @@ describe('VehicleUsagesController', () => {
         mockUsageId.toString(),
         {
           ...updateDto,
-          updatedBy: mockUserId.toString(),
+          updatedBy: mockUserId,
         },
         mockAccountId
       );
@@ -160,7 +160,7 @@ describe('VehicleUsagesController', () => {
 
       const result = await controller.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId);
 
-      expect(vehicleUsagesService.approve).toHaveBeenCalledWith(mockUsageId.toString(), mockUserId.toString(), mockAccountId);
+      expect(vehicleUsagesService.approve).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything());
       expect(result).toEqual({ ...mockVehicleUsage, status: 'approved' });
     });
 

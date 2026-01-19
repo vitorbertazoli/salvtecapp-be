@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { UsersController } from '../src/users/users.controller';
-import { UsersService } from '../src/users/users.service';
 import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { UpdateUserDto } from '../src/users/dto/update-user.dto';
+import { UsersController } from '../src/users/users.controller';
+import { UsersService } from '../src/users/users.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -23,7 +23,7 @@ describe('UsersController', () => {
     status: 'active',
     language: 'pt-BR',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockUserWithoutSensitive = {
@@ -36,25 +36,25 @@ describe('UsersController', () => {
     status: 'active',
     language: 'pt-BR',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockAdminUser = {
     id: 'admin-id',
     roles: ['ADMIN'],
-    isMasterAdmin: false,
+    isMasterAdmin: false
   };
 
   const mockMasterAdminUser = {
     id: 'master-admin-id',
     roles: ['ADMIN'],
-    isMasterAdmin: true,
+    isMasterAdmin: true
   };
 
   const mockRegularUser = {
     id: mockUserId.toString(),
     roles: ['USER'],
-    isMasterAdmin: false,
+    isMasterAdmin: false
   };
 
   beforeEach(async () => {
@@ -66,7 +66,7 @@ describe('UsersController', () => {
       update: jest.fn(),
       updateLanguage: jest.fn(),
       delete: jest.fn(),
-      deleteById: jest.fn(),
+      deleteById: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -74,12 +74,12 @@ describe('UsersController', () => {
       providers: [
         {
           provide: UsersService,
-          useValue: mockUsersService,
-        },
-      ],
+          useValue: mockUsersService
+        }
+      ]
     })
-      .overrideGuard() // Mock guards
-      .useValue({})
+      .overrideGuard()
+      .useValue({ canActivate: () => true })
       .compile();
 
     controller = module.get<UsersController>(UsersController);
@@ -97,23 +97,12 @@ describe('UsersController', () => {
         lastName: 'Silva',
         email: 'joao.silva@example.com',
         password: 'password123',
-        roles: ['role1'],
+        roles: ['role1']
       };
 
       usersService.create.mockResolvedValue(mockUser);
 
-      const result = await controller.create(createUserDto, mockAccountId, 'user-id');
-
-      expect(usersService.create).toHaveBeenCalledWith(
-        mockAccountId,
-        'João',
-        'Silva',
-        'joao.silva@example.com',
-        'password123',
-        ['role1'],
-        'user-id',
-        'user-id'
-      );
+      const result = await controller.create(createUserDto, mockAccountId, mockUserId.toString());
       expect(result).toEqual(mockUserWithoutSensitive);
     });
 
@@ -122,23 +111,14 @@ describe('UsersController', () => {
         firstName: 'João',
         lastName: 'Silva',
         email: 'joao.silva@example.com',
-        password: 'password123',
+        password: 'password123'
       };
 
       usersService.create.mockResolvedValue(mockUser);
 
-      const result = await controller.create(createUserDto, mockAccountId, 'user-id');
+      const result = await controller.create(createUserDto, mockAccountId, mockUserId.toString());
 
-      expect(usersService.create).toHaveBeenCalledWith(
-        mockAccountId,
-        'João',
-        'Silva',
-        'joao.silva@example.com',
-        'password123',
-        [],
-        'user-id',
-        'user-id'
-      );
+      expect(usersService.create).toHaveBeenCalledWith(mockAccountId, 'João', 'Silva', 'joao.silva@example.com', 'password123', [], mockUserId, mockUserId);
       expect(result).toEqual(mockUserWithoutSensitive);
     });
   });
@@ -150,7 +130,7 @@ describe('UsersController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       usersService.findAll.mockResolvedValue(mockResult);
@@ -160,7 +140,7 @@ describe('UsersController', () => {
       expect(usersService.findAll).toHaveBeenCalled();
       expect(result).toEqual({
         ...mockResult,
-        users: [mockUserWithoutSensitive],
+        users: [mockUserWithoutSensitive]
       });
     });
 
@@ -170,7 +150,7 @@ describe('UsersController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       usersService.findByAccount.mockResolvedValue(mockResult);
@@ -180,7 +160,7 @@ describe('UsersController', () => {
       expect(usersService.findByAccount).toHaveBeenCalledWith(mockAccountId, 1, 10, 'João');
       expect(result).toEqual({
         ...mockResult,
-        users: [mockUserWithoutSensitive],
+        users: [mockUserWithoutSensitive]
       });
     });
 
@@ -195,7 +175,7 @@ describe('UsersController', () => {
         total: 1,
         page: 1,
         limit: 1,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -209,7 +189,7 @@ describe('UsersController', () => {
         total: 0,
         page: 1,
         limit: 1,
-        totalPages: 1,
+        totalPages: 1
       });
     });
   });
@@ -250,7 +230,7 @@ describe('UsersController', () => {
         password: 'newpassword123',
         roles: [mockRoleId.toString()], // Use valid ObjectId string
         status: 'active',
-        language: 'en-US',
+        language: 'en-US'
       };
 
       usersService.update.mockResolvedValue(mockUser);
@@ -267,7 +247,7 @@ describe('UsersController', () => {
           status: 'active',
           language: 'en-US',
           updatedBy: 'admin-id',
-          roles: [mockRoleId], // Should be ObjectId
+          roles: [mockRoleId] // Should be ObjectId
         },
         mockAccountId
       );
@@ -282,7 +262,7 @@ describe('UsersController', () => {
         password: 'newpassword123',
         roles: [mockRoleId.toString()], // Use valid ObjectId string - this should be removed
         status: 'inactive', // This should be removed
-        language: 'en-US',
+        language: 'en-US'
       };
 
       usersService.update.mockResolvedValue(mockUser);
@@ -297,7 +277,7 @@ describe('UsersController', () => {
           email: 'joao.updated@example.com',
           password: 'newpassword123',
           language: 'en-US',
-          updatedBy: mockUserId.toString(),
+          updatedBy: mockUserId.toString()
           // roles and status should be removed
         },
         mockAccountId
@@ -307,7 +287,7 @@ describe('UsersController', () => {
 
     it('should return null when regular user tries to update other user data', async () => {
       const updateUserDto: UpdateUserDto = {
-        firstName: 'João Updated',
+        firstName: 'João Updated'
       };
 
       const result = await controller.update('other-user-id', updateUserDto, mockAccountId, mockRegularUser);

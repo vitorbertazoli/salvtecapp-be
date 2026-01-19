@@ -180,7 +180,7 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload, {
         secret: process.env.JWT_SECRET,
-        expiresIn: '1m'
+        expiresIn: '15m'
       }),
       refresh_token: this.jwtService.sign(refreshPayload, {
         secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,

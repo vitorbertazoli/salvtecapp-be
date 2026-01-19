@@ -25,8 +25,8 @@ export class FollowUp {
   @Prop()
   completedAt?: Date;
 
-  @Prop()
-  completedBy?: string;
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  completedBy?: Types.ObjectId;
 
   @Prop({ trim: true })
   notes?: string[];
@@ -45,7 +45,7 @@ export interface IFollowUp {
   startDate: Date;
   status: 'pending' | 'completed';
   completedAt?: Date;
-  completedBy?: string;
+  completedBy?: string | Types.ObjectId;
   notes?: string[];
   createdBy: string | Types.ObjectId;
   updatedBy: string | Types.ObjectId;

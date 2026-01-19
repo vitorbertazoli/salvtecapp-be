@@ -68,7 +68,7 @@ export class TechniciansService {
       cpf,
       phoneNumber,
       address,
-      user: user.id,
+      user: user,
       createdBy,
       updatedBy
     });
@@ -97,9 +97,9 @@ export class TechniciansService {
 
     // Build aggregation pipeline for search
     const pipeline: any[] = [
-      {
-        $match: { account: accountId }
-      },
+      // {
+      //   $match: { account: accountId }
+      // },
       {
         $lookup: {
           from: 'users',
@@ -180,6 +180,8 @@ export class TechniciansService {
         }
       }
     );
+
+    console.log('Aggregation Pipeline:', JSON.stringify(pipeline, null, 2));
 
     const result = await this.technicianModel.aggregate(pipeline).exec();
     const technicians = result[0]?.technicians || [];

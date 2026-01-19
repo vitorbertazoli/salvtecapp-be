@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
+import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../src/auth/guards/roles.guard';
 import { ContractsController } from '../src/contracts/contracts.controller';
 import { ContractsService } from '../src/contracts/contracts.service';
 import { CreateContractDto } from '../src/contracts/dto/create-contract.dto';
 import { UpdateContractDto } from '../src/contracts/dto/update-contract.dto';
-import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
 
 describe('ContractsController', () => {
   let controller: ContractsController;
@@ -95,8 +95,8 @@ describe('ContractsController', () => {
         ...createDto,
         account: mockAccountId,
         customer: new Types.ObjectId(mockCustomerId),
-        createdBy: mockUserId,
-        updatedBy: mockUserId,
+        createdBy: new Types.ObjectId(mockUserId),
+        updatedBy: new Types.ObjectId(mockUserId),
       });
       expect(result).toEqual(mockContract);
     });
@@ -170,7 +170,7 @@ describe('ContractsController', () => {
         {
           ...updateDto,
           customer: new Types.ObjectId(mockCustomerId),
-          updatedBy: mockUserId,
+          updatedBy: new Types.ObjectId(mockUserId),
         },
         mockAccountId
       );
@@ -191,7 +191,7 @@ describe('ContractsController', () => {
         mockContractId,
         {
           ...updateDto,
-          updatedBy: mockUserId,
+          updatedBy: new Types.ObjectId(mockUserId),
         },
         mockAccountId
       );

@@ -52,7 +52,7 @@ export class CustomersController {
     const customerData = {
       ...dto,
       ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.customersService.updateByAccount(id, customerData, accountId);
