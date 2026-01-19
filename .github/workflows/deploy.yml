@@ -48,5 +48,5 @@ jobs:
           # Pull latest backend image
           docker pull ${{ secrets.DOCKER_USERNAME }}/salvtec-backend:latest
 
-          # Restart only the backend container
-          docker compose restart backend
+          # Recreate the backend container with the latest image
+          docker compose up -d backend
