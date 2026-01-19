@@ -1,6 +1,6 @@
 import { Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { GetAccountId, Roles } from '../auth/decorators';
+import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { PaymentsService } from './payments.service';
@@ -13,8 +13,8 @@ export class PaymentsController {
 
   @Post()
   @Roles('ADMIN')
-  async createFromServiceOrder(@GetAccountId() accountId: Types.ObjectId, @Query('serviceOrderId') serviceOrderId: string): Promise<PaymentOrder> {
-    return this.paymentsService.createFromServiceOrder(accountId, serviceOrderId);
+  async createFromServiceOrder(@GetAccountId() accountId: Types.ObjectId, @Query('serviceOrderId') serviceOrderId: string, @GetUser("id") userId: string): Promise<PaymentOrder> {
+    return this.paymentsService.createFromServiceOrder(accountId, serviceOrderId, new Types.ObjectId(userId));
   }
 
   @Get()

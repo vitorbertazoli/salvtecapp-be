@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { VehicleUsage, VehicleUsageDocument } from './schemas/vehicle-usages.schema';
+import { T } from 'node_modules/@faker-js/faker/dist/airline-CWrCIUHH';
 
 @Injectable()
 export class VehicleUsagesService {
@@ -59,7 +60,7 @@ export class VehicleUsagesService {
     return this.vehicleUsageModel.findOneAndUpdate(query, updateDto, { new: true }).exec();
   }
 
-  async approve(id: string, userId: string, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
+  async approve(id: string, userId: Types.ObjectId, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
     const query = { _id: id, account: accountId };
     const existing = await this.vehicleUsageModel.findOne(query);
     if (!existing) throw new ForbiddenException('Vehicle usage not found');

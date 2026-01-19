@@ -15,8 +15,8 @@ export class UsersService {
     email: string,
     password: string,
     roles: string[] = [],
-    createdBy: string,
-    updatedBy: string
+    createdBy: Types.ObjectId,
+    updatedBy: Types.ObjectId
   ): Promise<User> {
     const user = await this.userModel.findOne({ email }).exec();
     if (user) {

@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
+import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../src/auth/guards/roles.guard';
 import { CustomersController } from '../src/customers/customers.controller';
 import { CustomersService } from '../src/customers/customers.service';
 import { CreateCustomerDto } from '../src/customers/dto/create-customer.dto';
 import { UpdateCustomerDto } from '../src/customers/dto/update-customer.dto';
-import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
 
 describe('CustomersController', () => {
   let controller: CustomersController;
@@ -130,8 +130,8 @@ describe('CustomersController', () => {
           ...createDto,
           account: mockAccountId,
           technicianResponsible: new Types.ObjectId(mockTechnicianId),
-          createdBy: mockUserId,
-          updatedBy: mockUserId,
+          createdBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId),
         },
         mockAccountId
       );
@@ -154,8 +154,8 @@ describe('CustomersController', () => {
         {
           ...createDto,
           account: mockAccountId,
-          createdBy: mockUserId,
-          updatedBy: mockUserId,
+          createdBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId),
         },
         mockAccountId
       );
@@ -241,7 +241,7 @@ describe('CustomersController', () => {
         {
           ...updateDto,
           technicianResponsible: new Types.ObjectId(mockTechnicianId),
-          updatedBy: mockUserId,
+          updatedBy: new Types.ObjectId(mockUserId),
         },
         mockAccountId
       );
@@ -263,7 +263,7 @@ describe('CustomersController', () => {
         mockCustomerId,
         {
           ...updateDto,
-          updatedBy: mockUserId,
+          updatedBy: new Types.ObjectId(mockUserId),
         },
         mockAccountId
       );

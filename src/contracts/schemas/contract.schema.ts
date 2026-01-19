@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Type } from 'class-transformer';
 import { Document, Types } from 'mongoose';
 import { IAccount } from 'src/accounts/schemas/account.schema';
 import { ICustomer } from 'src/customers/schemas/customer.schema';
@@ -37,11 +38,11 @@ export class Contract {
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   account: Types.ObjectId;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface IContract {

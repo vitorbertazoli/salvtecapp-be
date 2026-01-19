@@ -14,7 +14,7 @@ describe('QuotesService', () => {
   const mockCustomerId = new Types.ObjectId();
   const mockServiceId = new Types.ObjectId();
   const mockProductId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockQuote = {
     _id: new Types.ObjectId(),

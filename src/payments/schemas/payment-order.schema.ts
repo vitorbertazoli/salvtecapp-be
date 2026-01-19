@@ -50,6 +50,12 @@ export class PaymentOrder {
 
   @Prop()
   transactionId?: string; // External payment processor transaction ID
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export const PaymentOrderSchema = SchemaFactory.createForClass(PaymentOrder);

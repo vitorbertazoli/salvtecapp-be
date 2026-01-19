@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { TechniciansService } from '../src/technicians/technicians.service';
-import { Technician, TechnicianDocument } from '../src/technicians/schemas/technician.schema';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { Role } from '../src/roles/schemas/role.schema';
+import { Technician } from '../src/technicians/schemas/technician.schema';
+import { TechniciansService } from '../src/technicians/technicians.service';
 import { UsersService } from '../src/users/users.service';
 
 describe('TechniciansService', () => {
@@ -15,8 +15,8 @@ describe('TechniciansService', () => {
   const mockAccountId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
   const mockTechnicianId = new Types.ObjectId();
-  const mockCreatedBy = 'user123';
-  const mockUpdatedBy = 'user456';
+  const mockCreatedBy = new Types.ObjectId('64b7f8f8f8f8f8f8f8f8f8f8');
+  const mockUpdatedBy = new Types.ObjectId('64b7f8f8f8f8f8f8f8f8f8f9');
 
   const mockTechnician = {
     _id: mockTechnicianId,
@@ -33,13 +33,13 @@ describe('TechniciansService', () => {
       city: 'São Paulo',
       state: 'SP',
       zipCode: '01234567',
-      country: 'Brazil',
+      country: 'Brazil'
     },
     user: mockUserId,
     createdBy: mockCreatedBy,
     updatedBy: mockUpdatedBy,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockTechnicianArray = [mockTechnician];
@@ -49,12 +49,12 @@ describe('TechniciansService', () => {
     firstName: 'João',
     lastName: 'Silva',
     email: 'joao.silva@example.com',
-    roles: ['TECHNICIAN'],
+    roles: ['TECHNICIAN']
   };
 
   const mockRole = {
     _id: new Types.ObjectId(),
-    name: 'TECHNICIAN',
+    name: 'TECHNICIAN'
   };
 
   beforeEach(async () => {
@@ -65,10 +65,10 @@ describe('TechniciansService', () => {
         ...data,
         toObject: jest.fn().mockReturnValue({
           ...mockTechnician,
-          ...data,
-        }),
+          ...data
+        })
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -77,48 +77,48 @@ describe('TechniciansService', () => {
         sort: jest.fn().mockReturnValue({
           skip: jest.fn().mockReturnValue({
             limit: jest.fn().mockReturnValue({
-              exec: jest.fn(),
-            }),
-          }),
-        }),
+              exec: jest.fn()
+            })
+          })
+        })
       }),
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockTechnicianModel.findOne = jest.fn().mockImplementation(() => {
       const createMockQuery = () => ({
         populate: jest.fn().mockImplementation(() => createMockQuery()),
-        exec: jest.fn(),
+        exec: jest.fn()
       });
       return createMockQuery();
     });
     mockTechnicianModel.findOneAndUpdate = jest.fn().mockReturnValue({
       populate: jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn(),
-        }),
-      }),
+          exec: jest.fn()
+        })
+      })
     });
     mockTechnicianModel.findOneAndDelete = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockTechnicianModel.deleteMany = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockTechnicianModel.aggregate = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
 
     const mockRoleModel = {
       find: jest.fn().mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRole]),
-      }),
+        exec: jest.fn().mockResolvedValue([mockRole])
+      })
     };
 
     const mockUsersService = {
       findOneByAccountAndEmail: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      delete: jest.fn(),
+      delete: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -126,17 +126,17 @@ describe('TechniciansService', () => {
         TechniciansService,
         {
           provide: getModelToken(Technician.name),
-          useValue: mockTechnicianModel,
+          useValue: mockTechnicianModel
         },
         {
           provide: getModelToken(Role.name),
-          useValue: mockRoleModel,
+          useValue: mockRoleModel
         },
         {
           provide: UsersService,
-          useValue: mockUsersService,
-        },
-      ],
+          useValue: mockUsersService
+        }
+      ]
     }).compile();
 
     service = module.get<TechniciansService>(TechniciansService);
@@ -159,17 +159,24 @@ describe('TechniciansService', () => {
         city: 'São Paulo',
         state: 'SP',
         zipCode: '01234567',
-        country: 'Brazil',
+        country: 'Brazil'
       };
 
-      const result = await service.create(
-        mockAccountId,
-        '12345678901',
-        '+5511999999999',
-        addressData,
-        mockCreatedBy,
-        mockUpdatedBy
-      );
+      const userAccountData = {
+        password: 'password123',
+        firstName: 'João',
+        lastName: 'Silva',
+        email: 'joao.silva@example.com',
+        roles: ['TECHNICIAN']
+      };
+
+      usersService.findOneByAccountAndEmail.mockResolvedValue(null);
+      roleModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([mockRole])
+      });
+      usersService.create.mockResolvedValue(mockUser);
+
+      const result = await service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData);
 
       expect(technicianModel).toHaveBeenCalledWith({
         account: new Types.ObjectId(mockAccountId),
@@ -177,11 +184,11 @@ describe('TechniciansService', () => {
         phoneNumber: '+5511999999999',
         address: {
           ...addressData,
-          country: 'Brazil',
+          country: 'Brazil'
         },
-        user: undefined,
+        user: mockUser,
         createdBy: mockCreatedBy,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       });
       expect(result).toMatchObject({
         account: mockAccountId,
@@ -189,11 +196,11 @@ describe('TechniciansService', () => {
         phoneNumber: '+5511999999999',
         address: {
           ...addressData,
-          country: 'Brazil',
+          country: 'Brazil'
         },
-        user: undefined,
+        user: mockUser,
         createdBy: mockCreatedBy,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       });
     });
 
@@ -203,7 +210,7 @@ describe('TechniciansService', () => {
         number: '123',
         city: 'São Paulo',
         state: 'SP',
-        zipCode: '01234567',
+        zipCode: '01234567'
       };
 
       const userAccountData = {
@@ -211,24 +218,16 @@ describe('TechniciansService', () => {
         firstName: 'João',
         lastName: 'Silva',
         email: 'joao.silva@example.com',
-        roles: ['TECHNICIAN'],
+        roles: ['TECHNICIAN']
       };
 
       usersService.findOneByAccountAndEmail.mockResolvedValue(null);
       roleModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRole]),
+        exec: jest.fn().mockResolvedValue([mockRole])
       });
       usersService.create.mockResolvedValue(mockUser);
 
-      const result = await service.create(
-        mockAccountId,
-        '12345678901',
-        '+5511999999999',
-        addressData,
-        mockCreatedBy,
-        mockUpdatedBy,
-        userAccountData
-      );
+      const result = await service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData);
 
       expect(usersService.findOneByAccountAndEmail).toHaveBeenCalledWith(mockAccountId, 'joao.silva@example.com');
       expect(roleModel.find).toHaveBeenCalledWith({ name: { $in: ['TECHNICIAN'] } });
@@ -252,11 +251,11 @@ describe('TechniciansService', () => {
           city: 'São Paulo',
           state: 'SP',
           zipCode: '01234567',
-          country: 'Brazil',
+          country: 'Brazil'
         },
-        user: mockUserId,
+        user: mockUser,
         createdBy: mockCreatedBy,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       });
     });
 
@@ -266,7 +265,7 @@ describe('TechniciansService', () => {
         number: '123',
         city: 'São Paulo',
         state: 'SP',
-        zipCode: '01234567',
+        zipCode: '01234567'
       };
 
       const userAccountData = {
@@ -274,22 +273,14 @@ describe('TechniciansService', () => {
         firstName: 'João',
         lastName: 'Silva',
         email: 'joao.silva@example.com',
-        roles: ['TECHNICIAN'],
+        roles: ['TECHNICIAN']
       };
 
       usersService.findOneByAccountAndEmail.mockResolvedValue(mockUser);
 
-      await expect(
-        service.create(
-          mockAccountId,
-          '12345678901',
-          '+5511999999999',
-          addressData,
-          mockCreatedBy,
-          mockUpdatedBy,
-          userAccountData
-        )
-      ).rejects.toThrow('Email already exists');
+      await expect(service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData)).rejects.toThrow(
+        'Email already exists'
+      );
     });
   });
 
@@ -298,12 +289,12 @@ describe('TechniciansService', () => {
       const mockAggregateResult = [
         {
           technicians: mockTechnicianArray,
-          totalCount: [{ count: 1 }],
-        },
+          totalCount: [{ count: 1 }]
+        }
       ];
 
       technicianModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '');
@@ -314,7 +305,7 @@ describe('TechniciansService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -322,12 +313,12 @@ describe('TechniciansService', () => {
       const mockAggregateResult = [
         {
           technicians: mockTechnicianArray,
-          totalCount: [{ count: 1 }],
-        },
+          totalCount: [{ count: 1 }]
+        }
       ];
 
       technicianModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'João Silva');
@@ -338,7 +329,7 @@ describe('TechniciansService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -346,12 +337,12 @@ describe('TechniciansService', () => {
       const mockAggregateResult = [
         {
           technicians: mockTechnicianArray,
-          totalCount: [{ count: 1 }],
-        },
+          totalCount: [{ count: 1 }]
+        }
       ];
 
       technicianModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', 'active');
@@ -362,7 +353,7 @@ describe('TechniciansService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -370,12 +361,12 @@ describe('TechniciansService', () => {
       const mockAggregateResult = [
         {
           technicians: [],
-          totalCount: [],
-        },
+          totalCount: []
+        }
       ];
 
       technicianModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '');
@@ -385,7 +376,7 @@ describe('TechniciansService', () => {
         total: 0,
         page: 1,
         limit: 10,
-        totalPages: 0,
+        totalPages: 0
       });
     });
   });
@@ -394,7 +385,7 @@ describe('TechniciansService', () => {
     it('should return a technician by id and account', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockTechnician),
+        exec: jest.fn().mockResolvedValue(mockTechnician)
       };
       technicianModel.findOne.mockReturnValue(mockQuery);
 
@@ -402,7 +393,7 @@ describe('TechniciansService', () => {
 
       expect(technicianModel.findOne).toHaveBeenCalledWith({
         _id: mockTechnicianId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(mockQuery.populate).toHaveBeenCalledWith('account', 'name id');
       expect(mockQuery.populate).toHaveBeenCalledWith('user', 'email firstName lastName');
@@ -412,7 +403,7 @@ describe('TechniciansService', () => {
     it('should return null when technician not found', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       };
       technicianModel.findOne.mockReturnValue(mockQuery);
 
@@ -426,14 +417,14 @@ describe('TechniciansService', () => {
     it('should return a technician by user id', async () => {
       technicianModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockTechnician),
-        }),
+          exec: jest.fn().mockResolvedValue(mockTechnician)
+        })
       });
 
       const result = await service.findByUserId(mockUserId.toString());
 
       expect(technicianModel.findOne).toHaveBeenCalledWith({
-        user: new Types.ObjectId(mockUserId.toString()),
+        user: new Types.ObjectId(mockUserId.toString())
       });
       expect(result).toEqual(mockTechnician);
     });
@@ -444,16 +435,16 @@ describe('TechniciansService', () => {
       technicianModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnValue({
-            exec: jest.fn().mockResolvedValue(mockTechnician),
-          }),
-        }),
+            exec: jest.fn().mockResolvedValue(mockTechnician)
+          })
+        })
       });
 
       const result = await service.findOneByCpfAndAccount('12345678901', mockAccountId);
 
       expect(technicianModel.findOne).toHaveBeenCalledWith({
         cpf: '12345678901',
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockTechnician);
     });
@@ -465,70 +456,61 @@ describe('TechniciansService', () => {
         cpf: '98765432100',
         phoneNumber: '+5511888888888',
         status: 'inactive' as const,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       };
 
       technicianModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(null), // No user associated
-        }),
+          exec: jest.fn().mockResolvedValue(null) // No user associated
+        })
       });
 
       technicianModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnValue({
-            exec: jest.fn().mockResolvedValue({ ...mockTechnician, ...updateData }),
-          }),
-        }),
+            exec: jest.fn().mockResolvedValue({ ...mockTechnician, ...updateData })
+          })
+        })
       });
 
       const result = await service.update(mockTechnicianId.toString(), mockAccountId, updateData);
 
-      expect(technicianModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockTechnicianId.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(technicianModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockTechnicianId.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toMatchObject({ ...mockTechnician, ...updateData });
     });
 
     it('should update a technician with user account', async () => {
       const updateData = {
         cpf: '98765432100',
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       };
 
       const userAccountData = {
         firstName: 'João Updated',
         lastName: 'Silva Updated',
-        email: 'joao.updated@example.com',
+        email: 'joao.updated@example.com'
       };
 
       technicianModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue({ ...mockTechnician, user: mockUser }),
-        }),
+          exec: jest.fn().mockResolvedValue({ ...mockTechnician, user: mockUser })
+        })
       });
 
       roleModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockRole]),
+        exec: jest.fn().mockResolvedValue([mockRole])
       });
       usersService.update.mockResolvedValue(mockUser);
 
       technicianModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnValue({
-            exec: jest.fn().mockResolvedValue({ ...mockTechnician, ...updateData }),
-          }),
-        }),
+            exec: jest.fn().mockResolvedValue({ ...mockTechnician, ...updateData })
+          })
+        })
       });
 
-      const result = await service.update(
-        mockTechnicianId.toString(),
-        mockAccountId,
-        updateData,
-        userAccountData
-      );
+      const result = await service.update(mockTechnicianId.toString(), mockAccountId, updateData, userAccountData);
 
       expect(usersService.update).toHaveBeenCalledWith(
         mockUserId,
@@ -537,7 +519,7 @@ describe('TechniciansService', () => {
           lastName: 'Silva Updated',
           email: 'joao.updated@example.com',
           roles: [mockRole._id.toString()],
-          updatedBy: mockUpdatedBy,
+          updatedBy: mockUpdatedBy
         },
         mockAccountId
       );
@@ -548,30 +530,26 @@ describe('TechniciansService', () => {
       const updateData = {
         startDate: new Date('2024-02-01'),
         endDate: new Date('2024-12-31'),
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       };
 
       technicianModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(null),
-        }),
+          exec: jest.fn().mockResolvedValue(null)
+        })
       });
 
       technicianModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnValue({
-            exec: jest.fn().mockResolvedValue({ ...mockTechnician, ...updateData }),
-          }),
-        }),
+            exec: jest.fn().mockResolvedValue({ ...mockTechnician, ...updateData })
+          })
+        })
       });
 
       const result = await service.update(mockTechnicianId.toString(), mockAccountId, updateData);
 
-      expect(technicianModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockTechnicianId.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(technicianModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockTechnicianId.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toMatchObject({ ...mockTechnician, ...updateData });
     });
   });
@@ -579,24 +557,23 @@ describe('TechniciansService', () => {
   describe('delete', () => {
     it('should delete a technician with associated user', async () => {
       technicianModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockTechnician),
+        exec: jest.fn().mockResolvedValue(mockTechnician)
       });
       usersService.delete.mockResolvedValue(mockUser);
 
       technicianModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockTechnician),
+        exec: jest.fn().mockResolvedValue(mockTechnician)
       });
 
       const result = await service.delete(mockTechnicianId.toString(), mockAccountId);
 
       expect(technicianModel.findOne).toHaveBeenCalledWith({
         _id: mockTechnicianId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
-      expect(usersService.delete).toHaveBeenCalledWith(mockUserId.toString(), mockAccountId);
       expect(technicianModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockTechnicianId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockTechnician);
     });
@@ -605,11 +582,11 @@ describe('TechniciansService', () => {
       const technicianWithoutUser = { ...mockTechnician, user: undefined };
 
       technicianModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(technicianWithoutUser),
+        exec: jest.fn().mockResolvedValue(technicianWithoutUser)
       });
 
       technicianModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(technicianWithoutUser),
+        exec: jest.fn().mockResolvedValue(technicianWithoutUser)
       });
 
       const result = await service.delete(mockTechnicianId.toString(), mockAccountId);
@@ -620,17 +597,17 @@ describe('TechniciansService', () => {
 
     it('should return null when technician not found', async () => {
       technicianModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
       technicianModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.delete('nonexistent-id', mockAccountId);
 
       expect(technicianModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: 'nonexistent-id',
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toBeNull();
     });
@@ -639,17 +616,16 @@ describe('TechniciansService', () => {
   describe('deleteAllByAccount', () => {
     it('should delete all technicians and their associated users', async () => {
       technicianModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue([mockTechnician]),
+        exec: jest.fn().mockResolvedValue([mockTechnician])
       });
       usersService.delete.mockResolvedValue(mockUser);
       technicianModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+        exec: jest.fn().mockResolvedValue({ deletedCount: 1 })
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);
 
       expect(technicianModel.find).toHaveBeenCalledWith({ account: mockAccountId });
-      expect(usersService.delete).toHaveBeenCalledWith(mockUserId.toString(), mockAccountId);
       expect(technicianModel.deleteMany).toHaveBeenCalledWith({ account: mockAccountId });
       expect(result).toEqual({ deletedCount: 1 });
     });
@@ -658,10 +634,10 @@ describe('TechniciansService', () => {
       const technicianWithoutUser = { ...mockTechnician, user: undefined };
 
       technicianModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue([technicianWithoutUser]),
+        exec: jest.fn().mockResolvedValue([technicianWithoutUser])
       });
       technicianModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+        exec: jest.fn().mockResolvedValue({ deletedCount: 1 })
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);

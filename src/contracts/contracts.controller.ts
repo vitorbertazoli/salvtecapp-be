@@ -19,8 +19,8 @@ export class ContractsController {
       ...dto,
       account: accountId,
       customer: new Types.ObjectId(dto.customer),
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.contractsService.create(contractData);
@@ -54,7 +54,7 @@ export class ContractsController {
     const contractData = {
       ...dto,
       ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.contractsService.updateByAccount(id, contractData, accountId);

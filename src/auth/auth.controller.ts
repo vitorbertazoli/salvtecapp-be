@@ -12,10 +12,7 @@ const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UseGuards(LocalAuthGuard)
-  @Post('login')
-  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.login(loginDto);
+  private async handleAuthResponse(result: any, res: Response) {
     if (!result) {
       return null;
     }
@@ -30,22 +27,18 @@ export class AuthController {
     return response;
   }
 
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(loginDto);
+    return this.handleAuthResponse(result, res);
+  }
+
   @UseGuards(RefreshAuthGuard)
   @Post('refresh')
   async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.refreshToken(req.user);
-    if (!result) {
-      return null;
-    }
-    res.cookie('refresh_token', result.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/api/auth',
-      maxAge: REFRESH_TOKEN_MAX_AGE
-    });
-    const { refresh_token, ...response } = result;
-    return response;
+    return this.handleAuthResponse(result, res);
   }
 
   @Post('forgot-password')

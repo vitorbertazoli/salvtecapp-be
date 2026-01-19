@@ -21,8 +21,8 @@ export class EventsController {
       customer: new Types.ObjectId(dto.customer),
       technician: new Types.ObjectId(dto.technician),
       ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.eventsService.create(eventData, accountId);
@@ -69,7 +69,7 @@ export class EventsController {
       ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
       ...(dto.technician && { technician: new Types.ObjectId(dto.technician) }),
       ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     const result = await this.eventsService.updateByAccount(id, eventData, accountId);
@@ -96,7 +96,7 @@ export class EventsController {
   @Patch(':id/complete')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
   async complete(@Param('id') id: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    const result = await this.eventsService.completeByAccount(id, userId, accountId);
+    const result = await this.eventsService.completeByAccount(id, new Types.ObjectId(userId), accountId);
 
     if (!result) {
       return { message: 'Event not found' };

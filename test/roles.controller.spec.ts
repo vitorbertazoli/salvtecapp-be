@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { RolesController } from '../src/roles/roles.controller';
 import { RolesService } from '../src/roles/roles.service';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
@@ -7,7 +8,7 @@ describe('RolesController', () => {
   let controller: RolesController;
   let service: RolesService;
 
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockRole = {
     _id: '507f1f77bcf86cd799439011',

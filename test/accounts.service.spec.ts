@@ -9,14 +9,15 @@ describe('AccountsService', () => {
   let accountModel: jest.Mocked<Model<AccountDocument>>;
 
   const mockAccountId = new Types.ObjectId();
+  const mockUserId = new Types.ObjectId();
   const mockAccount: Account = {
     _id: mockAccountId,
     name: 'test-account',
     plan: 'free',
     status: 'pending',
     billingInfo: {},
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId,
     logoUrl: 'https://example.com/logo.png',
     verificationToken: 'token123',
     verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -71,8 +72,8 @@ describe('AccountsService', () => {
         plan: 'free',
         status: 'pending',
         billingInfo: {},
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: mockUserId,
+        updatedBy: mockUserId,
       };
 
       const result = await service.create(accountData);

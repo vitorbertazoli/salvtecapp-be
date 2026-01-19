@@ -25,17 +25,17 @@ export class FollowUp {
   @Prop()
   completedAt?: Date;
 
-  @Prop()
-  completedBy?: string;
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  completedBy?: Types.ObjectId;
 
   @Prop({ trim: true })
   notes?: string[];
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface IFollowUp {
@@ -45,10 +45,10 @@ export interface IFollowUp {
   startDate: Date;
   status: 'pending' | 'completed';
   completedAt?: Date;
-  completedBy?: string;
+  completedBy?: string | Types.ObjectId;
   notes?: string[];
-  createdBy: string;
-  updatedBy: string;
+  createdBy: string | Types.ObjectId;
+  updatedBy: string | Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }

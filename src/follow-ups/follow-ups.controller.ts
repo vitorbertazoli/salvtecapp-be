@@ -19,8 +19,8 @@ export class FollowUpsController {
       ...dto,
       account: accountId,
       customer: new Types.ObjectId(dto.customer),
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.followUpsService.create(followUpData);
@@ -56,13 +56,13 @@ export class FollowUpsController {
   async update(@Param('id') id: string, @Body() dto: UpdateFollowUpDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     const followUpData = {
       ...dto,
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     // Handle status changes for completion tracking
     if (dto.status === 'completed') {
       followUpData.completedAt = new Date();
-      followUpData.completedBy = userId;
+      followUpData.completedBy = new Types.ObjectId(userId);
     } else if (dto.status === 'pending') {
       followUpData.completedAt = undefined;
       followUpData.completedBy = undefined;

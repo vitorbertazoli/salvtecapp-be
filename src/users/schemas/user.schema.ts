@@ -32,11 +32,11 @@ export class User {
   @Prop({ type: Boolean, default: false })
   isMasterAdmin: boolean;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 
   @Prop()
   resetToken?: string;

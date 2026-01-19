@@ -18,8 +18,8 @@ export class VehiclesController {
     const vehicleData = {
       ...dto,
       account: accountId,
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.vehiclesService.create(vehicleData);
@@ -50,7 +50,7 @@ export class VehiclesController {
   async update(@Param('id') id: string, @Body() dto: UpdateVehicleDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const vehicleData = {
       ...dto,
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     const vehicle = await this.vehiclesService.update(id, vehicleData, accountId);

@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Types } from 'mongoose';
-import { PublicAccountsController } from '../src/accounts/public-accounts.controller';
 import { AccountsService } from '../src/accounts/accounts.service';
-import { UsersService } from '../src/users/users.service';
-import { RolesService } from '../src/roles/roles.service';
-import { EmailService } from '../src/utils/email.service';
 import { CreateAccountDto } from '../src/accounts/dto/create-account.dto';
+import { PublicAccountsController } from '../src/accounts/public-accounts.controller';
 import { AccountDocument } from '../src/accounts/schemas/account.schema';
-import { UserDocument } from '../src/users/schemas/user.schema';
+import { RolesService } from '../src/roles/roles.service';
 import { RoleDocument } from '../src/roles/schemas/role.schema';
+import { UserDocument } from '../src/users/schemas/user.schema';
+import { UsersService } from '../src/users/users.service';
+import { EmailService } from '../src/utils/email.service';
 
 describe('PublicAccountsController', () => {
   let controller: PublicAccountsController;
@@ -29,11 +29,11 @@ describe('PublicAccountsController', () => {
     plan: 'free',
     status: 'pending',
     billingInfo: {},
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId,
     logoUrl: '/uploads/logos/test-logo.png',
     verificationToken: 'token123',
-    verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000)
   } as AccountDocument;
 
   const mockUser: UserDocument = {
@@ -46,16 +46,16 @@ describe('PublicAccountsController', () => {
     status: 'active',
     roles: [mockRoleId],
     isMasterAdmin: false,
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId
   } as UserDocument;
 
   const mockRole: RoleDocument = {
     _id: mockRoleId,
     name: 'ADMIN',
     description: 'Administrator with full account access',
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId
   } as RoleDocument;
 
   const mockFile = {
@@ -67,7 +67,7 @@ describe('PublicAccountsController', () => {
     destination: './uploads/logos',
     filename: '1234567890-logo.png',
     path: './uploads/logos/1234567890-logo.png',
-    buffer: Buffer.from('fake-image-data'),
+    buffer: Buffer.from('fake-image-data')
   };
 
   beforeEach(async () => {
@@ -75,21 +75,21 @@ describe('PublicAccountsController', () => {
       create: jest.fn(),
       findByAccountName: jest.fn(),
       findByVerificationToken: jest.fn(),
-      update: jest.fn(),
+      update: jest.fn()
     };
 
     const mockUsersService = {
       create: jest.fn(),
-      findOneByEmail: jest.fn(),
+      findOneByEmail: jest.fn()
     };
 
     const mockRolesService = {
       findByName: jest.fn(),
-      create: jest.fn(),
+      create: jest.fn()
     };
 
     const mockEmailService = {
-      sendVerificationEmail: jest.fn(),
+      sendVerificationEmail: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -97,21 +97,21 @@ describe('PublicAccountsController', () => {
       providers: [
         {
           provide: AccountsService,
-          useValue: mockAccountsService,
+          useValue: mockAccountsService
         },
         {
           provide: UsersService,
-          useValue: mockUsersService,
+          useValue: mockUsersService
         },
         {
           provide: RolesService,
-          useValue: mockRolesService,
+          useValue: mockRolesService
         },
         {
           provide: EmailService,
-          useValue: mockEmailService,
-        },
-      ],
+          useValue: mockEmailService
+        }
+      ]
     })
       .overrideGuard(ThrottlerGuard)
       .useValue({ canActivate: () => true })
@@ -135,7 +135,7 @@ describe('PublicAccountsController', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
-      password: 'password123',
+      password: 'password123'
     };
 
     it('should create a new account successfully', async () => {
@@ -158,8 +158,8 @@ describe('PublicAccountsController', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
         billingInfo: {},
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: new Types.ObjectId('000000000000000000000000'),
+        updatedBy: new Types.ObjectId('000000000000000000000000')
       });
       expect(rolesService.findByName).toHaveBeenCalledWith('ADMIN');
       expect(usersService.create).toHaveBeenCalledWith(
@@ -169,8 +169,8 @@ describe('PublicAccountsController', () => {
         createAccountDto.email,
         createAccountDto.password,
         [mockRole._id.toString()],
-        'system',
-        'system'
+        new Types.ObjectId('000000000000000000000000'),
+        new Types.ObjectId('000000000000000000000000')
       );
       expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
         createAccountDto.email,
@@ -183,15 +183,15 @@ describe('PublicAccountsController', () => {
           name: mockAccount.name,
           plan: mockAccount.plan,
           status: mockAccount.status,
-          logoUrl: mockAccount.logoUrl,
+          logoUrl: mockAccount.logoUrl
         },
         user: {
           id: mockUser._id,
           firstName: mockUser.firstName,
           lastName: mockUser.lastName,
-          email: mockUser.email,
+          email: mockUser.email
         },
-        message: 'Account created successfully. Please check your email to verify your account.',
+        message: 'Account created successfully. Please check your email to verify your account.'
       });
     });
 
@@ -213,8 +213,8 @@ describe('PublicAccountsController', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
         billingInfo: {},
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: new Types.ObjectId('000000000000000000000000'),
+        updatedBy: new Types.ObjectId('000000000000000000000000')
       });
       expect(result.account.logoUrl).toBeUndefined();
     });
@@ -234,8 +234,8 @@ describe('PublicAccountsController', () => {
       expect(rolesService.create).toHaveBeenCalledWith({
         name: 'ADMIN',
         description: 'Administrator with full account access',
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: new Types.ObjectId('000000000000000000000000'),
+        updatedBy: new Types.ObjectId('000000000000000000000000')
       });
     });
 
@@ -261,9 +261,7 @@ describe('PublicAccountsController', () => {
     it('should throw error if account name already exists', async () => {
       accountsService.findByAccountName.mockResolvedValue(mockAccount);
 
-      await expect(controller.create(createAccountDto)).rejects.toThrow(
-        'Account with this name already exists'
-      );
+      await expect(controller.create(createAccountDto)).rejects.toThrow('Account with this name already exists');
 
       expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
       expect(usersService.findOneByEmail).not.toHaveBeenCalled();
@@ -273,9 +271,7 @@ describe('PublicAccountsController', () => {
       accountsService.findByAccountName.mockResolvedValue(null);
       usersService.findOneByEmail.mockResolvedValue(mockUser);
 
-      await expect(controller.create(createAccountDto)).rejects.toThrow(
-        'User with this email already exists'
-      );
+      await expect(controller.create(createAccountDto)).rejects.toThrow('User with this email already exists');
 
       expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
       expect(usersService.findOneByEmail).toHaveBeenCalledWith(createAccountDto.email);
@@ -295,15 +291,15 @@ describe('PublicAccountsController', () => {
       expect(accountsService.update).toHaveBeenCalledWith(mockAccount._id.toString(), {
         status: 'active',
         verificationToken: undefined,
-        verificationTokenExpires: undefined,
+        verificationTokenExpires: undefined
       });
       expect(result).toEqual({
         message: 'Email verified successfully. Your account is now active.',
         account: {
           id: mockAccount._id,
           name: mockAccount.name,
-          status: 'active',
-        },
+          status: 'active'
+        }
       });
     });
 
@@ -332,7 +328,7 @@ describe('PublicAccountsController', () => {
       const token = 'expired-token';
       const expiredAccount = {
         ...mockAccount,
-        verificationTokenExpires: new Date(Date.now() - 1000),
+        verificationTokenExpires: new Date(Date.now() - 1000)
       };
       accountsService.findByVerificationToken.mockResolvedValue(expiredAccount);
 
@@ -354,15 +350,11 @@ describe('PublicAccountsController', () => {
       expect(usersService.findOneByEmail).toHaveBeenCalledWith(resendBody.email);
       expect(accountsService.update).toHaveBeenCalledWith(mockUser.account.toString(), {
         verificationToken: expect.any(String),
-        verificationTokenExpires: expect.any(Date),
+        verificationTokenExpires: expect.any(Date)
       });
-      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
-        mockUser.email,
-        `${mockUser.firstName} ${mockUser.lastName}`,
-        expect.any(String)
-      );
+      expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(mockUser.email, `${mockUser.firstName} ${mockUser.lastName}`, expect.any(String));
       expect(result).toEqual({
-        message: 'Verification email sent successfully. Please check your email.',
+        message: 'Verification email sent successfully. Please check your email.'
       });
     });
 

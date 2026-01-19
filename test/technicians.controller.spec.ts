@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TechniciansController } from '../src/technicians/technicians.controller';
-import { TechniciansService } from '../src/technicians/technicians.service';
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
 import { CreateTechnicianDto } from '../src/technicians/dto/create-technician.dto';
 import { UpdateTechnicianDto } from '../src/technicians/dto/update-technician.dto';
+import { TechniciansController } from '../src/technicians/technicians.controller';
+import { TechniciansService } from '../src/technicians/technicians.service';
 
 describe('TechniciansController', () => {
   let controller: TechniciansController;
   let service: TechniciansService;
 
   const mockAccountId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
   const mockTechnicianId = new Types.ObjectId();
 
   const mockTechnician = {
@@ -30,13 +30,13 @@ describe('TechniciansController', () => {
       city: 'São Paulo',
       state: 'SP',
       zipCode: '01234567',
-      country: 'Brazil',
+      country: 'Brazil'
     },
     user: new Types.ObjectId(),
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockTechnicianArray = [mockTechnician];
@@ -46,7 +46,7 @@ describe('TechniciansController', () => {
     findByAccount: jest.fn(),
     findByIdAndAccount: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
+    delete: jest.fn()
   };
 
   beforeEach(async () => {
@@ -56,9 +56,9 @@ describe('TechniciansController', () => {
       providers: [
         {
           provide: TechniciansService,
-          useValue: mockTechniciansService,
-        },
-      ],
+          useValue: mockTechniciansService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -75,7 +75,7 @@ describe('TechniciansController', () => {
   });
 
   describe('create', () => {
-    it('should create a technician without user account', async () => {
+    it('should throw error when user account not provided', async () => {
       const createTechnicianDto: CreateTechnicianDto = {
         cpf: '12345678901',
         phoneNumber: '+5511999999999',
@@ -87,24 +87,11 @@ describe('TechniciansController', () => {
           city: 'São Paulo',
           state: 'SP',
           zipCode: '01234567',
-          country: 'Brazil',
-        },
+          country: 'Brazil'
+        }
       };
 
-      mockTechniciansService.create.mockResolvedValue(mockTechnician);
-
-      const result = await controller.create(createTechnicianDto, mockAccountId, mockUserId);
-
-      expect(mockTechniciansService.create).toHaveBeenCalledWith(
-        mockAccountId,
-        '12345678901',
-        '+5511999999999',
-        createTechnicianDto.address,
-        mockUserId,
-        mockUserId,
-        undefined
-      );
-      expect(result).toEqual(mockTechnician);
+      await expect(controller.create(createTechnicianDto, mockAccountId, mockUserId)).rejects.toThrow('User account data is required to create a technician');
     });
 
     it('should create a technician with user account', async () => {
@@ -116,15 +103,15 @@ describe('TechniciansController', () => {
           number: '123',
           city: 'São Paulo',
           state: 'SP',
-          zipCode: '01234567',
+          zipCode: '01234567'
         },
         userAccount: {
           password: 'password123',
           firstName: 'João',
           lastName: 'Silva',
           email: 'joao.silva@example.com',
-          roles: ['TECHNICIAN'],
-        },
+          roles: ['TECHNICIAN']
+        }
       };
 
       mockTechniciansService.create.mockResolvedValue(mockTechnician);
@@ -143,7 +130,7 @@ describe('TechniciansController', () => {
           firstName: 'João',
           lastName: 'Silva',
           email: 'joao.silva@example.com',
-          roles: ['TECHNICIAN'],
+          roles: ['TECHNICIAN']
         }
       );
       expect(result).toEqual(mockTechnician);
@@ -157,7 +144,7 @@ describe('TechniciansController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockTechniciansService.findByAccount.mockResolvedValue(mockResult);
 
@@ -173,7 +160,7 @@ describe('TechniciansController', () => {
         total: 1,
         page: 2,
         limit: 20,
-        totalPages: 1,
+        totalPages: 1
       };
       mockTechniciansService.findByAccount.mockResolvedValue(mockResult);
 
@@ -189,7 +176,7 @@ describe('TechniciansController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockTechniciansService.findByAccount.mockResolvedValue(mockResult);
 
@@ -204,7 +191,7 @@ describe('TechniciansController', () => {
     it('should return technician by id for admin user', async () => {
       const adminUser = {
         id: mockUserId,
-        roles: ['ADMIN'],
+        roles: ['ADMIN']
       };
 
       mockTechniciansService.findByIdAndAccount.mockResolvedValue(mockTechnician);
@@ -219,7 +206,7 @@ describe('TechniciansController', () => {
       const nonAdminUser = {
         id: mockUserId,
         roles: ['TECHNICIAN'],
-        technicianId: mockTechnicianId.toString(),
+        technicianId: mockTechnicianId.toString()
       };
 
       mockTechniciansService.findByIdAndAccount.mockResolvedValue(mockTechnician);
@@ -234,7 +221,7 @@ describe('TechniciansController', () => {
       const nonAdminUser = {
         id: mockUserId,
         roles: ['TECHNICIAN'],
-        technicianId: undefined,
+        technicianId: undefined
       };
 
       const result = await controller.findOne('some-id', mockAccountId, nonAdminUser);
@@ -246,7 +233,7 @@ describe('TechniciansController', () => {
     it('should handle user without roles array', async () => {
       const userWithoutRoles = {
         id: mockUserId,
-        technicianId: mockTechnicianId.toString(),
+        technicianId: mockTechnicianId.toString()
       };
 
       mockTechniciansService.findByIdAndAccount.mockResolvedValue(mockTechnician);
@@ -269,8 +256,8 @@ describe('TechniciansController', () => {
           number: '456',
           city: 'Rio de Janeiro',
           state: 'RJ',
-          zipCode: '22222222',
-        },
+          zipCode: '22222222'
+        }
       };
 
       const expectedTechnicianData = {
@@ -280,25 +267,20 @@ describe('TechniciansController', () => {
         updatedBy: mockUserId,
         address: updateTechnicianDto.address,
         startDate: undefined,
-        endDate: undefined,
+        endDate: undefined
       };
 
       mockTechniciansService.update.mockResolvedValue({
         ...mockTechnician,
-        ...expectedTechnicianData,
+        ...expectedTechnicianData
       });
 
       const result = await controller.update(mockTechnicianId.toString(), updateTechnicianDto, mockAccountId, mockUserId);
 
-      expect(mockTechniciansService.update).toHaveBeenCalledWith(
-        mockTechnicianId.toString(),
-        mockAccountId,
-        expectedTechnicianData,
-        undefined
-      );
+      expect(mockTechniciansService.update).toHaveBeenCalledWith(mockTechnicianId.toString(), mockAccountId, expectedTechnicianData, undefined);
       expect(result).toMatchObject({
         ...mockTechnician,
-        ...expectedTechnicianData,
+        ...expectedTechnicianData
       });
     });
 
@@ -307,72 +289,62 @@ describe('TechniciansController', () => {
         userAccount: {
           firstName: 'João Updated',
           lastName: 'Silva Updated',
-          email: 'joao.updated@example.com',
-        },
+          email: 'joao.updated@example.com'
+        }
       };
 
       const expectedTechnicianData = {
         updatedBy: mockUserId,
         address: undefined,
         startDate: undefined,
-        endDate: undefined,
+        endDate: undefined
       };
 
       const expectedUserAccountData = {
         firstName: 'João Updated',
         lastName: 'Silva Updated',
         email: 'joao.updated@example.com',
-        roles: ['TECHNICIAN'],
+        roles: ['TECHNICIAN']
       };
 
       mockTechniciansService.update.mockResolvedValue({
         ...mockTechnician,
-        ...expectedTechnicianData,
+        ...expectedTechnicianData
       });
 
       const result = await controller.update(mockTechnicianId.toString(), updateTechnicianDto, mockAccountId, mockUserId);
 
-      expect(mockTechniciansService.update).toHaveBeenCalledWith(
-        mockTechnicianId.toString(),
-        mockAccountId,
-        expectedTechnicianData,
-        expectedUserAccountData
-      );
+      expect(mockTechniciansService.update).toHaveBeenCalledWith(mockTechnicianId.toString(), mockAccountId, expectedTechnicianData, expectedUserAccountData);
       expect(result).toMatchObject({
         ...mockTechnician,
-        ...expectedTechnicianData,
+        ...expectedTechnicianData
       });
     });
 
     it('should handle date conversion', async () => {
       const updateTechnicianDto: UpdateTechnicianDto = {
         startDate: '2024-02-01',
-        endDate: '2024-12-31',
+        endDate: '2024-12-31'
       };
 
       const expectedTechnicianData = {
         updatedBy: mockUserId,
         address: undefined,
         startDate: new Date('2024-02-01'),
-        endDate: new Date('2024-12-31'),
+        endDate: new Date('2024-12-31')
       };
 
       mockTechniciansService.update.mockResolvedValue({
         ...mockTechnician,
-        ...expectedTechnicianData,
+        ...expectedTechnicianData
       });
 
       const result = await controller.update(mockTechnicianId.toString(), updateTechnicianDto, mockAccountId, mockUserId);
 
-      expect(mockTechniciansService.update).toHaveBeenCalledWith(
-        mockTechnicianId.toString(),
-        mockAccountId,
-        expectedTechnicianData,
-        undefined
-      );
+      expect(mockTechniciansService.update).toHaveBeenCalledWith(mockTechnicianId.toString(), mockAccountId, expectedTechnicianData, undefined);
       expect(result).toMatchObject({
         ...mockTechnician,
-        ...expectedTechnicianData,
+        ...expectedTechnicianData
       });
     });
   });

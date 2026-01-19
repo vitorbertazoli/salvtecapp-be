@@ -43,14 +43,14 @@ export class Event {
   @Prop()
   completedAt?: Date;
 
-  @Prop()
-  completedBy?: string;
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  completedBy?: Types.ObjectId;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'ServiceOrder' })
   serviceOrder?: Types.ObjectId;

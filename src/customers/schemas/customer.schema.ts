@@ -98,11 +98,11 @@ export class Customer {
   })
   equipments: Equipment[];
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface ICustomer {
@@ -119,8 +119,8 @@ export interface ICustomer {
   technicianResponsible?: string | ITechnician;
   address?: Address;
   account?: string | IAccount;
-  createdBy: string;
-  updatedBy: string;
+  createdBy: string | Types.ObjectId;
+  updatedBy: string | Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
   equipments?: Equipment[]; // Array of equipment for this customer

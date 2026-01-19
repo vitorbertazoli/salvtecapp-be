@@ -19,16 +19,16 @@ export class ServiceOrdersController {
     const serviceOrderData = {
       ...createServiceOrderDto,
       account: accountId,
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     };
     return this.serviceOrdersService.create(serviceOrderData as any);
   }
 
   @Post('from-quote')
   @Roles('ADMIN', 'SUPERVISOR')
-  async createFromQuote(@Body() body: CreateFromQuoteDto, @GetAccountId() accountId: Types.ObjectId) {
-    return this.serviceOrdersService.createFromQuote(body.quoteId, body.priority, accountId);
+  async createFromQuote(@Body() body: CreateFromQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    return this.serviceOrdersService.createFromQuote(body.quoteId, body.priority, accountId, new Types.ObjectId(userId));
   }
 
   @Get()
@@ -66,7 +66,7 @@ export class ServiceOrdersController {
   ) {
     const serviceOrderData = {
       ...updateServiceOrderDto,
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     };
     return this.serviceOrdersService.updateByAccount(id, serviceOrderData as any, accountId);
   }

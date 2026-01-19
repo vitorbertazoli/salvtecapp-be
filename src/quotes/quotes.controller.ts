@@ -31,8 +31,8 @@ export class QuotesController {
           product: new Types.ObjectId(product.product)
         }))
       }),
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.quotesService.create(quoteData);
@@ -77,7 +77,7 @@ export class QuotesController {
           ...(product.product && { product: new Types.ObjectId(product.product) })
         }))
       }),
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.quotesService.updateByAccount(id, quoteData, accountId);
@@ -86,7 +86,7 @@ export class QuotesController {
   @Put(':id/send')
   @Roles('ADMIN', 'SUPERVISOR')
   async send(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    return this.quotesService.sendQuote(id, accountId, userId);
+    return this.quotesService.sendQuote(id, accountId, new Types.ObjectId(userId));
   }
 
   @Delete(':id')

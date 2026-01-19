@@ -4,6 +4,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import * as crypto from 'crypto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { Types } from 'mongoose';
 import { RolesService } from '../roles/roles.service';
 import { RoleDocument } from '../roles/schemas/role.schema';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -90,8 +91,8 @@ export class PublicAccountsController {
       verificationToken,
       verificationTokenExpires,
       billingInfo: {},
-      createdBy: 'system',
-      updatedBy: 'system'
+      createdBy: new Types.ObjectId('000000000000000000000000'), // System user
+      updatedBy: new Types.ObjectId('000000000000000000000000') // System user
     })) as AccountDocument;
 
     // Get or create ADMIN role
@@ -100,8 +101,8 @@ export class PublicAccountsController {
       adminRole = (await this.rolesService.create({
         name: 'ADMIN',
         description: 'Administrator with full account access',
-        createdBy: 'system',
-        updatedBy: 'system'
+        createdBy: new Types.ObjectId('000000000000000000000000'), // System user
+        updatedBy: new Types.ObjectId('000000000000000000000000') // System user
       })) as RoleDocument;
     }
 
@@ -113,8 +114,8 @@ export class PublicAccountsController {
       createAccountDto.email,
       createAccountDto.password,
       [adminRole._id.toString()],
-      'system',
-      'system'
+      new Types.ObjectId('000000000000000000000000'),
+      new Types.ObjectId('000000000000000000000000')
     )) as unknown as UserDocument;
 
     // Send verification email

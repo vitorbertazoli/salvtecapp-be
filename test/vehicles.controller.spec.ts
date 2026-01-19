@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { VehiclesController } from '../src/vehicles/vehicles.controller';
-import { VehiclesService } from '../src/vehicles/vehicles.service';
 import { CreateVehicleDto } from '../src/vehicles/dto/create-vehicle.dto';
 import { UpdateVehicleDto } from '../src/vehicles/dto/update-vehicle.dto';
+import { VehiclesController } from '../src/vehicles/vehicles.controller';
+import { VehiclesService } from '../src/vehicles/vehicles.service';
 
 describe('VehiclesController', () => {
   let controller: VehiclesController;
@@ -80,8 +80,8 @@ describe('VehiclesController', () => {
       expect(vehiclesService.create).toHaveBeenCalledWith({
         ...createDto,
         account: mockAccountId,
-        createdBy: mockUserId.toString(),
-        updatedBy: mockUserId.toString(),
+        createdBy: mockUserId,
+        updatedBy: mockUserId,
       });
       expect(result).toEqual(mockVehicle);
     });
@@ -157,7 +157,7 @@ describe('VehiclesController', () => {
         mockVehicleId.toString(),
         {
           ...updateDto,
-          updatedBy: mockUserId.toString(),
+          updatedBy: mockUserId,
         },
         mockAccountId
       );

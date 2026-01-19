@@ -18,8 +18,8 @@ export class ServicesController {
     const serviceData = {
       ...createServiceDto,
       account: accountId,
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     };
     return this.servicesService.create(serviceData);
   }
@@ -47,7 +47,7 @@ export class ServicesController {
   update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const serviceData = {
       ...updateServiceDto,
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     };
     return this.servicesService.update(id, serviceData, accountId);
   }

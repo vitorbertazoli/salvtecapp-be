@@ -13,9 +13,7 @@ export class PaymentsService {
     private serviceOrdersService: ServiceOrdersService
   ) {}
 
-  async createFromServiceOrder(accountId: Types.ObjectId, serviceOrderId: string): Promise<PaymentOrder> {
-    // For now, assume account is not needed, but to get service order, we need to find it without account
-    // Since payments might be cross-account, let's fetch directly
+  async createFromServiceOrder(accountId: Types.ObjectId, serviceOrderId: string, userId: Types.ObjectId): Promise<PaymentOrder> {
     const serviceOrder = await this.serviceOrderModel.findOne({ account: accountId, _id: serviceOrderId }).exec();
     if (!serviceOrder) {
       throw new NotFoundException('Service order not found');
@@ -27,7 +25,9 @@ export class PaymentsService {
       serviceOrder: serviceOrder._id,
       paymentStatus: 'pending',
       paidAmount: 0,
-      totalAmount: serviceOrder.totalValue
+      totalAmount: serviceOrder.totalValue,
+      createdBy: userId,
+      updatedBy: userId
     });
 
     const savedPaymentOrder = await paymentOrder.save();

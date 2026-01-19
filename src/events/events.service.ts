@@ -256,7 +256,7 @@ export class EventsService {
     return this.eventModel.deleteMany({ account: accountId }).exec();
   }
 
-  async completeByAccount(id: string, userId: string, accountId: Types.ObjectId) {
+  async completeByAccount(id: string, userId: Types.ObjectId, accountId: Types.ObjectId) {
     const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
     if (!event) {

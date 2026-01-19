@@ -30,11 +30,11 @@ export class Product {
   })
   account: Types.ObjectId;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface IProduct {
@@ -46,8 +46,8 @@ export interface IProduct {
   value: number;
   sku?: string;
   account: Types.ObjectId;
-  createdBy: string;
-  updatedBy: string;
+  createdBy: string | Types.ObjectId;
+  updatedBy: string | Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }

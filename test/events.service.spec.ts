@@ -18,7 +18,7 @@ describe('EventsService', () => {
   const mockCustomerId = new Types.ObjectId();
   const mockTechnicianId = new Types.ObjectId();
   const mockServiceOrderId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockCustomer = {
     _id: mockCustomerId,
@@ -511,11 +511,11 @@ describe('EventsService', () => {
       serviceOrdersService.updateByAccount.mockResolvedValue({} as any);
       jest.spyOn(service, 'findByIdAndAccount').mockResolvedValue(mockEvent);
 
-      const result = await service.completeByAccount(mockEvent._id.toString(), mockUserId, mockAccountId);
+      const result = await service.completeByAccount(mockEvent._id.toString(), mockUserId.toString(), mockAccountId);
 
       expect(mockEventDoc.status).toBe('completed');
       expect(mockEventDoc.completedAt).toBeDefined();
-      expect(mockEventDoc.completedBy).toBe(mockUserId);
+      expect(mockEventDoc.completedBy.toString()).toBe(mockUserId.toString());
       expect(serviceOrdersService.updateByAccount).toHaveBeenCalledWith(
         mockServiceOrderId.toString(),
         {

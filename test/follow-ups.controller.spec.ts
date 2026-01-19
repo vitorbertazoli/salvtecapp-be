@@ -11,7 +11,7 @@ describe('FollowUpsController', () => {
 
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockFollowUp = {
     _id: new Types.ObjectId(),
@@ -80,13 +80,13 @@ describe('FollowUpsController', () => {
         ...createFollowUpDto,
         account: mockAccountId,
         customer: new Types.ObjectId(createFollowUpDto.customer),
-        createdBy: mockUserId,
-        updatedBy: mockUserId,
+        createdBy: new Types.ObjectId(mockUserId.toString()),
+        updatedBy: new Types.ObjectId(mockUserId.toString()),
       };
 
       mockFollowUpsService.create.mockResolvedValue(mockFollowUp);
 
-      const result = await controller.create(createFollowUpDto, mockAccountId, mockUserId);
+      const result = await controller.create(createFollowUpDto, mockAccountId, mockUserId.toString());
 
       expect(service.create).toHaveBeenCalledWith(expectedFollowUpData);
       expect(result).toEqual(mockFollowUp);
@@ -102,13 +102,13 @@ describe('FollowUpsController', () => {
         ...createFollowUpDto,
         account: mockAccountId,
         customer: new Types.ObjectId(createFollowUpDto.customer),
-        createdBy: mockUserId,
-        updatedBy: mockUserId,
+        createdBy: new Types.ObjectId(mockUserId.toString()),
+        updatedBy: new Types.ObjectId(mockUserId.toString()),
       };
 
       mockFollowUpsService.create.mockResolvedValue(mockFollowUp);
 
-      const result = await controller.create(createFollowUpDto, mockAccountId, mockUserId);
+      const result = await controller.create(createFollowUpDto, mockAccountId, mockUserId.toString());
 
       expect(service.create).toHaveBeenCalledWith(expectedFollowUpData);
       expect(result).toEqual(mockFollowUp);
@@ -232,14 +232,14 @@ describe('FollowUpsController', () => {
 
       const expectedFollowUpData = {
         ...updateFollowUpDto,
-        updatedBy: mockUserId,
+        updatedBy: new Types.ObjectId(mockUserId.toString()),
         completedAt: expect.any(Date),
-        completedBy: mockUserId,
+        completedBy: new Types.ObjectId(mockUserId.toString()),
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(mockFollowUp);
 
-      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId, mockAccountId);
+      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId.toString(), mockAccountId);
 
       expect(service.updateByAccount).toHaveBeenCalledWith(followUpId, expectedFollowUpData, mockAccountId);
       expect(result).toEqual(mockFollowUp);
@@ -254,14 +254,14 @@ describe('FollowUpsController', () => {
 
       const expectedFollowUpData = {
         ...updateFollowUpDto,
-        updatedBy: mockUserId,
+        updatedBy: new Types.ObjectId(mockUserId.toString()),
         completedAt: undefined,
         completedBy: undefined,
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(mockFollowUp);
 
-      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId, mockAccountId);
+      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId.toString(), mockAccountId);
 
       expect(service.updateByAccount).toHaveBeenCalledWith(followUpId, expectedFollowUpData, mockAccountId);
       expect(result).toEqual(mockFollowUp);
@@ -275,12 +275,12 @@ describe('FollowUpsController', () => {
 
       const expectedFollowUpData = {
         ...updateFollowUpDto,
-        updatedBy: mockUserId,
+        updatedBy: new Types.ObjectId(mockUserId.toString()),
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(mockFollowUp);
 
-      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId, mockAccountId);
+      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId.toString(), mockAccountId);
 
       expect(service.updateByAccount).toHaveBeenCalledWith(followUpId, expectedFollowUpData, mockAccountId);
       expect(result).toEqual(mockFollowUp);
@@ -294,15 +294,15 @@ describe('FollowUpsController', () => {
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(null);
 
-      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId, mockAccountId);
+      const result = await controller.update(followUpId, updateFollowUpDto, mockUserId.toString(), mockAccountId);
 
       expect(service.updateByAccount).toHaveBeenCalledWith(
         followUpId,
         expect.objectContaining({
           status: 'completed',
-          updatedBy: mockUserId,
+          updatedBy: new Types.ObjectId(mockUserId.toString()),
           completedAt: expect.any(Date),
-          completedBy: mockUserId,
+          completedBy: new Types.ObjectId(mockUserId.toString()),
         }),
         mockAccountId
       );

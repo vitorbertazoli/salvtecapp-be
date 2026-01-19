@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ServiceOrdersController } from '../src/service-orders/service-orders.controller';
-import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
-import { CreateServiceOrderDto } from '../src/service-orders/dto/create-service-order.dto';
 import { CreateFromQuoteDto } from '../src/service-orders/dto/create-from-quote.dto';
+import { CreateServiceOrderDto } from '../src/service-orders/dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from '../src/service-orders/dto/update-service-order.dto';
+import { ServiceOrdersController } from '../src/service-orders/service-orders.controller';
+import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 
 describe('ServiceOrdersController', () => {
   let controller: ServiceOrdersController;
@@ -16,7 +16,7 @@ describe('ServiceOrdersController', () => {
   const mockCustomerId = new Types.ObjectId();
   const mockQuoteId = new Types.ObjectId();
   const mockTechnicianId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockServiceOrder = {
     _id: new Types.ObjectId(),
@@ -152,7 +152,7 @@ describe('ServiceOrdersController', () => {
 
       const result = await controller.createFromQuote(createFromQuoteDto, mockAccountId);
 
-      expect(mockServiceOrdersService.createFromQuote).toHaveBeenCalledWith(mockQuoteId.toString(), 'high', mockAccountId);
+      expect(mockServiceOrdersService.createFromQuote).toHaveBeenCalledWith(mockQuoteId.toString(), 'high', mockAccountId, expect.anything());
       expect(result).toEqual(mockServiceOrder);
     });
   });
