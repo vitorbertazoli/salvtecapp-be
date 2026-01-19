@@ -19,7 +19,7 @@ describe('ServiceOrdersService', () => {
   const mockCustomerId = new Types.ObjectId();
   const mockQuoteId = new Types.ObjectId();
   const mockTechnicianId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockServiceOrder = {
     _id: new Types.ObjectId(),

@@ -12,7 +12,7 @@ describe('FollowUpsService', () => {
 
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockCustomer = {
     _id: mockCustomerId,

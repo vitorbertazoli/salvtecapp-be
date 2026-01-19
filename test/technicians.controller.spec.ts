@@ -12,7 +12,7 @@ describe('TechniciansController', () => {
   let service: TechniciansService;
 
   const mockAccountId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
   const mockTechnicianId = new Types.ObjectId();
 
   const mockTechnician = {

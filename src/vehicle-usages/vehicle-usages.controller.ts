@@ -20,8 +20,8 @@ export class VehicleUsagesController {
       account: accountId,
       technician: new Types.ObjectId(dto.technician),
       vehicle: new Types.ObjectId(dto.vehicle),
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.vehicleUsagesService.create(vehicleUsageData);
@@ -44,7 +44,7 @@ export class VehicleUsagesController {
   async update(@Param('id') id: string, @Body() dto: UpdateVehicleUsageDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const vehicleUsageData = {
       ...dto,
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     const usage = await this.vehicleUsagesService.update(id, vehicleUsageData, accountId);
@@ -55,7 +55,7 @@ export class VehicleUsagesController {
   @Post(':id/approve')
   @Roles('SUPERVISOR', 'ADMIN')
   async approve(@Param('id') id: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    const usage = await this.vehicleUsagesService.approve(id, userId, accountId);
+    const usage = await this.vehicleUsagesService.approve(id, new Types.ObjectId(userId), accountId);
     if (!usage) throw new NotFoundException('Vehicle usage not found');
     return usage;
   }

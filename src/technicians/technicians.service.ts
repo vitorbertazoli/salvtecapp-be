@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Role } from '../roles/schemas/role.schema';
@@ -27,9 +27,9 @@ export class TechniciansService {
       zipCode: string;
       country?: string;
     },
-    createdBy: string,
-    updatedBy: string,
-    userAccountData?: {
+    createdBy: Types.ObjectId,
+    updatedBy: Types.ObjectId,
+    userAccountData: {
       password: string;
       firstName: string;
       lastName: string;
@@ -37,31 +37,25 @@ export class TechniciansService {
       roles: string[];
     }
   ): Promise<Technician> {
-    let userId: Types.ObjectId | undefined;
-
-    // Create user account if provided
-    if (userAccountData) {
-      // Check if email already exists
-      const existingEmailUser = await this.usersService.findOneByAccountAndEmail(account, userAccountData.email);
-      if (existingEmailUser) {
-        throw new Error('Email already exists');
-      }
-
-      // Get role IDs for the roles
-      const roleIds = await this.getRoleIds(['TECHNICIAN']);
-
-      const user = await this.usersService.create(
-        account,
-        userAccountData.firstName,
-        userAccountData.lastName,
-        userAccountData.email,
-        userAccountData.password,
-        roleIds,
-        createdBy,
-        updatedBy
-      );
-      userId = (user as any)._id;
+    // Check if email already exists
+    const existingEmailUser = await this.usersService.findOneByAccountAndEmail(account, userAccountData.email);
+    if (existingEmailUser) {
+      throw new BadRequestException('Email already exists');
     }
+
+    // Get role IDs for the roles
+    const roleIds = await this.getRoleIds(['TECHNICIAN']);
+
+    const user = await this.usersService.create(
+      account,
+      userAccountData.firstName,
+      userAccountData.lastName,
+      userAccountData.email,
+      userAccountData.password,
+      roleIds,
+      createdBy,
+      updatedBy
+    );
 
     // Create the technician with embedded address
     const address = {
@@ -74,7 +68,7 @@ export class TechniciansService {
       cpf,
       phoneNumber,
       address,
-      user: userId,
+      user: user.id,
       createdBy,
       updatedBy
     });

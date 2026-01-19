@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type EquipmentTypeDocument = EquipmentType & Document;
 
@@ -14,11 +14,11 @@ export class EquipmentType {
   @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface IEquipmentType {
@@ -26,8 +26,8 @@ export interface IEquipmentType {
   name: string;
   description?: string;
   isActive: boolean;
-  createdBy: string;
-  updatedBy: string;
+  createdBy: string | Types.ObjectId;
+  updatedBy: string | Types.ObjectId;
 }
 
 export const EquipmentTypeSchema = SchemaFactory.createForClass(EquipmentType);

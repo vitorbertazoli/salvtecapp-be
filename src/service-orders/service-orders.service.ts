@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from './schemas/service-order.schema';
+import { create } from 'domain';
 
 @Injectable()
 export class ServiceOrdersService {
@@ -26,7 +27,7 @@ export class ServiceOrdersService {
     return savedServiceOrder.toObject() as any;
   }
 
-  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: Types.ObjectId): Promise<ServiceOrder> {
+  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
     // Fetch the quote with populated services and products
     const quote = await this.quotesService.findByIdAndAccount(quoteId, accountId);
     if (!quote) {
@@ -86,7 +87,9 @@ export class ServiceOrdersService {
       totalValue,
       issuedAt: new Date(),
       status: 'pending' as const,
-      priority
+      priority,
+      createdBy: userId,
+      updatedBy: userId,
     };
 
     const serviceOrder = await this.create(serviceOrderData);

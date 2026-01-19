@@ -29,8 +29,8 @@ describe('PublicAccountsController', () => {
     plan: 'free',
     status: 'pending',
     billingInfo: {},
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId,
     logoUrl: '/uploads/logos/test-logo.png',
     verificationToken: 'token123',
     verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -46,16 +46,16 @@ describe('PublicAccountsController', () => {
     status: 'active',
     roles: [mockRoleId],
     isMasterAdmin: false,
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId,
   } as UserDocument;
 
   const mockRole: RoleDocument = {
     _id: mockRoleId,
     name: 'ADMIN',
     description: 'Administrator with full account access',
-    createdBy: 'system',
-    updatedBy: 'system',
+    createdBy: mockUserId,
+    updatedBy: mockUserId,
   } as RoleDocument;
 
   const mockFile = {
@@ -158,8 +158,8 @@ describe('PublicAccountsController', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
         billingInfo: {},
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: new Types.ObjectId('000000000000000000000000'),
+        updatedBy: new Types.ObjectId('000000000000000000000000'),
       });
       expect(rolesService.findByName).toHaveBeenCalledWith('ADMIN');
       expect(usersService.create).toHaveBeenCalledWith(
@@ -213,8 +213,8 @@ describe('PublicAccountsController', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
         billingInfo: {},
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: new Types.ObjectId('000000000000000000000000'),
+        updatedBy: new Types.ObjectId('000000000000000000000000'),
       });
       expect(result.account.logoUrl).toBeUndefined();
     });
@@ -234,8 +234,8 @@ describe('PublicAccountsController', () => {
       expect(rolesService.create).toHaveBeenCalledWith({
         name: 'ADMIN',
         description: 'Administrator with full account access',
-        createdBy: 'system',
-        updatedBy: 'system',
+        createdBy: new Types.ObjectId('000000000000000000000000'),
+        updatedBy: new Types.ObjectId('000000000000000000000000'),
       });
     });
 

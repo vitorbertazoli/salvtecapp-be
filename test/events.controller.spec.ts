@@ -10,7 +10,7 @@ describe('EventsController', () => {
   let service: jest.Mocked<EventsService>;
 
   const mockAccountId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
   const mockTechnicianId = 'tech123';
 
   const mockEvent = {

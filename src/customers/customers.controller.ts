@@ -19,8 +19,8 @@ export class CustomersController {
       ...dto,
       account: accountId,
       ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     } as any;
 
     return this.customersService.create(customerData, accountId);

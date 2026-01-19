@@ -95,11 +95,11 @@ export class Quote {
   @Prop({ required: true })
   issuedAt: Date;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface IQuote {
@@ -127,8 +127,8 @@ export interface IQuote {
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
   validUntil: Date;
   issuedAt: Date;
-  createdBy: string;
-  updatedBy: string;
+  createdBy: string | Types.ObjectId;
+  updatedBy: string | Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }

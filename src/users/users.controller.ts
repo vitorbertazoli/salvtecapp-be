@@ -33,8 +33,8 @@ export class UsersController {
       createUserDto.email,
       createUserDto.password,
       createUserDto.roles || [],
-      userId,
-      userId
+      new Types.ObjectId(userId),
+      new Types.ObjectId(userId)
     );
     return this.sanitizeUser(createdUser);
   }

@@ -115,6 +115,12 @@ export class ServiceOrder {
 
   @Prop()
   customerNotes?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export const ServiceOrderSchema = SchemaFactory.createForClass(ServiceOrder);

@@ -21,11 +21,11 @@ export class Service {
   })
   account: Types.ObjectId;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface IService {
@@ -34,8 +34,8 @@ export interface IService {
   description?: string;
   value: number;
   account: Types.ObjectId;
-  createdBy: string;
-  updatedBy: string;
+  createdBy: string | Types.ObjectId;
+  updatedBy: string | Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
 }

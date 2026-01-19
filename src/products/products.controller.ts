@@ -18,8 +18,8 @@ export class ProductsController {
     const productData = {
       ...createProductDto,
       account: accountId,
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: new Types.ObjectId(userId),
+      updatedBy: new Types.ObjectId(userId)
     };
     return this.productsService.create(productData);
   }
@@ -47,7 +47,7 @@ export class ProductsController {
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const productData = {
       ...updateProductDto,
-      updatedBy: userId
+      updatedBy: new Types.ObjectId(userId)
     };
     return this.productsService.update(id, productData, accountId);
   }

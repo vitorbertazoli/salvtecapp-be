@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { EmailService } from '../utils/email.service';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
+import { T } from 'node_modules/@faker-js/faker/dist/airline-CWrCIUHH';
 
 @Injectable()
 export class QuotesService {
@@ -154,7 +155,7 @@ export class QuotesService {
     return this.quoteModel.deleteMany({ account: accountId }).exec();
   }
 
-  async sendQuote(id: string, accountId: Types.ObjectId, userId: string) {
+  async sendQuote(id: string, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<{ success: boolean; message: string }> {
     const query = { _id: id, account: accountId };
 
     // Find the quote with all populated data

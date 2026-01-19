@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -7,6 +7,7 @@ import { CreateTechnicianDto } from './dto/create-technician.dto';
 import { UpdateTechnicianDto } from './dto/update-technician.dto';
 import { Technician } from './schemas/technician.schema';
 import { TechniciansService } from './technicians.service';
+import { use } from 'passport';
 
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -16,20 +17,22 @@ export class TechniciansController {
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
   async create(@Body() createTechnicianDto: CreateTechnicianDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    const userAccount = createTechnicianDto.userAccount
-      ? {
+    if (!createTechnicianDto.userAccount) {
+      throw new BadRequestException('User account data is required to create a technician');
+    }
+    
+    const userAccount = {
           ...createTechnicianDto.userAccount,
           roles: createTechnicianDto.userAccount.roles || []
-        }
-      : undefined;
+        };
 
     return this.techniciansService.create(
       accountId,
       createTechnicianDto.cpf,
       createTechnicianDto.phoneNumber,
       createTechnicianDto.address,
-      userId,
-      userId,
+      new Types.ObjectId(userId),
+      new Types.ObjectId(userId),
       userAccount
     );
   }
@@ -78,7 +81,7 @@ export class TechniciansController {
       cpf: technicianData.cpf,
       phoneNumber: technicianData.phoneNumber,
       status: technicianData.status,
-      updatedBy: userId,
+      updatedBy: new Types.ObjectId(userId),
       address: technicianData.address,
       // Convert string dates to Date objects if provided
       ...(technicianData.startDate && { startDate: new Date(technicianData.startDate) }),

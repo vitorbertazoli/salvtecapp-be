@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { RolesService } from '../src/roles/roles.service';
 import { Role, RoleDocument } from '../src/roles/schemas/role.schema';
 
@@ -8,7 +8,7 @@ describe('RolesService', () => {
   let service: RolesService;
   let roleModel: any;
 
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockRole = {
     _id: '507f1f77bcf86cd799439011',

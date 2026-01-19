@@ -9,7 +9,7 @@ describe('ServicesService', () => {
   let serviceModel: any;
 
   const mockAccountId = new Types.ObjectId();
-  const mockUserId = 'user123';
+  const mockUserId = new Types.ObjectId();
 
   const mockService = {
     _id: new Types.ObjectId(),

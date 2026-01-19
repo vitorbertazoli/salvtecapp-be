@@ -53,11 +53,11 @@ export class Technician {
   @Prop({ required: true })
   phoneNumber: string;
 
-  @Prop({ required: true })
-  createdBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
-  @Prop({ required: true })
-  updatedBy: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
 }
 
 export interface ITechnician {
