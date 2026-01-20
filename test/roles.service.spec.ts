@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { RolesService } from '../src/roles/roles.service';
-import { Role, RoleDocument } from '../src/roles/schemas/role.schema';
+import { Role } from '../src/roles/schemas/role.schema';
 
 describe('RolesService', () => {
   let service: RolesService;
@@ -17,7 +17,7 @@ describe('RolesService', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockRoleArray = [
@@ -29,8 +29,8 @@ describe('RolesService', () => {
       createdBy: mockUserId,
       updatedBy: mockUserId,
       createdAt: new Date(),
-      updatedAt: new Date(),
-    },
+      updatedAt: new Date()
+    }
   ];
 
   beforeEach(async () => {
@@ -45,9 +45,9 @@ describe('RolesService', () => {
           ...data,
           _id: '507f1f77bcf86cd799439011',
           createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
-      }),
+          updatedAt: new Date()
+        })
+      })
     }));
 
     // Add static methods
@@ -60,9 +60,9 @@ describe('RolesService', () => {
         RolesService,
         {
           provide: getModelToken(Role.name),
-          useValue: mockRoleModel,
-        },
-      ],
+          useValue: mockRoleModel
+        }
+      ]
     }).compile();
 
     service = module.get<RolesService>(RolesService);
@@ -79,7 +79,7 @@ describe('RolesService', () => {
         name: 'MANAGER',
         description: 'Manager role',
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(roleData);
@@ -89,20 +89,20 @@ describe('RolesService', () => {
         name: 'MANAGER',
         description: 'Manager role',
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       });
     });
   });
 
   describe('findAll', () => {
-    it('should return all roles except TECHNICIAN', async () => {
+    it('should return all roles', async () => {
       roleModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockRoleArray),
+        exec: jest.fn().mockResolvedValue(mockRoleArray)
       });
 
       const result = await service.findAll();
 
-      expect(roleModel.find).toHaveBeenCalledWith({ name: { $ne: 'TECHNICIAN' } });
+      expect(roleModel.find).toHaveBeenCalledWith();
       expect(result).toEqual(mockRoleArray);
     });
   });
@@ -110,7 +110,7 @@ describe('RolesService', () => {
   describe('findOne', () => {
     it('should return a role by id', async () => {
       roleModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockRole),
+        exec: jest.fn().mockResolvedValue(mockRole)
       });
 
       const result = await service.findOne(mockRole._id);
@@ -121,7 +121,7 @@ describe('RolesService', () => {
 
     it('should return null when role not found', async () => {
       roleModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.findOne('invalid-id');
@@ -133,7 +133,7 @@ describe('RolesService', () => {
   describe('findByName', () => {
     it('should return a role by name', async () => {
       roleModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockRole),
+        exec: jest.fn().mockResolvedValue(mockRole)
       });
 
       const result = await service.findByName('ADMIN');
@@ -144,7 +144,7 @@ describe('RolesService', () => {
 
     it('should return null when role not found', async () => {
       roleModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.findByName('NONEXISTENT');

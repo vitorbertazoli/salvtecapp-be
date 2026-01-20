@@ -13,7 +13,7 @@ export class RolesService {
   }
 
   async findAll(): Promise<Role[]> {
-    return this.roleModel.find({ name: { $ne: 'TECHNICIAN' } }).exec();
+    return this.roleModel.find().exec();
   }
 
   async findOne(id: string): Promise<Role | null> {

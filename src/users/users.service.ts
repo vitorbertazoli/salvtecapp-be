@@ -124,11 +124,11 @@ export class UsersService {
         }
       },
       // Filter out users with TECHNICIAN role
-      {
-        $match: {
-          'userRoles.name': { $ne: 'TECHNICIAN' }
-        }
-      },
+      // {
+      //   $match: {
+      //     'userRoles.name': { $ne: 'TECHNICIAN' }
+      //   }
+      // },
       // Populate account
       {
         $lookup: {

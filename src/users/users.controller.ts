@@ -147,7 +147,6 @@ export class UsersController {
   @Roles('ADMIN') // Only users with ADMIN role can delete users
   async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
     if (user.isMasterAdmin) {
-      console.log(`Master admin ${user.id} is deleting user ${id} across all accounts.`);
       return this.usersService.deleteById(id);
     }
     await this.usersService.delete(id, accountId);

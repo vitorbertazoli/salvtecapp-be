@@ -181,8 +181,6 @@ export class TechniciansService {
       }
     );
 
-    console.log('Aggregation Pipeline:', JSON.stringify(pipeline, null, 2));
-
     const result = await this.technicianModel.aggregate(pipeline).exec();
     const technicians = result[0]?.technicians || [];
     const total = result[0]?.totalCount[0]?.count || 0;
