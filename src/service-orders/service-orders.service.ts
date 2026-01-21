@@ -4,7 +4,6 @@ import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from './schemas/service-order.schema';
-import { create } from 'domain';
 
 @Injectable()
 export class ServiceOrdersService {
@@ -27,7 +26,12 @@ export class ServiceOrdersService {
     return savedServiceOrder.toObject() as any;
   }
 
-  async createFromQuote(quoteId: string, priority: 'low' | 'normal' | 'high' | 'urgent', accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
+  async createFromQuote(
+    quoteId: string,
+    priority: 'low' | 'normal' | 'high' | 'urgent',
+    accountId: Types.ObjectId,
+    userId: Types.ObjectId
+  ): Promise<ServiceOrder> {
     // Fetch the quote with populated services and products
     const quote = await this.quotesService.findByIdAndAccount(quoteId, accountId);
     if (!quote) {
@@ -89,7 +93,7 @@ export class ServiceOrdersService {
       status: 'pending' as const,
       priority,
       createdBy: userId,
-      updatedBy: userId,
+      updatedBy: userId
     };
 
     const serviceOrder = await this.create(serviceOrderData);
@@ -197,6 +201,7 @@ export class ServiceOrdersService {
           'customer.name': 1,
           'customer.email': 1,
           'customer.phoneNumbers': 1,
+          'customer.address': 1,
           'customer.id': 1,
           'quote.quoteId': 1,
           'assignedTechnician.name': 1,
@@ -249,7 +254,7 @@ export class ServiceOrdersService {
     const serviceOrder = await this.serviceOrderModel
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
-      .populate('customer', 'name email phoneNumbers id')
+      .populate('customer', 'name email phoneNumbers address id')
       .populate('quote', 'quoteId')
       .populate('assignedTechnician', 'name email phoneNumber id')
       .populate('items.service', 'name')
@@ -265,7 +270,7 @@ export class ServiceOrdersService {
     const updatedServiceOrder = await this.serviceOrderModel
       .findOneAndUpdate(query, serviceOrderData, { new: true })
       .populate('account', 'name id')
-      .populate('customer', 'name email id')
+      .populate('customer', 'name email address id')
       .populate('quote', 'quoteId')
       .populate('assignedTechnician', 'name email id')
       .exec();
@@ -289,7 +294,7 @@ export class ServiceOrdersService {
         account: accountId,
         status: { $in: ['pending', 'scheduled', 'in_progress'] }
       })
-      .populate('customer', 'name email phoneNumbers id')
+      .populate('customer', 'name email phoneNumbers address id')
       .populate('assignedTechnician', 'name email phoneNumber id')
       .select('orderNumber description status priority scheduledDate createdAt customer assignedTechnician')
       .sort({ createdAt: -1 })

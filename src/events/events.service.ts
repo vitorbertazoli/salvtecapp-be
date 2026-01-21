@@ -86,7 +86,7 @@ export class EventsService {
 
     return this.eventModel
       .find(query)
-      .populate('customer', 'name email phone')
+      .populate('customer', 'name email phoneNumbers address')
       .populate({
         path: 'technician',
         populate: {
@@ -125,7 +125,7 @@ export class EventsService {
     const [events, total] = await Promise.all([
       this.eventModel
         .find(query)
-        .populate('customer', 'name email phone')
+        .populate('customer', 'name email phoneNumbers address')
         .populate({
           path: 'technician',
           populate: {
