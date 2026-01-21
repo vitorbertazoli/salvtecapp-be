@@ -82,14 +82,7 @@ export class CustomersService {
     }
 
     const [customers, total] = await Promise.all([
-      this.customerModel
-        .find(searchQuery)
-        .populate('account', 'name id')
-        .populate('technicianResponsible', 'name id')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
+      this.customerModel.find(searchQuery).populate('account', 'name id').sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
       this.customerModel.countDocuments(searchQuery).exec()
     ]);
 
@@ -105,11 +98,7 @@ export class CustomersService {
   }
 
   async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<CustomerDocument | null> {
-    const customer = await this.customerModel
-      .findOne({ _id: id, account: accountId })
-      .populate('account', 'name id')
-      .populate('technicianResponsible', 'name id')
-      .exec();
+    const customer = await this.customerModel.findOne({ _id: id, account: accountId }).populate('account', 'name id').exec();
 
     return customer;
   }
@@ -130,11 +119,7 @@ export class CustomersService {
     }
 
     // Equipments are now embedded, so just update the customer with the new equipments array
-    const updatedCustomer = await this.customerModel
-      .findOneAndUpdate(query, customerData, { new: true })
-      .populate('account', 'name id')
-      .populate('technicianResponsible', 'name id')
-      .exec();
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, customerData, { new: true }).populate('account', 'name id').exec();
 
     return updatedCustomer;
   }

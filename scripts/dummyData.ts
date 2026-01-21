@@ -521,7 +521,6 @@ async function populateDummyData() {
         type: isCompany ? 'commercial' : 'residential',
         status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
         phoneNumbers: [generatePhone()],
-        technicianResponsible: faker.helpers.arrayElement(createdTechnicians)._id,
         address: generateAddress(),
         account: account._id,
         equipments: equipments,

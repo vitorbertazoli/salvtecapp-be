@@ -13,7 +13,6 @@ describe('CustomersController', () => {
 
   const mockCustomerId = '507f1f77bcf86cd799439011';
   const mockAccountId = new Types.ObjectId('507f1f77bcf86cd799439012');
-  const mockTechnicianId = '507f1f77bcf86cd799439013';
   const mockUserId = '507f1f77bcf86cd799439014';
 
   const mockCustomer = {
@@ -25,7 +24,6 @@ describe('CustomersController', () => {
     status: 'active' as const,
     phoneNumbers: ['1234567890'],
     notes: 'Test notes',
-    technicianResponsible: mockTechnicianId,
     account: mockAccountId,
     address: {
       street: 'Test Street',
@@ -33,7 +31,7 @@ describe('CustomersController', () => {
       city: 'Test City',
       state: 'Test State',
       zipCode: '12345',
-      country: 'Brazil',
+      country: 'Brazil'
     },
     equipments: [
       {
@@ -42,13 +40,13 @@ describe('CustomersController', () => {
         btus: 12000,
         type: 'Air Conditioner',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockPaginatedResult = {
@@ -56,7 +54,7 @@ describe('CustomersController', () => {
     total: 1,
     page: 1,
     limit: 10,
-    totalPages: 1,
+    totalPages: 1
   };
 
   beforeEach(async () => {
@@ -67,7 +65,7 @@ describe('CustomersController', () => {
       findByIdAndAccount: jest.fn(),
       updateByAccount: jest.fn(),
       deleteByAccount: jest.fn(),
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -75,9 +73,9 @@ describe('CustomersController', () => {
       providers: [
         {
           provide: CustomersService,
-          useValue: mockCustomersService,
-        },
-      ],
+          useValue: mockCustomersService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })
@@ -101,13 +99,12 @@ describe('CustomersController', () => {
         type: 'residential',
         cpf: '12345678901',
         phoneNumbers: ['1234567890'],
-        technicianResponsible: mockTechnicianId,
         address: {
           street: 'Test Street',
           number: '123',
           city: 'Test City',
           state: 'Test State',
-          zipCode: '12345',
+          zipCode: '12345'
         },
         equipments: [
           {
@@ -116,9 +113,9 @@ describe('CustomersController', () => {
             btus: 12000,
             type: 'Air Conditioner',
             maker: 'Test Maker',
-            model: 'Test Model',
-          },
-        ],
+            model: 'Test Model'
+          }
+        ]
       };
 
       customersService.create.mockResolvedValue(mockCustomer as any);
@@ -129,9 +126,8 @@ describe('CustomersController', () => {
         {
           ...createDto,
           account: mockAccountId,
-          technicianResponsible: new Types.ObjectId(mockTechnicianId),
           createdBy: new Types.ObjectId(mockUserId),
-          updatedBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId)
         },
         mockAccountId
       );
@@ -143,7 +139,7 @@ describe('CustomersController', () => {
         name: 'Test Customer',
         email: 'customer@example.com',
         type: 'residential',
-        cpf: '12345678901',
+        cpf: '12345678901'
       };
 
       customersService.create.mockResolvedValue(mockCustomer as any);
@@ -155,7 +151,7 @@ describe('CustomersController', () => {
           ...createDto,
           account: mockAccountId,
           createdBy: new Types.ObjectId(mockUserId),
-          updatedBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId)
         },
         mockAccountId
       );
@@ -218,17 +214,16 @@ describe('CustomersController', () => {
       const updateDto: UpdateCustomerDto = {
         name: 'Updated Customer',
         email: 'updated@example.com',
-        technicianResponsible: mockTechnicianId,
         address: {
           street: 'Updated Street',
-          city: 'Updated City',
+          city: 'Updated City'
         },
         equipments: [
           {
             name: 'Updated Equipment',
-            type: 'Updated Type',
-          },
-        ],
+            type: 'Updated Type'
+          }
+        ]
       };
 
       const updatedCustomer = { ...mockCustomer, ...updateDto };
@@ -240,8 +235,7 @@ describe('CustomersController', () => {
         mockCustomerId,
         {
           ...updateDto,
-          technicianResponsible: new Types.ObjectId(mockTechnicianId),
-          updatedBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId)
         },
         mockAccountId
       );
@@ -251,7 +245,7 @@ describe('CustomersController', () => {
     it('should update customer without technician change', async () => {
       const updateDto: UpdateCustomerDto = {
         name: 'Updated Customer',
-        email: 'updated@example.com',
+        email: 'updated@example.com'
       };
 
       const updatedCustomer = { ...mockCustomer, ...updateDto };
@@ -263,7 +257,7 @@ describe('CustomersController', () => {
         mockCustomerId,
         {
           ...updateDto,
-          updatedBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId)
         },
         mockAccountId
       );

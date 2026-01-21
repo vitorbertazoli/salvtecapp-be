@@ -18,7 +18,6 @@ export class CustomersController {
     const customerData = {
       ...dto,
       account: accountId,
-      ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
       createdBy: new Types.ObjectId(userId),
       updatedBy: new Types.ObjectId(userId)
     } as any;
@@ -51,7 +50,6 @@ export class CustomersController {
   async update(@Param('id') id: string, @Body() dto: UpdateCustomerDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     const customerData = {
       ...dto,
-      ...(dto.technicianResponsible && { technicianResponsible: new Types.ObjectId(dto.technicianResponsible) }),
       updatedBy: new Types.ObjectId(userId)
     } as any;
 

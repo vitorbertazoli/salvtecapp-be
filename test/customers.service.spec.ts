@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Model, Types } from 'mongoose';
 import { CustomersService } from '../src/customers/customers.service';
 import { Customer, CustomerDocument } from '../src/customers/schemas/customer.schema';
@@ -22,7 +22,6 @@ describe('CustomersService', () => {
     status: 'active' as const,
     phoneNumbers: ['1234567890'],
     notes: 'Test notes',
-    technicianResponsible: mockTechnicianId,
     account: mockAccountId,
     address: {
       street: 'Test Street',
@@ -30,7 +29,7 @@ describe('CustomersService', () => {
       city: 'Test City',
       state: 'Test State',
       zipCode: '12345',
-      country: 'Brazil',
+      country: 'Brazil'
     },
     equipments: [
       {
@@ -39,20 +38,20 @@ describe('CustomersService', () => {
         btus: 12000,
         type: 'Air Conditioner',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockCustomerDocument = {
     ...mockCustomer,
     toObject: jest.fn().mockReturnValue(mockCustomer),
     save: jest.fn(),
-    populate: jest.fn(),
+    populate: jest.fn()
   };
 
   beforeEach(async () => {
@@ -62,8 +61,8 @@ describe('CustomersService', () => {
       save: jest.fn().mockResolvedValue({
         ...data,
         ...mockCustomer,
-        toObject: jest.fn().mockReturnValue({ ...data, ...mockCustomer }),
-      }),
+        toObject: jest.fn().mockReturnValue({ ...data, ...mockCustomer })
+      })
     }));
 
     // Add static methods
@@ -80,9 +79,9 @@ describe('CustomersService', () => {
         CustomersService,
         {
           provide: getModelToken(Customer.name),
-          useValue: mockCustomerModel,
-        },
-      ],
+          useValue: mockCustomerModel
+        }
+      ]
     }).compile();
 
     service = module.get<CustomersService>(CustomersService);
@@ -106,7 +105,7 @@ describe('CustomersService', () => {
           number: '123',
           city: 'Test City',
           state: 'Test State',
-          zipCode: '12345',
+          zipCode: '12345'
         },
         equipments: [
           {
@@ -115,11 +114,11 @@ describe('CustomersService', () => {
             btus: 12000,
             type: 'Air Conditioner',
             maker: 'Test Maker',
-            model: 'Test Model',
-          },
+            model: 'Test Model'
+          }
         ],
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(customerData, mockAccountId);
@@ -128,10 +127,10 @@ describe('CustomersService', () => {
         ...customerData,
         address: {
           ...customerData.address,
-          country: 'Brazil',
+          country: 'Brazil'
         },
         equipments: customerData.equipments,
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toBeDefined();
     });
@@ -145,7 +144,7 @@ describe('CustomersService', () => {
         contactName: 'John Doe',
         phoneNumbers: ['1234567890'],
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(customerData, mockAccountId);
@@ -157,7 +156,7 @@ describe('CustomersService', () => {
         contactName: 'John Doe',
         address: undefined,
         equipments: [],
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toBeDefined();
     });
@@ -166,7 +165,7 @@ describe('CustomersService', () => {
       const customerData = {
         name: 'Minimal Customer',
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(customerData, mockAccountId);
@@ -179,7 +178,7 @@ describe('CustomersService', () => {
         contactName: undefined,
         address: undefined,
         equipments: [],
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toBeDefined();
     });
@@ -189,7 +188,7 @@ describe('CustomersService', () => {
     it('should return all customers', async () => {
       const mockCustomers = [mockCustomer];
       customerModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockCustomers),
+        exec: jest.fn().mockResolvedValue(mockCustomers)
       } as any);
 
       const result = await service.findAll();
@@ -209,11 +208,11 @@ describe('CustomersService', () => {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockCustomers),
+        exec: jest.fn().mockResolvedValue(mockCustomers)
       } as any);
 
       customerModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockCount),
+        exec: jest.fn().mockResolvedValue(mockCount)
       } as any);
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'test', 'active');
@@ -224,16 +223,16 @@ describe('CustomersService', () => {
           { name: { $regex: 'test', $options: 'i' } },
           { email: { $regex: 'test', $options: 'i' } },
           { cpf: { $regex: 'test', $options: 'i' } },
-          { phoneNumbers: { $elemMatch: { $regex: 'test', $options: 'i' } } },
+          { phoneNumbers: { $elemMatch: { $regex: 'test', $options: 'i' } } }
         ],
-        status: 'active',
+        status: 'active'
       });
       expect(result).toEqual({
         customers: mockCustomers,
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -246,24 +245,24 @@ describe('CustomersService', () => {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockCustomers),
+        exec: jest.fn().mockResolvedValue(mockCustomers)
       } as any);
 
       customerModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockCount),
+        exec: jest.fn().mockResolvedValue(mockCount)
       } as any);
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', undefined);
 
       expect(customerModel.find).toHaveBeenCalledWith({
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual({
         customers: mockCustomers,
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -276,11 +275,11 @@ describe('CustomersService', () => {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockCustomers),
+        exec: jest.fn().mockResolvedValue(mockCustomers)
       } as any);
 
       customerModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockCount),
+        exec: jest.fn().mockResolvedValue(mockCount)
       } as any);
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', undefined);
@@ -290,7 +289,7 @@ describe('CustomersService', () => {
         total: 0,
         page: 1,
         limit: 10,
-        totalPages: 0,
+        totalPages: 0
       });
     });
   });
@@ -299,13 +298,12 @@ describe('CustomersService', () => {
     it('should return customer with populated fields', async () => {
       const populatedCustomer = {
         ...mockCustomer,
-        account: { name: 'Test Account', id: mockAccountId },
-        technicianResponsible: { name: 'Test Technician', id: mockTechnicianId },
+        account: { name: 'Test Account', id: mockAccountId }
       };
 
       customerModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(populatedCustomer),
+        exec: jest.fn().mockResolvedValue(populatedCustomer)
       } as any);
 
       const result = await service.findByIdAndAccount(mockCustomerId, mockAccountId);
@@ -317,7 +315,7 @@ describe('CustomersService', () => {
     it('should return null when customer not found', async () => {
       customerModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findByIdAndAccount(mockCustomerId, mockAccountId);
@@ -333,22 +331,22 @@ describe('CustomersService', () => {
         email: 'updated@example.com',
         address: {
           street: 'Updated Street',
-          city: 'Updated City',
+          city: 'Updated City'
         },
         equipments: [
           {
             name: 'Updated Equipment',
-            type: 'Updated Type',
-          },
+            type: 'Updated Type'
+          }
         ],
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const updatedCustomer = { ...mockCustomer, ...updateData };
 
       customerModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(updatedCustomer),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
       } as any);
 
       const result = await service.updateByAccount(mockCustomerId, updateData, mockAccountId);
@@ -359,8 +357,8 @@ describe('CustomersService', () => {
           ...updateData,
           address: {
             ...updateData.address,
-            country: 'Brazil',
-          },
+            country: 'Brazil'
+          }
         },
         { new: true }
       );
@@ -370,23 +368,19 @@ describe('CustomersService', () => {
     it('should update customer without address change', async () => {
       const updateData = {
         name: 'Updated Customer',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const updatedCustomer = { ...mockCustomer, ...updateData };
 
       customerModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(updatedCustomer),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
       } as any);
 
       const result = await service.updateByAccount(mockCustomerId, updateData, mockAccountId);
 
-      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockCustomerId, account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockCustomerId, account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(updatedCustomer);
     });
   });
@@ -394,7 +388,7 @@ describe('CustomersService', () => {
   describe('deleteByAccount', () => {
     it('should delete customer successfully', async () => {
       customerModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockCustomer),
+        exec: jest.fn().mockResolvedValue(mockCustomer)
       } as any);
 
       const result = await service.deleteByAccount(mockCustomerId, mockAccountId);
@@ -405,7 +399,7 @@ describe('CustomersService', () => {
 
     it('should return null when customer not found', async () => {
       customerModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.deleteByAccount(mockCustomerId, mockAccountId);
@@ -418,7 +412,7 @@ describe('CustomersService', () => {
     it('should delete all customers for account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
       customerModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockDeleteResult),
+        exec: jest.fn().mockResolvedValue(mockDeleteResult)
       } as any);
 
       const result = await service.deleteAllByAccount(mockAccountId);

@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { IAccount } from 'src/accounts/schemas/account.schema';
-import { ITechnician } from 'src/technicians/schemas/technician.schema';
 
 export type CustomerDocument = Customer & Document;
 
@@ -61,9 +60,6 @@ export class Customer {
   @Prop()
   notes?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Technician' })
-  technicianResponsible?: Types.ObjectId;
-
   @Prop({
     type: {
       street: String,
@@ -116,7 +112,6 @@ export interface ICustomer {
   status: 'active' | 'inactive' | 'suspended';
   phoneNumbers?: string[];
   notes?: string;
-  technicianResponsible?: string | ITechnician;
   address?: Address;
   account?: string | IAccount;
   createdBy: string | Types.ObjectId;
@@ -131,5 +126,4 @@ export const CustomerSchema = SchemaFactory.createForClass(Customer);
 // Create compound unique indexes for account-specific uniqueness
 CustomerSchema.index({ email: 1 });
 CustomerSchema.index({ status: 1 });
-CustomerSchema.index({ technicianResponsible: 1 });
 CustomerSchema.index({ account: 1 });

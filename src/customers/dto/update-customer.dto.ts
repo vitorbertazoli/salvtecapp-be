@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsEnum, IsMongoId, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class EquipmentDto {
   @IsOptional()
@@ -102,10 +102,6 @@ export class UpdateCustomerDto {
   @IsOptional()
   @IsString()
   notes?: string;
-
-  @IsOptional()
-  @IsMongoId()
-  technicianResponsible?: string;
 
   @IsOptional()
   @ValidateNested()
