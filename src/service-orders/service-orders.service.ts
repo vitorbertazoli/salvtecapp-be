@@ -317,7 +317,8 @@ export class ServiceOrdersService {
     userId: Types.ObjectId,
     description?: string,
     discount?: number,
-    otherDiscounts?: { description: string; amount: number }[]
+    otherDiscounts?: { description: string; amount: number }[],
+    equipments?: any[]
   ): Promise<ServiceOrder> {
     const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
     if (!serviceOrder) {
@@ -337,6 +338,8 @@ export class ServiceOrdersService {
       version,
       originalItems: serviceOrder.items,
       modifiedItems,
+      originalEquipments: serviceOrder.equipments || [],
+      modifiedEquipments: equipments || [],
       description,
       discount: discount || 0,
       otherDiscounts: otherDiscounts || [],
@@ -381,6 +384,7 @@ export class ServiceOrdersService {
     serviceOrder.totalValue = changeOrder.totalValue;
     serviceOrder.discount = changeOrder.discount;
     serviceOrder.otherDiscounts = changeOrder.otherDiscounts;
+    serviceOrder.equipments = changeOrder.modifiedEquipments || [];
     serviceOrder.updatedBy = userId;
 
     // Mark changeOrders as modified for Mongoose to detect the change

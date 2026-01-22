@@ -26,6 +26,16 @@ export class ServiceOrderItem {
   totalValue: number;
 }
 
+export class Equipment {
+  name: string;
+  room?: string;
+  btus?: number;
+  type: string;
+  subType?: string;
+  maker?: string;
+  model?: string;
+}
+
 export class ChangeOrder {
   @Prop({ required: true })
   version: number;
@@ -35,6 +45,9 @@ export class ChangeOrder {
 
   @Prop({ type: [ServiceOrderItem], required: true })
   modifiedItems: ServiceOrderItem[];
+
+  @Prop({ type: [Equipment], default: [] })
+  modifiedEquipments?: Equipment[];
 
   @Prop()
   description?: string;
@@ -80,16 +93,6 @@ export class ChangeOrder {
 
   @Prop({ required: true, default: Date.now })
   createdAt: Date;
-}
-
-export class Equipment {
-  name: string;
-  room?: string;
-  btus?: number;
-  type: string;
-  subType?: string;
-  maker?: string;
-  model?: string;
 }
 
 @Schema({ timestamps: true })

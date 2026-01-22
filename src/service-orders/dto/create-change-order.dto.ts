@@ -27,4 +27,17 @@ export class CreateChangeOrderDto {
     description: string;
     amount: number;
   }[];
+
+  @IsOptional()
+  @IsArray()
+  equipments?: {
+    name: string;
+    room?: string;
+    btus?: number;
+    type: string;
+    subType?: string;
+    maker?: string;
+    model?: string;
+    _id?: string;
+  }[];
 }

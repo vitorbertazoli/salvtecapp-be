@@ -128,7 +128,7 @@ describe('PaymentsController', () => {
       const result = await controller.remove(mockPaymentOrder._id.toString(), mockAccountId);
 
       expect(mockPaymentsService.remove).toHaveBeenCalledWith(mockPaymentOrder._id.toString(), mockAccountId);
-      expect(result).toBeUndefined();
+      expect(result).toEqual({ message: 'Payment order deleted successfully' });
     });
   });
 });

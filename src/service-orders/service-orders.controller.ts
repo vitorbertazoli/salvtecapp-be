@@ -99,7 +99,8 @@ export class ServiceOrdersController {
       new Types.ObjectId(userId),
       dto.description,
       dto.discount,
-      dto.otherDiscounts
+      dto.otherDiscounts,
+      dto.equipments
     );
   }
 
