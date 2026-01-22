@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
+import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
 import { EmailService } from '../utils/email.service';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
@@ -8,7 +10,8 @@ import { Quote, QuoteDocument } from './schemas/quote.schema';
 export class QuotesService {
   constructor(
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
-    private emailService: EmailService
+    private emailService: EmailService,
+    private configService: ConfigService
   ) {}
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
@@ -180,8 +183,12 @@ export class QuotesService {
       throw new NotFoundException('Customer email not found');
     }
 
+    // Generate approval token and expiration date (use quote's validUntil date)
+    const approvalToken = crypto.randomBytes(32).toString('hex');
+    const approvalTokenExpires = new Date(quote.validUntil);
+
     // Generate HTML email content
-    const htmlContent = this.generateQuoteEmailHtml(quote);
+    const htmlContent = this.generateQuoteEmailHtml(quote, approvalToken);
 
     // Send email
     await this.emailService.sendEmail({
@@ -190,11 +197,13 @@ export class QuotesService {
       html: htmlContent
     });
 
-    // Update quote status to 'sent'
+    // Update quote status to 'sent' and store token
     await this.quoteModel.findOneAndUpdate(
       query,
       {
         status: 'sent',
+        approvalToken,
+        approvalTokenExpires,
         updatedBy: userId
       },
       { new: true }
@@ -203,7 +212,75 @@ export class QuotesService {
     return { success: true, message: 'Quote sent successfully' };
   }
 
-  private generateQuoteEmailHtml(quote: any): string {
+  async approveQuoteByToken(token: string, approvalData: { approved: boolean; notes?: string }): Promise<{ success: boolean; message: string; quote?: any }> {
+    // Find quote by token and check if token is still valid
+    const quote = await this.quoteModel
+      .findOne({
+        approvalToken: token,
+        approvalTokenExpires: { $gt: new Date() },
+        status: { $in: ['sent', 'draft'] } // Only allow approval for sent or draft quotes
+      })
+      .populate('account', 'name')
+      .populate('customer', 'name email')
+      .populate('services.service', 'name description')
+      .populate('products.product', 'name description maker model sku')
+      .exec();
+
+    if (!quote) {
+      throw new NotFoundException('Invalid or expired approval token');
+    }
+
+    // Update quote status based on approval and clear the token
+    const newStatus = approvalData.approved ? 'accepted' : 'rejected';
+    const message = approvalData.approved ? 'Quote approved successfully' : 'Quote rejected';
+
+    const updatedQuote = await this.quoteModel
+      .findOneAndUpdate(
+        { _id: quote._id },
+        {
+          status: newStatus,
+          approvalToken: null,
+          approvalTokenExpires: null,
+          notes: approvalData.notes || quote.notes,
+          updatedBy: quote.updatedBy // Keep the same updatedBy
+        },
+        { new: true }
+      )
+      .populate('account', 'name')
+      .populate('customer', 'name email')
+      .populate('services.service', 'name description')
+      .populate('products.product', 'name description maker model sku')
+      .exec();
+
+    return {
+      success: true,
+      message,
+      quote: updatedQuote
+    };
+  }
+
+  async getQuoteByToken(token: string): Promise<any> {
+    // Find quote by token and check if token is still valid
+    const quote = await this.quoteModel
+      .findOne({
+        approvalToken: token,
+        approvalTokenExpires: { $gt: new Date() }
+      })
+      .populate('account', 'name')
+      .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
+      .populate('services.service', 'name description')
+      .populate('products.product', 'name description maker model sku')
+      .populate('createdBy', 'firstName lastName')
+      .exec();
+
+    if (!quote) {
+      throw new NotFoundException('Invalid or expired token');
+    }
+
+    return quote;
+  }
+
+  private generateQuoteEmailHtml(quote: any, approvalToken?: string): string {
     const formatCurrency = (value: number) => {
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -223,6 +300,7 @@ export class QuotesService {
     const customer = quote.customer;
     const account = quote.account;
     const createdBy = quote.createdBy;
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
 
     // Calculate subtotal before discounts
     let subtotal = quote.totalValue;
@@ -682,6 +760,18 @@ export class QuotesService {
         }
 
         <div class="footer">
+            ${
+              approvalToken
+                ? `
+            <div style="background-color: #007bff; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center;">
+                <p style="margin: 0; font-size: 16px; font-weight: bold;">Aprovar Orçamento</p>
+                <p style="margin: 10px 0 0 0;">
+                    <a href="${frontendUrl}/quotes/approval/${approvalToken}" style="background-color: white; color: #007bff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Clique aqui para aprovar</a>
+                </p>
+            </div>
+            `
+                : ''
+            }
             <p>Obrigado pelo seu interesse nos nossos serviços!</p>
             <p>Este orçamento é válido até ${formatDate(quote.validUntil)}.</p>
         </div>

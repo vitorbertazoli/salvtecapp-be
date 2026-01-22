@@ -89,6 +89,15 @@ export class Quote {
   })
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
 
+  @Prop()
+  approvalToken?: string;
+
+  @Prop()
+  approvalTokenExpires?: Date;
+
+  @Prop()
+  notes?: string;
+
   @Prop({ required: true })
   validUntil: Date;
 
@@ -125,6 +134,9 @@ export interface IQuote {
     amount: number;
   }[];
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
+  approvalToken?: string;
+  approvalTokenExpires?: Date;
+  notes?: string;
   validUntil: Date;
   issuedAt: Date;
   createdBy: string | Types.ObjectId;

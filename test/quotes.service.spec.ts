@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
@@ -96,6 +97,13 @@ describe('QuotesService', () => {
       createFromQuote: jest.fn()
     };
 
+    const mockConfigService = {
+      get: jest.fn((key: string) => {
+        if (key === 'FRONTEND_URL') return 'http://localhost:3000';
+        return undefined;
+      })
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuotesService,
@@ -110,6 +118,10 @@ describe('QuotesService', () => {
         {
           provide: ServiceOrdersService,
           useValue: mockServiceOrdersService
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService
         }
       ]
     }).compile();
@@ -415,7 +427,12 @@ describe('QuotesService', () => {
       expect(emailService.sendEmail).toHaveBeenCalled();
       expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: mockQuote._id.toString(), account: mockAccountId },
-        { status: 'sent', updatedBy: mockUserId },
+        expect.objectContaining({
+          status: 'sent',
+          updatedBy: mockUserId,
+          approvalToken: expect.any(String),
+          approvalTokenExpires: expect.any(Date)
+        }),
         { new: true }
       );
       expect(result).toEqual({ success: true, message: 'Quote sent successfully' });
