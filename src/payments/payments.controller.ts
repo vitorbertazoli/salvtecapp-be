@@ -41,7 +41,8 @@ export class PaymentsController {
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<void> {
-    return this.paymentsService.remove(id, accountId);
+  async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<{ message: string }> {
+    await this.paymentsService.remove(id, accountId);
+    return { message: 'Payment order deleted successfully' };
   }
 }
