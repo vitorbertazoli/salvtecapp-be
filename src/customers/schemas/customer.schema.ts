@@ -80,7 +80,6 @@ export class Customer {
   @Prop({
     type: [
       {
-        _id: false,
         name: { type: String, required: true },
         room: String,
         btus: Number,

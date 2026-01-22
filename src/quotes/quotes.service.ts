@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { EmailService } from '../utils/email.service';
@@ -165,18 +165,19 @@ export class QuotesService {
     // Find the quote with all populated data
     const quote = await this.quoteModel
       .findOne(query)
-      .populate('account', 'name')
-      .populate('customer', 'name email')
+      .populate('account', 'name logoUrl')
+      .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
       .populate('services.service', 'name description')
       .populate('products.product', 'name description maker model sku')
+      .populate('createdBy', 'firstName lastName')
       .exec();
 
     if (!quote) {
-      throw new Error('Quote not found');
+      throw new NotFoundException('Quote not found');
     }
 
     if (!quote.customer || !(quote.customer as any).email) {
-      throw new Error('Customer email not found');
+      throw new NotFoundException('Customer email not found');
     }
 
     // Generate HTML email content
@@ -212,208 +213,482 @@ export class QuotesService {
 
     const formatDate = (date: Date) => {
       return new Intl.DateTimeFormat('pt-BR', {
-        year: '2-digit',
+        year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour12: false
       }).format(new Date(date));
     };
 
-    // Calculate totals
-    const servicesTotal = quote.services?.reduce((sum: number, service: any) => sum + service.quantity * service.unitValue, 0) || 0;
+    const customer = quote.customer;
+    const account = quote.account;
+    const createdBy = quote.createdBy;
 
-    const productsTotal = quote.products?.reduce((sum: number, product: any) => sum + product.quantity * product.unitValue, 0) || 0;
-
-    const subtotal = servicesTotal + productsTotal;
-    const discountValue = subtotal * ((quote.discount || 0) / 100);
-    const totalValue = subtotal - discountValue;
-
-    // Status styling
-    const getStatusStyle = (status: string) => {
-      switch (status) {
-        case 'accepted':
-          return 'background-color: #4caf50; color: white;';
-        case 'sent':
-          return 'background-color: #2196f3; color: white;';
-        case 'draft':
-        default:
-          return 'background-color: #ff9800; color: white;';
-      }
-    };
-
-    let equipmentHtml = '';
-    if (quote.customer?.equipments && quote.customer.equipments.length > 0) {
-      equipmentHtml = `
-        <h6 style="color: #1976d2; margin: 30px 0 10px 0; font-size: 18px;">Equipamentos</h6>
-        <div style="margin-bottom: 20px;">
-          ${quote.customer.equipments
-            .map(
-              (equipment: any) => `
-            <span style="display: inline-block; padding: 4px 12px; margin: 2px 4px 2px 0; border: 1px solid #ddd; border-radius: 16px; font-size: 12px; background-color: #f5f5f5;">
-              ${equipment.name}${equipment.room ? ` (${equipment.room})` : ''}
-            </span>
-          `
-            )
-            .join('')}
-        </div>
-      `;
+    // Calculate subtotal before discounts
+    let subtotal = quote.totalValue;
+    if (quote.discount) {
+      subtotal = subtotal / (1 - quote.discount / 100);
+    }
+    if (quote.otherDiscounts) {
+      quote.otherDiscounts.forEach((discount: any) => {
+        subtotal += discount.amount;
+      });
     }
 
-    let servicesHtml = '';
-    if (quote.services && quote.services.length > 0) {
-      servicesHtml = `
-        <h6 style="color: #1976d2; margin: 30px 0 10px 0; font-size: 18px;">Serviços</h6>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-          <thead>
-            <tr style="background-color: #f5f5f5;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: 600;">Item</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: 600;">Quantidade</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: 600;">Preço Unitário</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: 600;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${quote.services
-              .map(
-                (service: any) => `
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;">${service.service.name}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${service.quantity}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(service.unitValue)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(service.quantity * service.unitValue)}</td>
-              </tr>
-            `
-              )
-              .join('')}
-            <tr style="background-color: #f9f9f9; font-weight: 600;">
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;" colspan="3">Total em Serviços:</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(servicesTotal)}</td>
-            </tr>
-          </tbody>
-        </table>
-      `;
-    }
-
-    let productsHtml = '';
-    if (quote.products && quote.products.length > 0) {
-      productsHtml = `
-        <h6 style="color: #1976d2; margin: 30px 0 10px 0; font-size: 18px;">Produtos</h6>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-          <thead>
-            <tr style="background-color: #f5f5f5;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left; font-weight: 600;">Item</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: 600;">Quantidade</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: 600;">Preço Unitário</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: 600;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${quote.products
-              .map(
-                (product: any) => `
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px;">
-                  ${product.product.name}
-                  ${product.product.maker ? `<br><small style="color: #666;">${product.product.maker} ${product.product.model || ''}</small>` : ''}
-                </td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${product.quantity}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(product.unitValue)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(product.quantity * product.unitValue)}</td>
-              </tr>
-            `
-              )
-              .join('')}
-            <tr style="background-color: #f9f9f9; font-weight: 600;">
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;" colspan="3">Total em Produtos:</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(productsTotal)}</td>
-            </tr>
-          </tbody>
-        </table>
-      `;
-    }
-
-    let descriptionHtml = '';
-    if (quote.description) {
-      descriptionHtml = `
-        <h6 style="color: #1976d2; margin: 30px 0 10px 0; font-size: 18px;">Descrição</h6>
-        <p style="margin-bottom: 20px; line-height: 1.5;">${quote.description}</p>
-      `;
-    }
-
-    return `
-      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-        <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center;">
-              <div style="width: 40px; height: 40px; background-color: #1976d2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px;">
-                <span style="color: white; font-size: 20px;">📄</span>
-              </div>
-              <div>
-                <h1 style="color: #1976d2; margin: 0; font-size: 24px;">Orçamento</h1>
-                <p style="color: #666; margin: 0; font-size: 14px;">Detalhes e informações do orçamento</p>
-              </div>
-            </div>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-            <div style="width: 48%;">
-              <p style="margin: 5px 0; font-size: 14px;"><strong>ID do Orçamento:</strong> ${quote._id.toString().slice(-8)}</p>
-              <p style="margin: 5px 0; font-size: 14px;"><strong>Emitido Em:</strong> ${formatDate(quote.issuedAt)}</p>
-              <p style="margin: 5px 0; font-size: 14px;"><strong>Válido Até:</strong> ${formatDate(quote.validUntil)}</p>
-            </div>
-            <div style="width: 48%;">
-              <p style="margin: 5px 0; font-size: 14px;"><strong>Cliente:</strong> ${quote.customer.name}</p>
-              <p style="margin: 5px 0; font-size: 14px;"><strong>Email:</strong> ${quote.customer.email}</p>
-            </div>
-          </div>
-
-          ${equipmentHtml}
-          ${servicesHtml}
-          ${productsHtml}
-          ${descriptionHtml}
-
-          <div style="margin-top: 30px;">
-            <h6 style="color: #1976d2; margin: 0 0 15px 0; font-size: 18px;">Resumo</h6>
-            <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>Total em Serviços:</span>
-                <span>${formatCurrency(servicesTotal)}</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span>Total em Produtos:</span>
-                <span>${formatCurrency(productsTotal)}</span>
-              </div>
-              <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span><strong>Subtotal:</strong></span>
-                <span><strong>${formatCurrency(subtotal)}</strong></span>
-              </div>
-              ${
-                quote.discount
-                  ? `
-              <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <span>Desconto (${quote.discount}%):</span>
-                <span style="color: #d32f2f;">-${formatCurrency(discountValue)}</span>
-              </div>
-              <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
-              `
-                  : ''
-              }
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 18px; font-weight: bold;">Valor Total:</span>
-                <span style="font-size: 18px; font-weight: bold; color: #1976d2;">${formatCurrency(totalValue)}</span>
-              </div>
-            </div>
-          </div>
+    const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamento - ${account.name}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 0;
+        }
+        .quote-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-draft { background-color: #ffc107; color: #212529; }
+        .status-sent { background-color: #007bff; color: white; }
+        .status-accepted { background-color: #28a745; color: white; }
+        .status-rejected { background-color: #dc3545; color: white; }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+        }
+        .info-value {
+            font-size: 16px;
+            margin-top: 2px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .table th, .table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .equipment-table {
+            margin: 15px 0;
+        }
+        .equipment-table th, .equipment-table td {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .total-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .discount-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .dates-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .description {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        @media (max-width: 600px) {
+            .table {
+                font-size: 14px;
+            }
+            .table th, .table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">${account.name}</h1>
+            <h2 class="quote-title">Orçamento</h2>
         </div>
 
-        <div style="text-align: center; color: #666; font-size: 14px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
-          <p style="margin: 5px 0;">Obrigado pelo seu negócio!</p>
-          <p style="margin: 5px 0;">Este orçamento é válido até ${formatDate(quote.validUntil)}.</p>
-          <p style="margin: 5px 0;">Para aceitar este orçamento, entre em contato conosco.</p>
-          <p style="margin: 15px 0 0 0; font-weight: bold;">${quote.account.name}</p>
+        <div class="dates-info">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="width: 48%; vertical-align: top; padding-right: 20px;">
+                        <div class="info-item">
+                            <div class="info-label">Data de Emissão:</div>
+                            <div class="info-value">${formatDate(quote.issuedAt)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Válido Até:</div>
+                            <div class="info-value">${formatDate(quote.validUntil)}</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
         </div>
-      </div>
-    `;
+
+        <div class="section">
+            <h3 class="section-title">Informações do Cliente</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="width: 48%; vertical-align: top; padding-right: 20px;">
+                        <div class="info-item">
+                            <div class="info-label">Nome:</div>
+                            <div class="info-value">${customer.name}</div>
+                        </div>
+                        ${
+                          customer.email
+                            ? `
+                        <div class="info-item">
+                            <div class="info-label">Email:</div>
+                            <div class="info-value">${customer.email}</div>
+                        </div>
+                        `
+                            : ''
+                        }
+                        ${
+                          customer.contactName
+                            ? `
+                        <div class="info-item">
+                            <div class="info-label">Nome do Contato:</div>
+                            <div class="info-value">${customer.contactName}</div>
+                        </div>
+                        `
+                            : ''
+                        }
+                        <div class="info-item">
+                            <div class="info-label">Tipo:</div>
+                            <div class="info-value">${customer.type === 'residential' ? 'Residencial' : 'Comercial'}</div>
+                        </div>
+                        ${
+                          customer.cpf
+                            ? `
+                        <div class="info-item">
+                            <div class="info-label">CPF:</div>
+                            <div class="info-value">${customer.cpf}</div>
+                        </div>
+                        `
+                            : ''
+                        }
+                        ${
+                          customer.cnpj
+                            ? `
+                        <div class="info-item">
+                            <div class="info-label">CNPJ:</div>
+                            <div class="info-value">${customer.cnpj}</div>
+                        </div>
+                        `
+                            : ''
+                        }
+                        ${
+                          customer.phoneNumbers && customer.phoneNumbers.length > 0
+                            ? `
+                        <div class="info-item">
+                            <div class="info-label">Telefones:</div>
+                            <div class="info-value">${customer.phoneNumbers.join(', ')}</div>
+                        </div>
+                        `
+                            : ''
+                        }
+                    </td>
+                    <td style="width: 48%; vertical-align: top; padding-left: 20px;">
+                        ${
+                          customer.address
+                            ? `
+                        <div class="info-item">
+                            <div class="info-label">Endereço:</div>
+                            <div class="info-value">
+                                ${customer.address.street ? customer.address.street : ''} ${customer.address.number ? ', ' + customer.address.number : ''}<br>
+                                ${customer.address.complement ? customer.address.complement + '<br>' : ''}
+                                ${customer.address.neighborhood ? customer.address.neighborhood + ' - ' : ''}
+                                ${customer.address.city ? customer.address.city : ''} ${customer.address.state ? '- ' + customer.address.state : ''}<br>
+                                ${customer.address.zipCode ? 'CEP: ' + customer.address.zipCode : ''}
+                                ${customer.address.country && customer.address.country !== 'Brazil' ? '<br>' + customer.address.country : ''}
+                            </div>
+                        </div>
+                        `
+                            : '<div class="info-item"><div class="info-label">Endereço:</div><div class="info-value">Não informado</div></div>'
+                        }
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        ${
+          quote.equipments && quote.equipments.length > 0
+            ? `
+        <div class="section">
+            <h3 class="section-title">Equipamentos</h3>
+            <table class="table equipment-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Sala</th>
+                        <th>BTUs</th>
+                        <th>Tipo</th>
+                        <th>Subtipo</th>
+                        <th>Fabricante</th>
+                        <th>Modelo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${quote.equipments
+                      .map(
+                        (equipment: any) => `
+                        <tr>
+                            <td>${equipment.name}</td>
+                            <td>${equipment.room || '-'}</td>
+                            <td>${equipment.btus || '-'}</td>
+                            <td>${equipment.type}</td>
+                            <td>${equipment.subType || '-'}</td>
+                            <td>${equipment.maker || '-'}</td>
+                            <td>${equipment.model || '-'}</td>
+                        </tr>
+                    `
+                      )
+                      .join('')}
+                </tbody>
+            </table>
+        </div>
+        `
+            : ''
+        }
+
+        ${
+          quote.services && quote.services.length > 0
+            ? `
+        <div class="section">
+            <h3 class="section-title">Serviços</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Serviço</th>
+                        <th>Descrição</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${quote.services
+                      .map(
+                        (serviceItem: any) => `
+                        <tr>
+                            <td>${serviceItem.service?.name || 'Serviço'}</td>
+                            <td>${serviceItem.service?.description || '-'}</td>
+                            <td>${serviceItem.quantity}</td>
+                            <td>${formatCurrency(serviceItem.unitValue)}</td>
+                            <td>${formatCurrency(serviceItem.quantity * serviceItem.unitValue)}</td>
+                        </tr>
+                    `
+                      )
+                      .join('')}
+                </tbody>
+            </table>
+        </div>
+        `
+            : ''
+        }
+
+        ${
+          quote.products && quote.products.length > 0
+            ? `
+        <div class="section">
+            <h3 class="section-title">Produtos</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Descrição</th>
+                        <th>Fabricante</th>
+                        <th>Modelo</th>
+                        <th>SKU</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${quote.products
+                      .map(
+                        (productItem: any) => `
+                        <tr>
+                            <td>${productItem.product?.name || 'Produto'}</td>
+                            <td>${productItem.product?.description || '-'}</td>
+                            <td>${productItem.product?.maker || '-'}</td>
+                            <td>${productItem.product?.model || '-'}</td>
+                            <td>${productItem.product?.sku || '-'}</td>
+                            <td>${productItem.quantity}</td>
+                            <td>${formatCurrency(productItem.unitValue)}</td>
+                            <td>${formatCurrency(productItem.quantity * productItem.unitValue)}</td>
+                        </tr>
+                    `
+                      )
+                      .join('')}
+                </tbody>
+            </table>
+        </div>
+        `
+            : ''
+        }
+
+        ${
+          quote.description
+            ? `
+        <div class="section">
+            <h3 class="section-title">Descrição</h3>
+            <div class="description">${quote.description}</div>
+        </div>
+        `
+            : ''
+        }
+
+        <div class="total-section">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; font-size: 16px; border-bottom: 1px solid #dee2e6;">Subtotal:</td>
+                    <td style="padding: 8px 0; font-size: 16px; text-align: right; border-bottom: 1px solid #dee2e6;">${formatCurrency(subtotal)}</td>
+                </tr>
+
+                ${
+                  quote.discount
+                    ? `
+                <tr>
+                    <td style="padding: 8px 0; font-size: 16px; border-bottom: 1px solid #dee2e6;">Desconto (${quote.discount}%):</td>
+                    <td style="padding: 8px 0; font-size: 16px; text-align: right; border-bottom: 1px solid #dee2e6;">-${formatCurrency((subtotal * quote.discount) / 100)}</td>
+                </tr>
+                `
+                    : ''
+                }
+
+                ${
+                  quote.otherDiscounts && quote.otherDiscounts.length > 0
+                    ? `
+                    ${quote.otherDiscounts
+                      .map(
+                        (discount: any) => `
+                <tr>
+                    <td style="padding: 8px 0; font-size: 16px; border-bottom: 1px solid #dee2e6;">${discount.description}:</td>
+                    <td style="padding: 8px 0; font-size: 16px; text-align: right; border-bottom: 1px solid #dee2e6;">-${formatCurrency(discount.amount)}</td>
+                </tr>
+                `
+                      )
+                      .join('')}
+                `
+                    : ''
+                }
+
+                <tr>
+                    <td style="padding: 15px 0 8px 0; font-size: 20px; font-weight: bold; border-top: 2px solid #007bff;">Total:</td>
+                    <td style="padding: 15px 0 8px 0; font-size: 20px; font-weight: bold; text-align: right; border-top: 2px solid #007bff;">${formatCurrency(quote.totalValue)}</td>
+                </tr>
+            </table>
+        </div>
+
+        ${
+          createdBy
+            ? `
+        <div class="section">
+            <div style="text-align: center; color: #666; font-size: 14px;">
+                Orçamento preparado por: <strong>${createdBy.firstName} ${createdBy.lastName}</strong>
+            </div>
+        </div>
+        `
+            : ''
+        }
+
+        <div class="footer">
+            <p>Obrigado pelo seu interesse nos nossos serviços!</p>
+            <p>Este orçamento é válido até ${formatDate(quote.validUntil)}.</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    return html;
   }
 }
