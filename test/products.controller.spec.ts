@@ -20,13 +20,13 @@ describe('ProductsController', () => {
     description: 'A test product',
     maker: 'Test Maker',
     model: 'Test Model',
-    value: 100.50,
+    value: 100.5,
     sku: 'TEST-001',
     account: mockAccountId,
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockProductArray = [mockProduct];
@@ -36,7 +36,7 @@ describe('ProductsController', () => {
     findByAccount: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
+    delete: jest.fn()
   };
 
   beforeEach(async () => {
@@ -45,9 +45,9 @@ describe('ProductsController', () => {
       providers: [
         {
           provide: ProductsService,
-          useValue: mockProductsService,
-        },
-      ],
+          useValue: mockProductsService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -70,15 +70,15 @@ describe('ProductsController', () => {
         description: 'New product description',
         maker: 'New Maker',
         model: 'New Model',
-        value: 200.00,
-        sku: 'NEW-001',
+        value: 200.0,
+        sku: 'NEW-001'
       };
 
       const expectedProductData = {
         ...createProductDto,
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockProductsService.create.mockResolvedValue(mockProduct);
@@ -97,7 +97,7 @@ describe('ProductsController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockProductsService.findByAccount.mockResolvedValue(mockResult);
 
@@ -113,7 +113,7 @@ describe('ProductsController', () => {
         total: 1,
         page: 2,
         limit: 20,
-        totalPages: 1,
+        totalPages: 1
       };
       mockProductsService.findByAccount.mockResolvedValue(mockResult);
 
@@ -129,7 +129,7 @@ describe('ProductsController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockProductsService.findByAccount.mockResolvedValue(mockResult);
 
@@ -155,17 +155,17 @@ describe('ProductsController', () => {
     it('should update a product', async () => {
       const updateProductDto: UpdateProductDto = {
         name: 'Updated Product',
-        value: 150.00,
+        value: 150.0
       };
 
       const expectedProductData = {
         ...updateProductDto,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockProductsService.update.mockResolvedValue({
         ...mockProduct,
-        ...updateProductDto,
+        ...updateProductDto
       });
 
       const result = await controller.update(mockProduct._id.toString(), updateProductDto, mockAccountId, mockUserId);
@@ -173,7 +173,7 @@ describe('ProductsController', () => {
       expect(mockProductsService.update).toHaveBeenCalledWith(mockProduct._id.toString(), expectedProductData, mockAccountId);
       expect(result).toMatchObject({
         ...mockProduct,
-        ...updateProductDto,
+        ...updateProductDto
       });
     });
   });

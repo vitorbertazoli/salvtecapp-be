@@ -21,7 +21,7 @@ describe('AccountsService', () => {
     logoUrl: 'https://example.com/logo.png',
     verificationToken: 'token123',
     verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    expireDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    expireDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
   };
 
   beforeEach(async () => {
@@ -30,7 +30,7 @@ describe('AccountsService', () => {
       findById: jest.fn(),
       findOne: jest.fn(),
       findByIdAndUpdate: jest.fn(),
-      findByIdAndDelete: jest.fn(),
+      findByIdAndDelete: jest.fn()
     };
 
     // Mock the constructor behavior
@@ -52,9 +52,9 @@ describe('AccountsService', () => {
         AccountsService,
         {
           provide: getModelToken(Account.name),
-          useValue: MockModel,
-        },
-      ],
+          useValue: MockModel
+        }
+      ]
     }).compile();
 
     service = module.get<AccountsService>(AccountsService);
@@ -73,7 +73,7 @@ describe('AccountsService', () => {
         status: 'pending',
         billingInfo: {},
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(accountData);
@@ -82,7 +82,7 @@ describe('AccountsService', () => {
       // The result should be the resolved value from save()
       expect(result).toEqual({
         ...accountData,
-        _id: mockAccountId,
+        _id: mockAccountId
       });
     });
   });
@@ -91,7 +91,7 @@ describe('AccountsService', () => {
     it('should return all accounts', async () => {
       const mockAccounts = [mockAccount];
       accountModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAccounts),
+        exec: jest.fn().mockResolvedValue(mockAccounts)
       } as any);
 
       const result = await service.findAll();
@@ -104,7 +104,7 @@ describe('AccountsService', () => {
   describe('findOne', () => {
     it('should return an account by id', async () => {
       accountModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAccount),
+        exec: jest.fn().mockResolvedValue(mockAccount)
       } as any);
 
       const result = await service.findOne(mockAccountId);
@@ -115,7 +115,7 @@ describe('AccountsService', () => {
 
     it('should return null if account not found', async () => {
       accountModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findOne(mockAccountId);
@@ -129,13 +129,13 @@ describe('AccountsService', () => {
     it('should return an account by name', async () => {
       const accountName = 'test-account';
       accountModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAccount),
+        exec: jest.fn().mockResolvedValue(mockAccount)
       } as any);
 
       const result = await service.findByAccountName(accountName);
 
       expect(accountModel.findOne).toHaveBeenCalledWith({
-        name: { $regex: accountName, $options: 'i' },
+        name: { $regex: accountName, $options: 'i' }
       });
       expect(result).toEqual(mockAccount);
     });
@@ -144,13 +144,13 @@ describe('AccountsService', () => {
       const accountName = 'test.account+name';
       const escapedName = 'test\\.account\\+name';
       accountModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAccount),
+        exec: jest.fn().mockResolvedValue(mockAccount)
       } as any);
 
       const result = await service.findByAccountName(accountName);
 
       expect(accountModel.findOne).toHaveBeenCalledWith({
-        name: { $regex: escapedName, $options: 'i' },
+        name: { $regex: escapedName, $options: 'i' }
       });
       expect(result).toEqual(mockAccount);
     });
@@ -158,13 +158,13 @@ describe('AccountsService', () => {
     it('should return null if account not found', async () => {
       const accountName = 'non-existent';
       accountModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findByAccountName(accountName);
 
       expect(accountModel.findOne).toHaveBeenCalledWith({
-        name: { $regex: accountName, $options: 'i' },
+        name: { $regex: accountName, $options: 'i' }
       });
       expect(result).toBeNull();
     });
@@ -174,14 +174,14 @@ describe('AccountsService', () => {
     it('should return an account by verification token', async () => {
       const token = 'token123';
       accountModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAccount),
+        exec: jest.fn().mockResolvedValue(mockAccount)
       } as any);
 
       const result = await service.findByVerificationToken(token);
 
       expect(accountModel.findOne).toHaveBeenCalledWith({
         verificationToken: token,
-        verificationTokenExpires: { $gt: expect.any(Date) },
+        verificationTokenExpires: { $gt: expect.any(Date) }
       });
       expect(result).toEqual(mockAccount);
     });
@@ -189,14 +189,14 @@ describe('AccountsService', () => {
     it('should return null if token not found or expired', async () => {
       const token = 'invalid-token';
       accountModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findByVerificationToken(token);
 
       expect(accountModel.findOne).toHaveBeenCalledWith({
         verificationToken: token,
-        verificationTokenExpires: { $gt: expect.any(Date) },
+        verificationTokenExpires: { $gt: expect.any(Date) }
       });
       expect(result).toBeNull();
     });
@@ -207,32 +207,24 @@ describe('AccountsService', () => {
       const updateData = { status: 'active' as const };
       const updatedAccount = { ...mockAccount, ...updateData };
       accountModel.findByIdAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(updatedAccount),
+        exec: jest.fn().mockResolvedValue(updatedAccount)
       } as any);
 
       const result = await service.update(mockAccountId.toString(), updateData);
 
-      expect(accountModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        mockAccountId.toString(),
-        updateData,
-        { new: true }
-      );
+      expect(accountModel.findByIdAndUpdate).toHaveBeenCalledWith(mockAccountId.toString(), updateData, { new: true });
       expect(result).toEqual(updatedAccount);
     });
 
     it('should return null if account not found', async () => {
       const updateData = { status: 'active' as const };
       accountModel.findByIdAndUpdate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.update(mockAccountId.toString(), updateData);
 
-      expect(accountModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        mockAccountId.toString(),
-        updateData,
-        { new: true }
-      );
+      expect(accountModel.findByIdAndUpdate).toHaveBeenCalledWith(mockAccountId.toString(), updateData, { new: true });
       expect(result).toBeNull();
     });
   });
@@ -240,7 +232,7 @@ describe('AccountsService', () => {
   describe('delete', () => {
     it('should delete an account', async () => {
       accountModel.findByIdAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAccount),
+        exec: jest.fn().mockResolvedValue(mockAccount)
       } as any);
 
       const result = await service.delete(mockAccountId);
@@ -251,7 +243,7 @@ describe('AccountsService', () => {
 
     it('should return null if account not found', async () => {
       accountModel.findByIdAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.delete(mockAccountId);

@@ -24,7 +24,7 @@ describe('EventsService', () => {
     _id: mockCustomerId,
     name: 'John Doe',
     email: 'john@example.com',
-    phone: '1234567890',
+    phone: '1234567890'
   };
 
   const mockTechnician = {
@@ -32,8 +32,8 @@ describe('EventsService', () => {
     user: {
       firstName: 'Jane',
       lastName: 'Smith',
-      email: 'jane@example.com',
-    },
+      email: 'jane@example.com'
+    }
   };
 
   const mockEvent = {
@@ -49,7 +49,7 @@ describe('EventsService', () => {
     status: 'scheduled',
     createdBy: mockUserId,
     updatedBy: mockUserId,
-    serviceOrder: mockServiceOrderId,
+    serviceOrder: mockServiceOrderId
   };
 
   const mockEventArray = [mockEvent];
@@ -59,10 +59,10 @@ describe('EventsService', () => {
       ...data,
       save: jest.fn().mockResolvedValue({
         ...mockEvent,
-        toObject: jest.fn().mockReturnValue(mockEvent),
+        toObject: jest.fn().mockReturnValue(mockEvent)
       }),
       toObject: jest.fn().mockReturnValue(mockEvent),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -73,15 +73,15 @@ describe('EventsService', () => {
     mockEventModel.deleteMany = jest.fn();
 
     const mockCustomerModel = {
-      findById: jest.fn(),
+      findById: jest.fn()
     };
 
     const mockTechnicianModel = {
-      findById: jest.fn(),
+      findById: jest.fn()
     };
 
     const mockServiceOrdersService = {
-      updateByAccount: jest.fn(),
+      updateByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -89,21 +89,21 @@ describe('EventsService', () => {
         EventsService,
         {
           provide: getModelToken(Event.name),
-          useValue: mockEventModel,
+          useValue: mockEventModel
         },
         {
           provide: getModelToken(Customer.name),
-          useValue: mockCustomerModel,
+          useValue: mockCustomerModel
         },
         {
           provide: getModelToken(Technician.name),
-          useValue: mockTechnicianModel,
+          useValue: mockTechnicianModel
         },
         {
           provide: ServiceOrdersService,
-          useValue: mockServiceOrdersService,
-        },
-      ],
+          useValue: mockServiceOrdersService
+        }
+      ]
     }).compile();
 
     service = module.get<EventsService>(EventsService);
@@ -126,7 +126,7 @@ describe('EventsService', () => {
         customer: mockCustomerId.toString(),
         technician: mockTechnicianId.toString(),
         description: 'Service call',
-        serviceOrder: mockServiceOrderId.toString(),
+        serviceOrder: mockServiceOrderId.toString()
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
@@ -141,7 +141,7 @@ describe('EventsService', () => {
         mockServiceOrderId.toString(),
         {
           status: 'scheduled',
-          scheduledDate: expect.any(Date),
+          scheduledDate: expect.any(Date)
         },
         mockAccountId
       );
@@ -154,7 +154,7 @@ describe('EventsService', () => {
         startTime: '09:00',
         endTime: '10:00',
         customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString(),
+        technician: mockTechnicianId.toString()
       };
 
       customerModel.findById.mockResolvedValue(null);
@@ -169,7 +169,7 @@ describe('EventsService', () => {
         startTime: '09:00',
         endTime: '10:00',
         customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString(),
+        technician: mockTechnicianId.toString()
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
@@ -185,7 +185,7 @@ describe('EventsService', () => {
         endTime: '10:00',
         customer: mockCustomerId.toString(),
         technician: mockTechnicianId.toString(),
-        description: 'Service call',
+        description: 'Service call'
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
@@ -204,7 +204,7 @@ describe('EventsService', () => {
         populate: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -213,7 +213,7 @@ describe('EventsService', () => {
 
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        status: { $ne: 'completed' },
+        status: { $ne: 'completed' }
       });
       expect(result).toEqual(mockEventArray);
     });
@@ -221,14 +221,14 @@ describe('EventsService', () => {
     it('should filter events by date range', async () => {
       const filters = {
         startDate: '2024-01-01',
-        endDate: '2024-01-31',
+        endDate: '2024-01-31'
       };
 
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -239,23 +239,23 @@ describe('EventsService', () => {
         account: mockAccountId,
         date: {
           $gte: '2024-01-01',
-          $lte: '2024-01-31',
+          $lte: '2024-01-31'
         },
-        status: { $ne: 'completed' },
+        status: { $ne: 'completed' }
       });
       expect(result).toEqual(mockEventArray);
     });
 
     it('should filter events by technician', async () => {
       const filters = {
-        technicianId: mockTechnicianId.toString(),
+        technicianId: mockTechnicianId.toString()
       };
 
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -265,21 +265,21 @@ describe('EventsService', () => {
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
         technician: mockTechnicianId,
-        status: { $ne: 'completed' },
+        status: { $ne: 'completed' }
       });
       expect(result).toEqual(mockEventArray);
     });
 
     it('should filter events by customer', async () => {
       const filters = {
-        customerId: mockCustomerId.toString(),
+        customerId: mockCustomerId.toString()
       };
 
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -289,21 +289,21 @@ describe('EventsService', () => {
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
         customer: mockCustomerId,
-        status: { $ne: 'completed' },
+        status: { $ne: 'completed' }
       });
       expect(result).toEqual(mockEventArray);
     });
 
     it('should filter events by status', async () => {
       const filters = {
-        status: 'completed',
+        status: 'completed'
       };
 
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -312,7 +312,7 @@ describe('EventsService', () => {
 
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        status: 'completed',
+        status: 'completed'
       });
       expect(result).toEqual(mockEventArray);
     });
@@ -326,7 +326,7 @@ describe('EventsService', () => {
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -341,7 +341,7 @@ describe('EventsService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -352,7 +352,7 @@ describe('EventsService', () => {
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEventArray),
+        exec: jest.fn().mockResolvedValue(mockEventArray)
       };
 
       jest.spyOn(eventModel, 'find').mockReturnValue(mockQuery as any);
@@ -362,7 +362,7 @@ describe('EventsService', () => {
 
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        customer: mockCustomerId,
+        customer: mockCustomerId
       });
       expect(result.events).toEqual(mockEventArray);
     });
@@ -373,7 +373,7 @@ describe('EventsService', () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockEvent),
+        exec: jest.fn().mockResolvedValue(mockEvent)
       };
 
       jest.spyOn(eventModel, 'findOne').mockReturnValue(mockQuery as any);
@@ -382,7 +382,7 @@ describe('EventsService', () => {
 
       expect(eventModel.findOne).toHaveBeenCalledWith({
         _id: mockEvent._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockEvent);
     });
@@ -391,7 +391,7 @@ describe('EventsService', () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
         lean: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       };
 
       jest.spyOn(eventModel, 'findOne').mockReturnValue(mockQuery as any);
@@ -411,12 +411,12 @@ describe('EventsService', () => {
         customer: mockCustomerId.toString(),
         technician: mockTechnicianId.toString(),
         description: 'Updated service call',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const mockEventDoc = {
         ...mockEvent,
-        save: jest.fn().mockResolvedValue(mockEvent),
+        save: jest.fn().mockResolvedValue(mockEvent)
       };
 
       jest.spyOn(eventModel, 'findOne').mockResolvedValue(mockEventDoc as any);
@@ -426,7 +426,7 @@ describe('EventsService', () => {
 
       expect(eventModel.findOne).toHaveBeenCalledWith({
         _id: mockEvent._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(mockEventDoc.save).toHaveBeenCalled();
       expect(result).toEqual(mockEvent);
@@ -436,7 +436,7 @@ describe('EventsService', () => {
       const updateData = {
         date: '2024-01-16',
         description: 'Updated service call',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       jest.spyOn(eventModel, 'findOne').mockResolvedValue(null);
@@ -450,13 +450,13 @@ describe('EventsService', () => {
       const updateData = {
         status: 'completed',
         completionNotes: 'Service completed successfully',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const mockEventDoc = {
         ...mockEvent,
         serviceOrder: mockServiceOrderId,
-        save: jest.fn().mockResolvedValue(mockEvent),
+        save: jest.fn().mockResolvedValue(mockEvent)
       };
 
       eventModel.findOne.mockResolvedValue(mockEventDoc as any);
@@ -469,7 +469,7 @@ describe('EventsService', () => {
         mockServiceOrderId.toString(),
         {
           status: 'completed',
-          completedAt: expect.any(Date),
+          completedAt: expect.any(Date)
         },
         mockAccountId
       );
@@ -485,7 +485,7 @@ describe('EventsService', () => {
 
       expect(eventModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockEvent._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toBe(true);
     });
@@ -504,7 +504,7 @@ describe('EventsService', () => {
       const mockEventDoc = {
         ...mockEvent,
         serviceOrder: mockServiceOrderId,
-        save: jest.fn().mockResolvedValue(mockEvent),
+        save: jest.fn().mockResolvedValue(mockEvent)
       };
 
       eventModel.findOne.mockResolvedValue(mockEventDoc as any);
@@ -520,7 +520,7 @@ describe('EventsService', () => {
         mockServiceOrderId.toString(),
         {
           status: 'completed',
-          completedAt: expect.any(Date),
+          completedAt: expect.any(Date)
         },
         mockAccountId
       );
@@ -530,9 +530,7 @@ describe('EventsService', () => {
     it('should throw NotFoundException when event not found', async () => {
       jest.spyOn(eventModel, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.completeByAccount('nonexistent-id', mockUserId, mockAccountId)
-      ).rejects.toThrow('Event not found');
+      await expect(service.completeByAccount('nonexistent-id', mockUserId, mockAccountId)).rejects.toThrow('Event not found');
     });
   });
 });

@@ -25,7 +25,7 @@ describe('EventsController', () => {
     status: 'scheduled' as const,
     account: mockAccountId,
     createdBy: mockUserId,
-    updatedBy: mockUserId,
+    updatedBy: mockUserId
   };
 
   beforeEach(async () => {
@@ -36,7 +36,7 @@ describe('EventsController', () => {
       findByIdAndAccount: jest.fn(),
       updateByAccount: jest.fn(),
       deleteByAccount: jest.fn(),
-      completeByAccount: jest.fn(),
+      completeByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -44,9 +44,9 @@ describe('EventsController', () => {
       providers: [
         {
           provide: EventsService,
-          useValue: mockEventsService,
-        },
-      ],
+          useValue: mockEventsService
+        }
+      ]
     }).compile();
 
     controller = module.get<EventsController>(EventsController);
@@ -68,7 +68,7 @@ describe('EventsController', () => {
         title: 'Test Event',
         description: 'Test description',
         status: 'scheduled',
-        serviceOrder: new Types.ObjectId().toString(),
+        serviceOrder: new Types.ObjectId().toString()
       };
 
       const expectedEventData = {
@@ -78,7 +78,7 @@ describe('EventsController', () => {
         technician: new Types.ObjectId(createEventDto.technician),
         serviceOrder: new Types.ObjectId(createEventDto.serviceOrder),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       service.create.mockResolvedValue(mockEvent as any);
@@ -95,7 +95,7 @@ describe('EventsController', () => {
         startTime: '09:00',
         endTime: '10:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString(),
+        technician: new Types.ObjectId().toString()
       };
 
       const expectedEventData = {
@@ -104,7 +104,7 @@ describe('EventsController', () => {
         customer: new Types.ObjectId(createEventDto.customer),
         technician: new Types.ObjectId(createEventDto.technician),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       service.create.mockResolvedValue(mockEvent as any);
@@ -122,27 +122,20 @@ describe('EventsController', () => {
         startDate: '2024-01-01',
         endDate: '2024-01-31',
         customerId: 'customer123',
-        status: 'scheduled',
+        status: 'scheduled'
       };
 
       const mockEvents = [mockEvent];
       service.findAll.mockResolvedValue(mockEvents as any);
 
-      const result = await controller.findAll(
-        mockAccountId,
-        mockTechnicianId,
-        filters.startDate,
-        filters.endDate,
-        filters.customerId,
-        filters.status
-      );
+      const result = await controller.findAll(mockAccountId, mockTechnicianId, filters.startDate, filters.endDate, filters.customerId, filters.status);
 
       expect(service.findAll).toHaveBeenCalledWith(mockAccountId, {
         startDate: filters.startDate,
         endDate: filters.endDate,
         technicianId: mockTechnicianId,
         customerId: filters.customerId,
-        status: filters.status,
+        status: filters.status
       });
       expect(result).toEqual(mockEvents);
     });
@@ -154,7 +147,7 @@ describe('EventsController', () => {
       const result = await controller.findAll(mockAccountId, mockTechnicianId);
 
       expect(service.findAll).toHaveBeenCalledWith(mockAccountId, {
-        technicianId: mockTechnicianId,
+        technicianId: mockTechnicianId
       });
       expect(result).toEqual(mockEvents);
     });
@@ -171,7 +164,7 @@ describe('EventsController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       service.findAllPaginated.mockResolvedValue(mockPaginatedResult as any);
@@ -190,7 +183,7 @@ describe('EventsController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       service.findAllPaginated.mockResolvedValue(mockPaginatedResult as any);
@@ -228,7 +221,7 @@ describe('EventsController', () => {
         description: 'Updated description',
         status: 'completed',
         completionNotes: 'Event completed successfully',
-        serviceOrder: new Types.ObjectId().toString(),
+        serviceOrder: new Types.ObjectId().toString()
       };
 
       const expectedUpdateData = {
@@ -236,7 +229,7 @@ describe('EventsController', () => {
         customer: new Types.ObjectId(updateEventDto.customer),
         technician: new Types.ObjectId(updateEventDto.technician),
         serviceOrder: new Types.ObjectId(updateEventDto.serviceOrder),
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const updatedEvent = { ...mockEvent, ...expectedUpdateData };
@@ -255,14 +248,14 @@ describe('EventsController', () => {
         startTime: '10:00',
         endTime: '11:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString(),
+        technician: new Types.ObjectId().toString()
       };
 
       const expectedUpdateData = {
         ...updateEventDto,
         customer: new Types.ObjectId(updateEventDto.customer),
         technician: new Types.ObjectId(updateEventDto.technician),
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const updatedEvent = { ...mockEvent, ...expectedUpdateData };
@@ -281,7 +274,7 @@ describe('EventsController', () => {
         startTime: '10:00',
         endTime: '11:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString(),
+        technician: new Types.ObjectId().toString()
       };
 
       service.updateByAccount.mockResolvedValue(null);

@@ -39,7 +39,7 @@ describe('AdminService', () => {
     verificationToken: 'token123',
     verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
     expireDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
   } as AccountDocument;
 
   const mockAccount2: AccountDocument = {
@@ -51,7 +51,7 @@ describe('AdminService', () => {
     createdBy: 'system',
     updatedBy: 'system',
     logoUrl: 'https://example.com/logo2.png',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) // 3 days ago
   } as AccountDocument;
 
   beforeEach(async () => {
@@ -59,43 +59,43 @@ describe('AdminService', () => {
       findAll: jest.fn(),
       findOne: jest.fn(),
       update: jest.fn(),
-      delete: jest.fn(),
+      delete: jest.fn()
     };
 
     const mockCustomersService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockUsersService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockProductsService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockQuotesService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockServiceOrdersService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockServicesService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockTechniciansService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockEventsService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const mockFollowUpsService = {
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -103,45 +103,45 @@ describe('AdminService', () => {
         AdminService,
         {
           provide: AccountsService,
-          useValue: mockAccountsService,
+          useValue: mockAccountsService
         },
         {
           provide: CustomersService,
-          useValue: mockCustomersService,
+          useValue: mockCustomersService
         },
         {
           provide: UsersService,
-          useValue: mockUsersService,
+          useValue: mockUsersService
         },
         {
           provide: ProductsService,
-          useValue: mockProductsService,
+          useValue: mockProductsService
         },
         {
           provide: QuotesService,
-          useValue: mockQuotesService,
+          useValue: mockQuotesService
         },
         {
           provide: ServiceOrdersService,
-          useValue: mockServiceOrdersService,
+          useValue: mockServiceOrdersService
         },
         {
           provide: ServicesService,
-          useValue: mockServicesService,
+          useValue: mockServicesService
         },
         {
           provide: TechniciansService,
-          useValue: mockTechniciansService,
+          useValue: mockTechniciansService
         },
         {
           provide: EventsService,
-          useValue: mockEventsService,
+          useValue: mockEventsService
         },
         {
           provide: FollowUpsService,
-          useValue: mockFollowUpsService,
-        },
-      ],
+          useValue: mockFollowUpsService
+        }
+      ]
     }).compile();
 
     service = module.get<AdminService>(AdminService);
@@ -178,7 +178,7 @@ describe('AdminService', () => {
             status: mockAccount2.status,
             logoUrl: mockAccount2.logoUrl,
             createdAt: mockAccount2.createdAt,
-            expireDate: mockAccount2.expireDate,
+            expireDate: mockAccount2.expireDate
           },
           {
             id: mockAccount._id.toString(),
@@ -187,13 +187,13 @@ describe('AdminService', () => {
             status: mockAccount.status,
             logoUrl: mockAccount.logoUrl,
             createdAt: mockAccount.createdAt,
-            expireDate: mockAccount.expireDate,
-          },
+            expireDate: mockAccount.expireDate
+          }
         ],
         total: 2,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -269,7 +269,7 @@ describe('AdminService', () => {
         name: updatedAccount.name,
         plan: updatedAccount.plan,
         status: updatedAccount.status,
-        logoUrl: updatedAccount.logoUrl,
+        logoUrl: updatedAccount.logoUrl
       });
     });
 
@@ -316,7 +316,7 @@ describe('AdminService', () => {
       expect(result).toEqual({
         id: mockAccount._id.toString(),
         name: mockAccount.name,
-        message: 'Account and all related data deleted successfully',
+        message: 'Account and all related data deleted successfully'
       });
     });
 

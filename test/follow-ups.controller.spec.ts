@@ -21,7 +21,7 @@ describe('FollowUpsController', () => {
     status: 'pending',
     notes: ['Initial note'],
     createdBy: mockUserId,
-    updatedBy: mockUserId,
+    updatedBy: mockUserId
   };
 
   const mockFollowUpArray = [mockFollowUp];
@@ -31,7 +31,7 @@ describe('FollowUpsController', () => {
     total: 1,
     page: 1,
     limit: 50,
-    totalPages: 1,
+    totalPages: 1
   };
 
   const mockFollowUpsService = {
@@ -40,7 +40,7 @@ describe('FollowUpsController', () => {
     findByAccount: jest.fn(),
     findByIdAndAccount: jest.fn(),
     updateByAccount: jest.fn(),
-    deleteByAccount: jest.fn(),
+    deleteByAccount: jest.fn()
   };
 
   beforeEach(async () => {
@@ -49,9 +49,9 @@ describe('FollowUpsController', () => {
       providers: [
         {
           provide: FollowUpsService,
-          useValue: mockFollowUpsService,
-        },
-      ],
+          useValue: mockFollowUpsService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -73,7 +73,7 @@ describe('FollowUpsController', () => {
         customer: mockCustomerId.toString(),
         startDate: '2024-01-15T00:00:00.000Z',
         status: 'pending' as const,
-        notes: ['Initial note'],
+        notes: ['Initial note']
       };
 
       const expectedFollowUpData = {
@@ -81,7 +81,7 @@ describe('FollowUpsController', () => {
         account: mockAccountId,
         customer: new Types.ObjectId(createFollowUpDto.customer),
         createdBy: new Types.ObjectId(mockUserId.toString()),
-        updatedBy: new Types.ObjectId(mockUserId.toString()),
+        updatedBy: new Types.ObjectId(mockUserId.toString())
       };
 
       mockFollowUpsService.create.mockResolvedValue(mockFollowUp);
@@ -95,7 +95,7 @@ describe('FollowUpsController', () => {
     it('should create a follow-up with minimal data', async () => {
       const createFollowUpDto = {
         customer: mockCustomerId.toString(),
-        startDate: '2024-01-15T00:00:00.000Z',
+        startDate: '2024-01-15T00:00:00.000Z'
       };
 
       const expectedFollowUpData = {
@@ -103,7 +103,7 @@ describe('FollowUpsController', () => {
         account: mockAccountId,
         customer: new Types.ObjectId(createFollowUpDto.customer),
         createdBy: new Types.ObjectId(mockUserId.toString()),
-        updatedBy: new Types.ObjectId(mockUserId.toString()),
+        updatedBy: new Types.ObjectId(mockUserId.toString())
       };
 
       mockFollowUpsService.create.mockResolvedValue(mockFollowUp);
@@ -119,16 +119,7 @@ describe('FollowUpsController', () => {
     it('should return paginated follow-ups with all filters', async () => {
       mockFollowUpsService.findByAccount.mockResolvedValue(mockPaginatedResult);
 
-      const result = await controller.findAll(
-        '1',
-        '50',
-        'search term',
-        'pending',
-        mockCustomerId.toString(),
-        '2024-01-01',
-        '2024-01-31',
-        mockAccountId
-      );
+      const result = await controller.findAll('1', '50', 'search term', 'pending', mockCustomerId.toString(), '2024-01-01', '2024-01-31', mockAccountId);
 
       expect(service.findByAccount).toHaveBeenCalledWith(
         mockAccountId,
@@ -146,54 +137,18 @@ describe('FollowUpsController', () => {
     it('should return paginated follow-ups with default values', async () => {
       mockFollowUpsService.findByAccount.mockResolvedValue(mockPaginatedResult);
 
-      const result = await controller.findAll(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        mockAccountId
-      );
+      const result = await controller.findAll(undefined, undefined, undefined, undefined, undefined, undefined, undefined, mockAccountId);
 
-      expect(service.findByAccount).toHaveBeenCalledWith(
-        mockAccountId,
-        1,
-        50,
-        '',
-        undefined,
-        undefined,
-        undefined,
-        undefined
-      );
+      expect(service.findByAccount).toHaveBeenCalledWith(mockAccountId, 1, 50, '', undefined, undefined, undefined, undefined);
       expect(result).toEqual(mockPaginatedResult);
     });
 
     it('should handle empty string parameters as undefined', async () => {
       mockFollowUpsService.findByAccount.mockResolvedValue(mockPaginatedResult);
 
-      const result = await controller.findAll(
-        '1',
-        '10',
-        '',
-        '',
-        '',
-        '',
-        '',
-        mockAccountId
-      );
+      const result = await controller.findAll('1', '10', '', '', '', '', '', mockAccountId);
 
-      expect(service.findByAccount).toHaveBeenCalledWith(
-        mockAccountId,
-        1,
-        10,
-        '',
-        undefined,
-        undefined,
-        undefined,
-        undefined
-      );
+      expect(service.findByAccount).toHaveBeenCalledWith(mockAccountId, 1, 10, '', undefined, undefined, undefined, undefined);
       expect(result).toEqual(mockPaginatedResult);
     });
   });
@@ -227,14 +182,14 @@ describe('FollowUpsController', () => {
       const followUpId = mockFollowUp._id.toString();
       const updateFollowUpDto = {
         status: 'completed' as const,
-        notes: ['Updated note'],
+        notes: ['Updated note']
       };
 
       const expectedFollowUpData = {
         ...updateFollowUpDto,
         updatedBy: new Types.ObjectId(mockUserId.toString()),
         completedAt: expect.any(Date),
-        completedBy: new Types.ObjectId(mockUserId.toString()),
+        completedBy: new Types.ObjectId(mockUserId.toString())
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(mockFollowUp);
@@ -249,14 +204,14 @@ describe('FollowUpsController', () => {
       const followUpId = mockFollowUp._id.toString();
       const updateFollowUpDto = {
         status: 'pending' as const,
-        notes: ['Updated note'],
+        notes: ['Updated note']
       };
 
       const expectedFollowUpData = {
         ...updateFollowUpDto,
         updatedBy: new Types.ObjectId(mockUserId.toString()),
         completedAt: undefined,
-        completedBy: undefined,
+        completedBy: undefined
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(mockFollowUp);
@@ -270,12 +225,12 @@ describe('FollowUpsController', () => {
     it('should update a follow-up without status change', async () => {
       const followUpId = mockFollowUp._id.toString();
       const updateFollowUpDto = {
-        notes: ['Updated note'],
+        notes: ['Updated note']
       };
 
       const expectedFollowUpData = {
         ...updateFollowUpDto,
-        updatedBy: new Types.ObjectId(mockUserId.toString()),
+        updatedBy: new Types.ObjectId(mockUserId.toString())
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(mockFollowUp);
@@ -289,7 +244,7 @@ describe('FollowUpsController', () => {
     it('should return null when follow-up not found', async () => {
       const followUpId = 'nonexistent-id';
       const updateFollowUpDto = {
-        status: 'completed' as const,
+        status: 'completed' as const
       };
 
       mockFollowUpsService.updateByAccount.mockResolvedValue(null);
@@ -302,7 +257,7 @@ describe('FollowUpsController', () => {
           status: 'completed',
           updatedBy: new Types.ObjectId(mockUserId.toString()),
           completedAt: expect.any(Date),
-          completedBy: new Types.ObjectId(mockUserId.toString()),
+          completedBy: new Types.ObjectId(mockUserId.toString())
         }),
         mockAccountId
       );

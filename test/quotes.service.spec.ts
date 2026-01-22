@@ -1,8 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { QuotesService } from '../src/quotes/quotes.service';
-import { Quote, QuoteDocument } from '../src/quotes/schemas/quote.schema';
+import { Quote } from '../src/quotes/schemas/quote.schema';
+import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 import { EmailService } from '../src/utils/email.service';
 
 describe('QuotesService', () => {
@@ -28,31 +30,31 @@ describe('QuotesService', () => {
         type: 'Split',
         subType: 'Wall',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     services: [
       {
         service: mockServiceId,
         quantity: 1,
-        unitValue: 100.00,
-      },
+        unitValue: 100.0
+      }
     ],
     products: [
       {
         product: mockProductId,
         quantity: 2,
-        unitValue: 50.00,
-      },
+        unitValue: 50.0
+      }
     ],
-    totalValue: 200.00,
+    totalValue: 200.0,
     description: 'Test quote description',
     discount: 10,
     otherDiscounts: [
       {
         description: 'Special discount',
-        amount: 20.00,
-      },
+        amount: 20.0
+      }
     ],
     status: 'draft',
     validUntil: new Date('2024-12-31'),
@@ -60,7 +62,7 @@ describe('QuotesService', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockQuoteArray = [mockQuote];
@@ -70,9 +72,9 @@ describe('QuotesService', () => {
       ...data,
       save: jest.fn().mockResolvedValue({
         ...mockQuote,
-        toObject: jest.fn().mockReturnValue(mockQuote),
+        toObject: jest.fn().mockReturnValue(mockQuote)
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -81,13 +83,17 @@ describe('QuotesService', () => {
     mockQuoteModel.findOneAndUpdate = jest.fn();
     mockQuoteModel.findOneAndDelete = jest.fn();
     mockQuoteModel.countDocuments = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(1),
+      exec: jest.fn().mockResolvedValue(1)
     });
     mockQuoteModel.deleteMany = jest.fn();
     mockQuoteModel.aggregate = jest.fn();
 
     const mockEmailService = {
-      sendEmail: jest.fn(),
+      sendEmail: jest.fn()
+    };
+
+    const mockServiceOrdersService = {
+      createFromQuote: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -95,13 +101,17 @@ describe('QuotesService', () => {
         QuotesService,
         {
           provide: getModelToken(Quote.name),
-          useValue: mockQuoteModel,
+          useValue: mockQuoteModel
         },
         {
           provide: EmailService,
-          useValue: mockEmailService,
+          useValue: mockEmailService
         },
-      ],
+        {
+          provide: ServiceOrdersService,
+          useValue: mockServiceOrdersService
+        }
+      ]
     }).compile();
 
     service = module.get<QuotesService>(QuotesService);
@@ -118,11 +128,11 @@ describe('QuotesService', () => {
       const quoteData = {
         account: mockAccountId,
         customer: mockCustomerId,
-        totalValue: 200.00,
+        totalValue: 200.0,
         validUntil: new Date('2024-12-31'),
         issuedAt: new Date('2024-01-01'),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(quoteData);
@@ -131,11 +141,11 @@ describe('QuotesService', () => {
       expect(result).toMatchObject({
         account: mockAccountId,
         customer: mockCustomerId,
-        totalValue: 200.00,
+        totalValue: 200.0,
         validUntil: new Date('2024-12-31'),
         issuedAt: new Date('2024-01-01'),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       });
     });
   });
@@ -145,7 +155,7 @@ describe('QuotesService', () => {
       const mockAggregateResult = mockQuoteArray;
 
       quoteModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', 'draft');
@@ -156,7 +166,7 @@ describe('QuotesService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -166,10 +176,10 @@ describe('QuotesService', () => {
 
       quoteModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         })
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregateResult),
+          exec: jest.fn().mockResolvedValue(mockAggregateResult)
         });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'test', '');
@@ -180,7 +190,7 @@ describe('QuotesService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -188,7 +198,7 @@ describe('QuotesService', () => {
       const mockAggregateResult = mockQuoteArray;
 
       quoteModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', '', mockCustomerId.toString());
@@ -199,7 +209,7 @@ describe('QuotesService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -207,7 +217,7 @@ describe('QuotesService', () => {
       const mockAggregateResult = mockQuoteArray;
 
       quoteModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 2, 5, '', '');
@@ -217,7 +227,7 @@ describe('QuotesService', () => {
         total: 1,
         page: 2,
         limit: 5,
-        totalPages: 1,
+        totalPages: 1
       });
     });
   });
@@ -226,14 +236,14 @@ describe('QuotesService', () => {
     it('should return a quote by id and account', async () => {
       quoteModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockQuote),
+        exec: jest.fn().mockResolvedValue(mockQuote)
       });
 
       const result = await service.findByIdAndAccount(mockQuote._id.toString(), mockAccountId);
 
       expect(quoteModel.findOne).toHaveBeenCalledWith({
         _id: mockQuote._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockQuote);
     });
@@ -241,7 +251,7 @@ describe('QuotesService', () => {
     it('should return null when quote not found', async () => {
       quoteModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.findByIdAndAccount('invalid-id', mockAccountId);
@@ -254,43 +264,39 @@ describe('QuotesService', () => {
     it('should update a quote successfully', async () => {
       const updateData = {
         description: 'Updated description',
-        totalValue: 250.00,
-        updatedBy: mockUserId,
+        totalValue: 250.0,
+        updatedBy: mockUserId
       };
 
       quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'draft' }),
+        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'draft' })
       });
 
       quoteModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue({
           ...mockQuote,
-          ...updateData,
-        }),
+          ...updateData
+        })
       });
 
-      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId);
+      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
 
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockQuote._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockQuote._id.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toMatchObject({
         ...mockQuote,
-        ...updateData,
+        ...updateData
       });
     });
 
     it('should reset status to draft when updating sent quote', async () => {
       const updateData = {
         description: 'Updated description',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'sent' }),
+        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'sent' })
       });
 
       quoteModel.findOneAndUpdate.mockReturnValue({
@@ -298,11 +304,11 @@ describe('QuotesService', () => {
         exec: jest.fn().mockResolvedValue({
           ...mockQuote,
           ...updateData,
-          status: 'draft',
-        }),
+          status: 'draft'
+        })
       });
 
-      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId);
+      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
 
       expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: mockQuote._id.toString(), account: mockAccountId },
@@ -312,47 +318,32 @@ describe('QuotesService', () => {
       expect(result).toMatchObject({
         ...mockQuote,
         ...updateData,
-        status: 'draft',
+        status: 'draft'
       });
     });
 
-    it('should allow status change from sent to accepted', async () => {
+    it('should throw BadRequestException when trying to update accepted quote', async () => {
       const updateData = {
-        status: 'accepted',
-        updatedBy: mockUserId,
+        description: 'Updated description',
+        updatedBy: mockUserId
       };
 
       quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'sent' }),
+        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'accepted' })
       });
 
-      quoteModel.findOneAndUpdate.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue({
-          ...mockQuote,
-          ...updateData,
-        }),
-      });
-
-      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId);
-
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockQuote._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
+      await expect(service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId)).rejects.toThrow(BadRequestException);
+      await expect(service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId)).rejects.toThrow(
+        'Quote has been accepted and cannot be modified. Use change order process.'
       );
-      expect(result).toMatchObject({
-        ...mockQuote,
-        ...updateData,
-      });
     });
 
     it('should return null when quote not found', async () => {
       quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
-      const result = await service.updateByAccount('invalid-id', { description: 'Updated' }, mockAccountId);
+      const result = await service.updateByAccount('invalid-id', { description: 'Updated' }, mockAccountId, mockUserId);
 
       expect(result).toBeNull();
     });
@@ -361,21 +352,21 @@ describe('QuotesService', () => {
   describe('deleteByAccount', () => {
     it('should delete a quote successfully', async () => {
       quoteModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockQuote),
+        exec: jest.fn().mockResolvedValue(mockQuote)
       });
 
       const result = await service.deleteByAccount(mockQuote._id.toString(), mockAccountId);
 
       expect(quoteModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockQuote._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockQuote);
     });
 
     it('should return null when quote not found', async () => {
       quoteModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.deleteByAccount('invalid-id', mockAccountId);
@@ -388,7 +379,7 @@ describe('QuotesService', () => {
     it('should delete all quotes for an account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
       quoteModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockDeleteResult),
+        exec: jest.fn().mockResolvedValue(mockDeleteResult)
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);
@@ -405,12 +396,12 @@ describe('QuotesService', () => {
         account: { name: 'Test Account' },
         customer: { name: 'Test Customer', email: 'test@example.com' },
         services: [{ service: { name: 'Test Service' }, quantity: 1, unitValue: 100 }],
-        products: [{ product: { name: 'Test Product', maker: 'Test Maker', model: 'Test Model' }, quantity: 2, unitValue: 50 }],
+        products: [{ product: { name: 'Test Product', maker: 'Test Maker', model: 'Test Model' }, quantity: 2, unitValue: 50 }]
       };
 
       quoteModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedQuote),
+        exec: jest.fn().mockResolvedValue(mockPopulatedQuote)
       });
 
       emailService.sendEmail.mockResolvedValue(undefined);
@@ -419,7 +410,7 @@ describe('QuotesService', () => {
 
       expect(quoteModel.findOne).toHaveBeenCalledWith({
         _id: mockQuote._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(emailService.sendEmail).toHaveBeenCalled();
       expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
@@ -433,7 +424,7 @@ describe('QuotesService', () => {
     it('should throw error when quote not found', async () => {
       quoteModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       await expect(service.sendQuote('invalid-id', mockAccountId, mockUserId)).rejects.toThrow('Quote not found');
@@ -443,12 +434,12 @@ describe('QuotesService', () => {
       const mockPopulatedQuote = {
         ...mockQuote,
         account: { name: 'Test Account' },
-        customer: { name: 'Test Customer' }, // No email
+        customer: { name: 'Test Customer' } // No email
       };
 
       quoteModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedQuote),
+        exec: jest.fn().mockResolvedValue(mockPopulatedQuote)
       });
 
       await expect(service.sendQuote(mockQuote._id.toString(), mockAccountId, mockUserId)).rejects.toThrow('Customer email not found');

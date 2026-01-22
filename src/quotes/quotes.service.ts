@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { EmailService } from '../utils/email.service';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
-import { T } from 'node_modules/@faker-js/faker/dist/airline-CWrCIUHH';
 
 @Injectable()
 export class QuotesService {
@@ -118,7 +117,7 @@ export class QuotesService {
     return quote;
   }
 
-  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: Types.ObjectId): Promise<Quote | null> {
+  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: Types.ObjectId, userId?: Types.ObjectId): Promise<Quote | null> {
     const query = { _id: id, account: accountId };
 
     // Check current quote status
@@ -127,10 +126,15 @@ export class QuotesService {
       return null;
     }
 
-    // If quote has been sent or accepted, reset status to draft when updating
+    // If quote has been accepted, do not allow changes
+    if (currentQuote.status === 'accepted') {
+      throw new BadRequestException('Quote has been accepted and cannot be modified. Use change order process.');
+    }
+
+    // If quote has been sent, reset status to draft when updating
     // But allow status changes from 'sent' to 'accepted' (for service order creation)
     const updateData = { ...quoteData };
-    if (currentQuote.status === 'sent' || currentQuote.status === 'accepted') {
+    if (currentQuote.status === 'sent') {
       // Allow status change from 'sent' to 'accepted', but reset to 'draft' for other updates
       if (!(quoteData.status === 'accepted' && currentQuote.status === 'sent')) {
         updateData.status = 'draft';

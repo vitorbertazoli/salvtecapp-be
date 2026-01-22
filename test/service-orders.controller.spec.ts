@@ -32,8 +32,8 @@ describe('ServiceOrdersController', () => {
         type: 'Split',
         subType: 'Wall',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     items: [
       {
@@ -41,22 +41,22 @@ describe('ServiceOrdersController', () => {
         itemId: new Types.ObjectId(),
         name: 'AC Maintenance',
         quantity: 1,
-        unitValue: 100.00,
-        totalValue: 100.00,
+        unitValue: 100.0,
+        totalValue: 100.0
       },
       {
         type: 'product',
         itemId: new Types.ObjectId(),
         name: 'Filter',
         quantity: 2,
-        unitValue: 50.00,
-        totalValue: 100.00,
-      },
+        unitValue: 50.0,
+        totalValue: 100.0
+      }
     ],
     description: 'Test service order',
     discount: 10,
-    subtotal: 200.00,
-    totalValue: 180.00,
+    subtotal: 200.0,
+    totalValue: 180.0,
     issuedAt: new Date('2024-01-01'),
     scheduledDate: new Date('2024-01-15'),
     status: 'pending',
@@ -66,7 +66,7 @@ describe('ServiceOrdersController', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockServiceOrderArray = [mockServiceOrder];
@@ -78,7 +78,7 @@ describe('ServiceOrdersController', () => {
     findByCustomerAndAccount: jest.fn(),
     findByIdAndAccount: jest.fn(),
     updateByAccount: jest.fn(),
-    deleteByAccount: jest.fn(),
+    deleteByAccount: jest.fn()
   };
 
   beforeEach(async () => {
@@ -87,9 +87,9 @@ describe('ServiceOrdersController', () => {
       providers: [
         {
           provide: ServiceOrdersService,
-          useValue: mockServiceOrdersService,
-        },
-      ],
+          useValue: mockServiceOrdersService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -116,20 +116,20 @@ describe('ServiceOrdersController', () => {
             itemId: 'item1',
             name: 'AC Maintenance',
             quantity: 1,
-            unitValue: 100.00,
-            totalValue: 100.00,
-          },
+            unitValue: 100.0,
+            totalValue: 100.0
+          }
         ],
-        subtotal: 200.00,
-        totalValue: 180.00,
-        issuedAt: '2024-01-01',
+        subtotal: 200.0,
+        totalValue: 180.0,
+        issuedAt: '2024-01-01'
       };
 
       const expectedServiceOrderData = {
         ...createServiceOrderDto,
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockServiceOrdersService.create.mockResolvedValue(mockServiceOrder);
@@ -145,7 +145,7 @@ describe('ServiceOrdersController', () => {
     it('should create service order from quote', async () => {
       const createFromQuoteDto: CreateFromQuoteDto = {
         quoteId: mockQuoteId.toString(),
-        priority: 'high',
+        priority: 'high'
       };
 
       mockServiceOrdersService.createFromQuote.mockResolvedValue(mockServiceOrder);
@@ -164,7 +164,7 @@ describe('ServiceOrdersController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockServiceOrdersService.findByAccount.mockResolvedValue(mockResult);
 
@@ -180,7 +180,7 @@ describe('ServiceOrdersController', () => {
         total: 1,
         page: 2,
         limit: 20,
-        totalPages: 1,
+        totalPages: 1
       };
       mockServiceOrdersService.findByAccount.mockResolvedValue(mockResult);
 
@@ -196,7 +196,7 @@ describe('ServiceOrdersController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockServiceOrdersService.findByAccount.mockResolvedValue(mockResult);
 
@@ -233,17 +233,17 @@ describe('ServiceOrdersController', () => {
     it('should update a service order', async () => {
       const updateServiceOrderDto: UpdateServiceOrderDto = {
         status: 'in_progress',
-        notes: 'Updated notes',
+        notes: 'Updated notes'
       };
 
       const expectedServiceOrderData = {
         ...updateServiceOrderDto,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockServiceOrdersService.updateByAccount.mockResolvedValue({
         ...mockServiceOrder,
-        ...updateServiceOrderDto,
+        ...updateServiceOrderDto
       });
 
       const result = await controller.update(mockServiceOrder._id.toString(), updateServiceOrderDto, mockAccountId, mockUserId);
@@ -251,7 +251,7 @@ describe('ServiceOrdersController', () => {
       expect(mockServiceOrdersService.updateByAccount).toHaveBeenCalledWith(mockServiceOrder._id.toString(), expectedServiceOrderData, mockAccountId);
       expect(result).toMatchObject({
         ...mockServiceOrder,
-        ...updateServiceOrderDto,
+        ...updateServiceOrderDto
       });
     });
   });

@@ -30,7 +30,7 @@ describe('VehiclesService', () => {
     createdBy: mockCreatedBy,
     updatedBy: mockUpdatedBy,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockVehicleArray = [mockVehicle];
@@ -43,28 +43,28 @@ describe('VehiclesService', () => {
         ...data,
         toObject: jest.fn().mockReturnValue({
           ...mockVehicle,
-          ...data,
-        }),
-      }),
+          ...data
+        })
+      })
     }));
 
     // Add static methods
     mockVehicleModel.find = jest.fn().mockReturnValue({
       skip: jest.fn().mockReturnValue({
         limit: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockVehicleArray),
-        }),
+          exec: jest.fn().mockResolvedValue(mockVehicleArray)
+        })
       }),
-      exec: jest.fn().mockResolvedValue(mockVehicleArray),
+      exec: jest.fn().mockResolvedValue(mockVehicleArray)
     });
     mockVehicleModel.findOne = jest.fn().mockImplementation(() => {
       const createMockQuery = () => ({
-        exec: jest.fn(),
+        exec: jest.fn()
       });
       return createMockQuery();
     });
     mockVehicleModel.findOneAndUpdate = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockVehicleModel.countDocuments = jest.fn().mockResolvedValue(1);
 
@@ -73,9 +73,9 @@ describe('VehiclesService', () => {
         VehiclesService,
         {
           provide: getModelToken(Vehicle.name),
-          useValue: mockVehicleModel,
-        },
-      ],
+          useValue: mockVehicleModel
+        }
+      ]
     }).compile();
 
     service = module.get<VehiclesService>(VehiclesService);
@@ -99,7 +99,7 @@ describe('VehiclesService', () => {
         mileage: 50000,
         fuelType: 'Diesel',
         createdBy: mockCreatedBy,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       };
 
       const result = await service.create(createData);
@@ -138,7 +138,7 @@ describe('VehiclesService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -147,14 +147,14 @@ describe('VehiclesService', () => {
 
       expect(vehicleModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        isActive: true,
+        isActive: true
       });
       expect(result).toEqual({
         vehicles: mockVehicleArray,
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -163,14 +163,14 @@ describe('VehiclesService', () => {
 
       expect(vehicleModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        isActive: true,
+        isActive: true
       });
       expect(result).toEqual({
         vehicles: mockVehicleArray,
         total: 1,
         page: 2,
         limit: 5,
-        totalPages: 1,
+        totalPages: 1
       });
     });
   });
@@ -178,7 +178,7 @@ describe('VehiclesService', () => {
   describe('findOne', () => {
     it('should return vehicle by id and account', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockVehicle),
+        exec: jest.fn().mockResolvedValue(mockVehicle)
       };
       vehicleModel.findOne.mockReturnValue(mockQuery);
 
@@ -186,7 +186,7 @@ describe('VehiclesService', () => {
 
       expect(vehicleModel.findOne).toHaveBeenCalledWith({
         _id: mockVehicleId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockVehicle);
     });
@@ -195,18 +195,14 @@ describe('VehiclesService', () => {
   describe('update', () => {
     it('should update vehicle successfully', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockVehicle),
+        exec: jest.fn().mockResolvedValue(mockVehicle)
       };
       vehicleModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
       const updateData = { name: 'Updated Van' };
       const result = await service.update(mockVehicleId.toString(), updateData, mockAccountId);
 
-      expect(vehicleModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockVehicleId.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(vehicleModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockVehicleId.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(mockVehicle);
     });
   });
@@ -214,17 +210,13 @@ describe('VehiclesService', () => {
   describe('remove', () => {
     it('should soft delete vehicle successfully', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue({ ...mockVehicle, isActive: false }),
+        exec: jest.fn().mockResolvedValue({ ...mockVehicle, isActive: false })
       };
       vehicleModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
       const result = await service.remove(mockVehicleId.toString(), mockAccountId);
 
-      expect(vehicleModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockVehicleId.toString(), account: mockAccountId },
-        { isActive: false },
-        { new: true }
-      );
+      expect(vehicleModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockVehicleId.toString(), account: mockAccountId }, { isActive: false }, { new: true });
       expect(result).toEqual({ ...mockVehicle, isActive: false });
     });
   });

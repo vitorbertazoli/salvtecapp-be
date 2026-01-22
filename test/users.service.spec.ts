@@ -32,7 +32,7 @@ describe('UsersService', () => {
     createdBy: mockCreatedBy,
     updatedBy: mockUpdatedBy,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockUserArray = [mockUser];
@@ -44,12 +44,14 @@ describe('UsersService', () => {
       name: 'Test Account',
       id: 'test-id',
       logoUrl: 'logo.png',
-      status: 'active',
+      status: 'active'
     },
-    roles: [{
-      _id: mockRoleId,
-      name: 'ADMIN',
-    }],
+    roles: [
+      {
+        _id: mockRoleId,
+        name: 'ADMIN'
+      }
+    ]
   };
 
   beforeEach(async () => {
@@ -60,50 +62,50 @@ describe('UsersService', () => {
         ...data,
         toObject: jest.fn().mockReturnValue({
           ...mockUser,
-          ...data,
-        }),
+          ...data
+        })
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
     mockUserModel.find = jest.fn().mockReturnValue({
       populate: jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockUserArray),
-        }),
+          exec: jest.fn().mockResolvedValue(mockUserArray)
+        })
       }),
-      exec: jest.fn().mockResolvedValue(mockUserArray),
+      exec: jest.fn().mockResolvedValue(mockUserArray)
     });
     mockUserModel.findById = jest.fn().mockReturnValue({
       populate: jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockPopulatedUser),
-        }),
-      }),
+          exec: jest.fn().mockResolvedValue(mockPopulatedUser)
+        })
+      })
     });
     mockUserModel.findOne = jest.fn().mockImplementation(() => {
       const createMockQuery = () => ({
         populate: jest.fn().mockImplementation(() => createMockQuery()),
-        exec: jest.fn(),
+        exec: jest.fn()
       });
       return createMockQuery();
     });
     mockUserModel.findOneAndUpdate = jest.fn().mockReturnValue({
       populate: jest.fn().mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn(),
-        }),
-      }),
+          exec: jest.fn()
+        })
+      })
     });
     mockUserModel.findOneAndDelete = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockUserModel.deleteMany = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockUserModel.aggregate = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -111,9 +113,9 @@ describe('UsersService', () => {
         UsersService,
         {
           provide: getModelToken(User.name),
-          useValue: mockUserModel,
-        },
-      ],
+          useValue: mockUserModel
+        }
+      ]
     }).compile();
 
     service = module.get<UsersService>(UsersService);
@@ -128,7 +130,7 @@ describe('UsersService', () => {
     it('should create a new user successfully', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       };
       userModel.findOne.mockReturnValue(mockQuery);
 
@@ -155,7 +157,7 @@ describe('UsersService', () => {
         passwordHash: 'hashedpassword',
         roles: [mockRoleId], // Should be ObjectId
         createdBy: mockCreatedBy,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       });
       expect(result).toBeDefined();
     });
@@ -163,22 +165,13 @@ describe('UsersService', () => {
     it('should throw error if user with email already exists', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockUser),
+        exec: jest.fn().mockResolvedValue(mockUser)
       };
       userModel.findOne.mockReturnValue(mockQuery);
 
-      await expect(
-        service.create(
-          mockAccountId,
-          'João',
-          'Silva',
-          'joao.silva@example.com',
-          'password123',
-          [],
-          mockCreatedBy,
-          mockUpdatedBy
-        )
-      ).rejects.toThrow('User with this email already exists');
+      await expect(service.create(mockAccountId, 'João', 'Silva', 'joao.silva@example.com', 'password123', [], mockCreatedBy, mockUpdatedBy)).rejects.toThrow(
+        'User with this email already exists'
+      );
     });
   });
 
@@ -186,7 +179,7 @@ describe('UsersService', () => {
     it('should return user by account and email', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockUser),
+        exec: jest.fn().mockResolvedValue(mockUser)
       };
       userModel.findOne.mockReturnValue(mockQuery);
 
@@ -194,7 +187,7 @@ describe('UsersService', () => {
 
       expect(userModel.findOne).toHaveBeenCalledWith({
         account: mockAccountId,
-        email: 'joao.silva@example.com',
+        email: 'joao.silva@example.com'
       });
       expect(result).toEqual(mockUser);
     });
@@ -204,7 +197,7 @@ describe('UsersService', () => {
     it('should return user by email with populated data', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedUser),
+        exec: jest.fn().mockResolvedValue(mockPopulatedUser)
       };
       userModel.findOne.mockReturnValue(mockQuery);
 
@@ -236,7 +229,7 @@ describe('UsersService', () => {
         total: 1,
         page: 1,
         limit: 1,
-        totalPages: 1,
+        totalPages: 1
       });
     });
   });
@@ -248,10 +241,10 @@ describe('UsersService', () => {
 
       userModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockUsers),
+          exec: jest.fn().mockResolvedValue(mockUsers)
         })
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'João');
@@ -262,7 +255,7 @@ describe('UsersService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -272,10 +265,10 @@ describe('UsersService', () => {
 
       userModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockUsers),
+          exec: jest.fn().mockResolvedValue(mockUsers)
         })
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '');
@@ -285,7 +278,7 @@ describe('UsersService', () => {
         total: 0,
         page: 1,
         limit: 10,
-        totalPages: 0,
+        totalPages: 0
       });
     });
   });
@@ -294,30 +287,26 @@ describe('UsersService', () => {
     it('should update user successfully', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedUser),
+        exec: jest.fn().mockResolvedValue(mockPopulatedUser)
       };
       userModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
       const updateData = {
         firstName: 'João Updated',
         lastName: 'Silva Updated',
-        email: 'joao.updated@example.com',
+        email: 'joao.updated@example.com'
       };
 
       const result = await service.update(mockUserId.toString(), updateData, mockAccountId);
 
-      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockUserId.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockUserId.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(mockPopulatedUser);
     });
 
     it('should hash password when provided', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedUser),
+        exec: jest.fn().mockResolvedValue(mockPopulatedUser)
       };
       userModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
@@ -325,7 +314,7 @@ describe('UsersService', () => {
 
       const updateData = {
         firstName: 'João Updated',
-        password: 'newpassword123',
+        password: 'newpassword123'
       };
 
       await service.update(mockUserId.toString(), updateData, mockAccountId);
@@ -335,7 +324,7 @@ describe('UsersService', () => {
         { _id: mockUserId.toString(), account: mockAccountId },
         {
           firstName: 'João Updated',
-          passwordHash: 'newhashedpassword',
+          passwordHash: 'newhashedpassword'
         },
         { new: true }
       );
@@ -346,17 +335,13 @@ describe('UsersService', () => {
     it('should update user language successfully', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedUser),
+        exec: jest.fn().mockResolvedValue(mockPopulatedUser)
       };
       userModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
       const result = await service.updateLanguage(mockUserId.toString(), 'en-US', mockAccountId);
 
-      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockUserId.toString(), account: mockAccountId },
-        { language: 'en-US' },
-        { new: true }
-      );
+      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockUserId.toString(), account: mockAccountId }, { language: 'en-US' }, { new: true });
       expect(result).toEqual(mockPopulatedUser);
     });
   });
@@ -364,7 +349,7 @@ describe('UsersService', () => {
   describe('delete', () => {
     it('should delete user successfully', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockUser),
+        exec: jest.fn().mockResolvedValue(mockUser)
       };
       userModel.findOneAndDelete.mockReturnValue(mockQuery);
 
@@ -372,7 +357,7 @@ describe('UsersService', () => {
 
       expect(userModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockUserId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockUser);
     });
@@ -381,14 +366,14 @@ describe('UsersService', () => {
   describe('deleteById', () => {
     it('should delete user by id only', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockUser),
+        exec: jest.fn().mockResolvedValue(mockUser)
       };
       userModel.findOneAndDelete.mockReturnValue(mockQuery);
 
       const result = await service.deleteById(mockUserId.toString());
 
       expect(userModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: mockUserId.toString(),
+        _id: mockUserId.toString()
       });
       expect(result).toEqual(mockUser);
     });
@@ -398,7 +383,7 @@ describe('UsersService', () => {
     it('should return user by id and account with populated data', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedUser),
+        exec: jest.fn().mockResolvedValue(mockPopulatedUser)
       };
       userModel.findOne.mockReturnValue(mockQuery);
 
@@ -406,7 +391,7 @@ describe('UsersService', () => {
 
       expect(userModel.findOne).toHaveBeenCalledWith({
         _id: mockUserId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(mockQuery.populate).toHaveBeenCalledWith('account', 'name id logoUrl');
       expect(mockQuery.populate).toHaveBeenCalledWith('roles', 'name');
@@ -417,7 +402,7 @@ describe('UsersService', () => {
   describe('updateResetToken', () => {
     it('should update reset token successfully', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockUser),
+        exec: jest.fn().mockResolvedValue(mockUser)
       };
       userModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
@@ -426,11 +411,7 @@ describe('UsersService', () => {
 
       const result = await service.updateResetToken('joao.silva@example.com', resetToken, resetTokenExpiry);
 
-      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { email: 'joao.silva@example.com' },
-        { resetToken, resetTokenExpiry },
-        { new: true }
-      );
+      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith({ email: 'joao.silva@example.com' }, { resetToken, resetTokenExpiry }, { new: true });
       expect(result).toEqual(mockUser);
     });
   });
@@ -438,7 +419,7 @@ describe('UsersService', () => {
   describe('findByResetToken', () => {
     it('should return user by valid reset token', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockUser),
+        exec: jest.fn().mockResolvedValue(mockUser)
       };
       userModel.findOne.mockReturnValue(mockQuery);
 
@@ -446,7 +427,7 @@ describe('UsersService', () => {
 
       expect(userModel.findOne).toHaveBeenCalledWith({
         resetToken: 'reset-token-123',
-        resetTokenExpiry: { $gt: expect.any(Date) },
+        resetTokenExpiry: { $gt: expect.any(Date) }
       });
       expect(result).toEqual(mockUser);
     });
@@ -455,7 +436,7 @@ describe('UsersService', () => {
   describe('deleteAllByAccount', () => {
     it('should delete all users by account', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue({ deletedCount: 5 }),
+        exec: jest.fn().mockResolvedValue({ deletedCount: 5 })
       };
       userModel.deleteMany.mockReturnValue(mockQuery);
 

@@ -22,13 +22,13 @@ describe('AdminController', () => {
         status: 'active',
         logoUrl: 'https://example.com/logo.png',
         createdAt: new Date(),
-        expireDate: new Date(),
-      },
+        expireDate: new Date()
+      }
     ],
     total: 1,
     page: 1,
     limit: 10,
-    totalPages: 1,
+    totalPages: 1
   };
 
   const mockUpdatedAccount = {
@@ -36,20 +36,20 @@ describe('AdminController', () => {
     name: 'test-account',
     plan: 'free',
     status: 'active',
-    logoUrl: 'https://example.com/logo.png',
+    logoUrl: 'https://example.com/logo.png'
   };
 
   const mockDeletedAccount = {
     id: '507f1f77bcf86cd799439011',
     name: 'test-account',
-    message: 'Account and all related data deleted successfully',
+    message: 'Account and all related data deleted successfully'
   };
 
   beforeEach(async () => {
     const mockAdminService = {
       getAllAccounts: jest.fn(),
       updateAccountStatus: jest.fn(),
-      deleteAccount: jest.fn(),
+      deleteAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -57,9 +57,9 @@ describe('AdminController', () => {
       providers: [
         {
           provide: AdminService,
-          useValue: mockAdminService,
-        },
-      ],
+          useValue: mockAdminService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })
@@ -142,8 +142,8 @@ describe('AdminController', () => {
     beforeEach(() => {
       mockRequest = {
         user: {
-          account: mockCurrentUserAccountId.toString(),
-        },
+          account: mockCurrentUserAccountId.toString()
+        }
       };
     });
 
@@ -160,9 +160,7 @@ describe('AdminController', () => {
     it('should throw error when trying to delete own account', async () => {
       const ownAccountId = mockCurrentUserAccountId;
 
-      await expect(controller.deleteAccount(ownAccountId, ownAccountId.toString())).rejects.toThrow(
-        'You cannot delete your own account while logged in.'
-      );
+      await expect(controller.deleteAccount(ownAccountId, ownAccountId.toString())).rejects.toThrow('You cannot delete your own account while logged in.');
 
       expect(adminService.deleteAccount).not.toHaveBeenCalled();
     });

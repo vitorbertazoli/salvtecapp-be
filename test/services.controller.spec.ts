@@ -18,12 +18,12 @@ describe('ServicesController', () => {
     _id: new Types.ObjectId(),
     name: 'Test Service',
     description: 'A test service',
-    value: 150.00,
+    value: 150.0,
     account: mockAccountId,
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockServiceArray = [mockService];
@@ -33,7 +33,7 @@ describe('ServicesController', () => {
     findByAccount: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn(),
+    delete: jest.fn()
   };
 
   beforeEach(async () => {
@@ -42,9 +42,9 @@ describe('ServicesController', () => {
       providers: [
         {
           provide: ServicesService,
-          useValue: mockServicesService,
-        },
-      ],
+          useValue: mockServicesService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -65,14 +65,14 @@ describe('ServicesController', () => {
       const createServiceDto: CreateServiceDto = {
         name: 'New Service',
         description: 'New service description',
-        value: 200.00,
+        value: 200.0
       };
 
       const expectedServiceData = {
         ...createServiceDto,
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockServicesService.create.mockResolvedValue(mockService);
@@ -91,7 +91,7 @@ describe('ServicesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockServicesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -107,7 +107,7 @@ describe('ServicesController', () => {
         total: 1,
         page: 2,
         limit: 20,
-        totalPages: 1,
+        totalPages: 1
       };
       mockServicesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -123,7 +123,7 @@ describe('ServicesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockServicesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -149,17 +149,17 @@ describe('ServicesController', () => {
     it('should update a service', async () => {
       const updateServiceDto: UpdateServiceDto = {
         name: 'Updated Service',
-        value: 250.00,
+        value: 250.0
       };
 
       const expectedServiceData = {
         ...updateServiceDto,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockServicesService.update.mockResolvedValue({
         ...mockService,
-        ...updateServiceDto,
+        ...updateServiceDto
       });
 
       const result = await controller.update(mockService._id.toString(), updateServiceDto, mockAccountId, mockUserId);
@@ -167,7 +167,7 @@ describe('ServicesController', () => {
       expect(mockServicesService.update).toHaveBeenCalledWith(mockService._id.toString(), expectedServiceData, mockAccountId);
       expect(result).toMatchObject({
         ...mockService,
-        ...updateServiceDto,
+        ...updateServiceDto
       });
     });
   });

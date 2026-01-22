@@ -19,13 +19,13 @@ describe('DashboardController', () => {
     todaysEventsCount: 3,
     monthlySalesData: [
       { date: '2024-01-01', sales: 1500 },
-      { date: '2024-01-02', sales: 2200 },
-    ],
+      { date: '2024-01-02', sales: 2200 }
+    ]
   };
 
   beforeEach(async () => {
     const mockDashboardService = {
-      getStats: jest.fn(),
+      getStats: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -33,9 +33,9 @@ describe('DashboardController', () => {
       providers: [
         {
           provide: DashboardService,
-          useValue: mockDashboardService,
-        },
-      ],
+          useValue: mockDashboardService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })
@@ -68,7 +68,7 @@ describe('DashboardController', () => {
         openQuotesCount: 0,
         openServiceOrdersCount: 0,
         todaysEventsCount: 0,
-        monthlySalesData: [],
+        monthlySalesData: []
       };
 
       dashboardService.getStats.mockResolvedValue(emptyStats);

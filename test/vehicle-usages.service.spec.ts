@@ -31,7 +31,7 @@ describe('VehicleUsagesService', () => {
     createdBy: mockCreatedBy,
     updatedBy: mockUpdatedBy,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockPopulatedUsage = {
@@ -40,24 +40,24 @@ describe('VehicleUsagesService', () => {
       _id: mockTechnicianId,
       user: {
         firstName: 'João',
-        lastName: 'Silva',
-      },
+        lastName: 'Silva'
+      }
     },
     vehicle: {
       _id: mockVehicleId,
       name: 'Van 001',
-      licensePlate: 'ABC-1234',
+      licensePlate: 'ABC-1234'
     },
     approvedBy: {
       _id: mockUserId,
       firstName: 'Admin',
-      lastName: 'User',
+      lastName: 'User'
     },
     createdBy: {
       _id: mockCreatedBy,
       firstName: 'Creator',
-      lastName: 'User',
-    },
+      lastName: 'User'
+    }
   };
 
   beforeEach(async () => {
@@ -68,10 +68,10 @@ describe('VehicleUsagesService', () => {
         ...data,
         toObject: jest.fn().mockReturnValue({
           ...mockVehicleUsage,
-          ...data,
-        }),
+          ...data
+        })
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -81,29 +81,29 @@ describe('VehicleUsagesService', () => {
           populate: jest.fn().mockReturnValue({
             populate: jest.fn().mockReturnValue({
               sort: jest.fn().mockReturnValue({
-                exec: jest.fn().mockResolvedValue([mockPopulatedUsage]),
-              }),
-            }),
-          }),
-        }),
+                exec: jest.fn().mockResolvedValue([mockPopulatedUsage])
+              })
+            })
+          })
+        })
       })),
-      exec: jest.fn().mockResolvedValue([mockPopulatedUsage]),
+      exec: jest.fn().mockResolvedValue([mockPopulatedUsage])
     });
     mockVehicleUsageModel.findOne = jest.fn().mockImplementation(() => {
       const createMockQuery = () => ({
         populate: jest.fn().mockImplementation(() => createMockQuery()),
-        exec: jest.fn(),
+        exec: jest.fn()
       });
       return createMockQuery();
     });
     mockVehicleUsageModel.findOneAndUpdate = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockVehicleUsageModel.findByIdAndUpdate = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
     mockVehicleUsageModel.findOneAndDelete = jest.fn().mockReturnValue({
-      exec: jest.fn(),
+      exec: jest.fn()
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -111,9 +111,9 @@ describe('VehicleUsagesService', () => {
         VehicleUsagesService,
         {
           provide: getModelToken(VehicleUsage.name),
-          useValue: mockVehicleUsageModel,
-        },
-      ],
+          useValue: mockVehicleUsageModel
+        }
+      ]
     }).compile();
 
     service = module.get<VehicleUsagesService>(VehicleUsagesService);
@@ -136,7 +136,7 @@ describe('VehicleUsagesService', () => {
         mileageStart: 10000,
         mileageEnd: 10100,
         createdBy: mockCreatedBy,
-        updatedBy: mockUpdatedBy,
+        updatedBy: mockUpdatedBy
       };
 
       const result = await service.create(createData);
@@ -166,7 +166,7 @@ describe('VehicleUsagesService', () => {
     it('should return vehicle usage by id and account with populated data', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPopulatedUsage),
+        exec: jest.fn().mockResolvedValue(mockPopulatedUsage)
       };
       vehicleUsageModel.findOne.mockReturnValue(mockQuery);
 
@@ -174,7 +174,7 @@ describe('VehicleUsagesService', () => {
 
       expect(vehicleUsageModel.findOne).toHaveBeenCalledWith({
         _id: mockUsageId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(mockQuery.populate).toHaveBeenCalledWith({
         path: 'technician',
@@ -194,12 +194,12 @@ describe('VehicleUsagesService', () => {
     it('should update vehicle usage successfully', async () => {
       const mockExisting = { ...mockVehicleUsage, status: 'pending' };
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockExisting),
+        exec: jest.fn().mockResolvedValue(mockExisting)
       };
       vehicleUsageModel.findOne.mockReturnValueOnce(mockQuery);
 
       const mockUpdateQuery = {
-        exec: jest.fn().mockResolvedValue(mockVehicleUsage),
+        exec: jest.fn().mockResolvedValue(mockVehicleUsage)
       };
       vehicleUsageModel.findOneAndUpdate.mockReturnValue(mockUpdateQuery);
 
@@ -208,31 +208,23 @@ describe('VehicleUsagesService', () => {
 
       expect(vehicleUsageModel.findOne).toHaveBeenCalledWith({
         _id: mockUsageId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
-      expect(vehicleUsageModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockUsageId.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(vehicleUsageModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockUsageId.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(mockVehicleUsage);
     });
 
     it('should throw error if vehicle usage not found', async () => {
       vehicleUsageModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.update(mockUsageId.toString(), { purpose: 'Updated' }, mockAccountId)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update(mockUsageId.toString(), { purpose: 'Updated' }, mockAccountId)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw error if vehicle usage is already approved', async () => {
       const mockExisting = { ...mockVehicleUsage, status: 'approved' };
       vehicleUsageModel.findOne.mockResolvedValue(mockExisting);
 
-      await expect(
-        service.update(mockUsageId.toString(), { purpose: 'Updated' }, mockAccountId)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.update(mockUsageId.toString(), { purpose: 'Updated' }, mockAccountId)).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -240,12 +232,12 @@ describe('VehicleUsagesService', () => {
     it('should approve vehicle usage successfully', async () => {
       const mockExisting = { ...mockVehicleUsage, status: 'pending' };
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockExisting),
+        exec: jest.fn().mockResolvedValue(mockExisting)
       };
       vehicleUsageModel.findOne.mockReturnValueOnce(mockQuery);
 
       const mockUpdateQuery = {
-        exec: jest.fn().mockResolvedValue({ ...mockVehicleUsage, status: 'approved' }),
+        exec: jest.fn().mockResolvedValue({ ...mockVehicleUsage, status: 'approved' })
       };
       vehicleUsageModel.findByIdAndUpdate.mockReturnValue(mockUpdateQuery);
 
@@ -253,14 +245,14 @@ describe('VehicleUsagesService', () => {
 
       expect(vehicleUsageModel.findOne).toHaveBeenCalledWith({
         _id: mockUsageId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(vehicleUsageModel.findByIdAndUpdate).toHaveBeenCalledWith(
         mockUsageId.toString(),
         {
           status: 'approved',
           approvedBy: mockUserId.toString(),
-          approvedAt: expect.any(Date),
+          approvedAt: expect.any(Date)
         },
         { new: true }
       );
@@ -270,18 +262,14 @@ describe('VehicleUsagesService', () => {
     it('should throw error if vehicle usage not found', async () => {
       vehicleUsageModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw error if vehicle usage is already approved', async () => {
       const mockExisting = { ...mockVehicleUsage, status: 'approved' };
       vehicleUsageModel.findOne.mockResolvedValue(mockExisting);
 
-      await expect(
-        service.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId)).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -289,12 +277,12 @@ describe('VehicleUsagesService', () => {
     it('should remove vehicle usage successfully', async () => {
       const mockExisting = { ...mockVehicleUsage, status: 'pending' };
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockExisting),
+        exec: jest.fn().mockResolvedValue(mockExisting)
       };
       vehicleUsageModel.findOne.mockReturnValueOnce(mockQuery);
 
       const mockDeleteQuery = {
-        exec: jest.fn().mockResolvedValue(mockVehicleUsage),
+        exec: jest.fn().mockResolvedValue(mockVehicleUsage)
       };
       vehicleUsageModel.findOneAndDelete.mockReturnValue(mockDeleteQuery);
 
@@ -302,11 +290,11 @@ describe('VehicleUsagesService', () => {
 
       expect(vehicleUsageModel.findOne).toHaveBeenCalledWith({
         _id: mockUsageId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(vehicleUsageModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockUsageId.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockVehicleUsage);
     });
@@ -314,18 +302,14 @@ describe('VehicleUsagesService', () => {
     it('should throw error if vehicle usage not found', async () => {
       vehicleUsageModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.remove(mockUsageId.toString(), mockAccountId)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.remove(mockUsageId.toString(), mockAccountId)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw error if vehicle usage is already approved', async () => {
       const mockExisting = { ...mockVehicleUsage, status: 'approved' };
       vehicleUsageModel.findOne.mockResolvedValue(mockExisting);
 
-      await expect(
-        service.remove(mockUsageId.toString(), mockAccountId)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.remove(mockUsageId.toString(), mockAccountId)).rejects.toThrow(ForbiddenException);
     });
   });
 });

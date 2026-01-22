@@ -27,30 +27,30 @@ describe('DashboardService', () => {
     monthlySalesData: [
       { date: '2024-01-01', sales: 1500 },
       { date: '2024-01-02', sales: 2200 },
-      { date: '2024-01-03', sales: 0 },
-    ],
+      { date: '2024-01-03', sales: 0 }
+    ]
   };
 
   beforeEach(async () => {
     const mockCustomerModel = {
-      countDocuments: jest.fn(),
+      countDocuments: jest.fn()
     };
 
     const mockTechnicianModel = {
-      countDocuments: jest.fn(),
+      countDocuments: jest.fn()
     };
 
     const mockQuoteModel = {
-      countDocuments: jest.fn(),
+      countDocuments: jest.fn()
     };
 
     const mockServiceOrderModel = {
       countDocuments: jest.fn(),
-      aggregate: jest.fn(),
+      aggregate: jest.fn()
     };
 
     const mockEventModel = {
-      countDocuments: jest.fn(),
+      countDocuments: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -58,25 +58,25 @@ describe('DashboardService', () => {
         DashboardService,
         {
           provide: getModelToken(Customer.name),
-          useValue: mockCustomerModel,
+          useValue: mockCustomerModel
         },
         {
           provide: getModelToken(Technician.name),
-          useValue: mockTechnicianModel,
+          useValue: mockTechnicianModel
         },
         {
           provide: getModelToken(Quote.name),
-          useValue: mockQuoteModel,
+          useValue: mockQuoteModel
         },
         {
           provide: getModelToken(ServiceOrder.name),
-          useValue: mockServiceOrderModel,
+          useValue: mockServiceOrderModel
         },
         {
           provide: getModelToken(Event.name),
-          useValue: mockEventModel,
-        },
-      ],
+          useValue: mockEventModel
+        }
+      ]
     }).compile();
 
     service = module.get<DashboardService>(DashboardService);
@@ -103,7 +103,7 @@ describe('DashboardService', () => {
       // Mock aggregate for monthly sales data
       serviceOrderModel.aggregate.mockResolvedValue([
         { _id: '2024-01-01', total: 1500 },
-        { _id: '2024-01-02', total: 2200 },
+        { _id: '2024-01-02', total: 2200 }
       ]);
 
       const result = await service.getStats(mockAccountId);
@@ -131,7 +131,7 @@ describe('DashboardService', () => {
         openQuotesCount: mockStats.openQuotesCount,
         openServiceOrdersCount: mockStats.openServiceOrdersCount,
         todaysEventsCount: mockStats.todaysEventsCount,
-        monthlySalesData: expect.any(Array),
+        monthlySalesData: expect.any(Array)
       });
     });
 
@@ -154,7 +154,7 @@ describe('DashboardService', () => {
         openQuotesCount: 0,
         openServiceOrdersCount: 0,
         todaysEventsCount: 0,
-        monthlySalesData: expect.any(Array),
+        monthlySalesData: expect.any(Array)
       });
     });
 
@@ -175,7 +175,7 @@ describe('DashboardService', () => {
 
       const salesData = [
         { _id: yesterday.toISOString().split('T')[0], total: 1000 },
-        { _id: twoDaysAgo.toISOString().split('T')[0], total: 2000 },
+        { _id: twoDaysAgo.toISOString().split('T')[0], total: 2000 }
       ];
       serviceOrderModel.aggregate.mockResolvedValue(salesData);
 
@@ -203,7 +203,7 @@ describe('DashboardService', () => {
       const fromDate = new Date('2024-01-01');
       const salesData = [
         { _id: '2024-01-01', total: 1500 },
-        { _id: '2024-01-02', total: 2200 },
+        { _id: '2024-01-02', total: 2200 }
       ];
 
       serviceOrderModel.aggregate.mockResolvedValue(salesData);
@@ -245,9 +245,7 @@ describe('DashboardService', () => {
       const toDate = new Date('2024-01-03');
 
       // Mock only one day with sales
-      serviceOrderModel.aggregate.mockResolvedValue([
-        { _id: '2024-01-02', total: 1000 }
-      ]);
+      serviceOrderModel.aggregate.mockResolvedValue([{ _id: '2024-01-02', total: 1000 }]);
 
       const result = await (service as any).getMonthlySalesData(mockAccountId, fromDate);
 
@@ -255,9 +253,9 @@ describe('DashboardService', () => {
       expect(result.length).toBeGreaterThanOrEqual(3); // At least 3 days
 
       // Find the specific dates
-      const day1 = result.find(item => item.date === '2024-01-01');
-      const day2 = result.find(item => item.date === '2024-01-02');
-      const day3 = result.find(item => item.date === '2024-01-03');
+      const day1 = result.find((item) => item.date === '2024-01-01');
+      const day2 = result.find((item) => item.date === '2024-01-02');
+      const day3 = result.find((item) => item.date === '2024-01-03');
 
       expect(day1?.sales).toBe(0);
       expect(day2?.sales).toBe(1000);

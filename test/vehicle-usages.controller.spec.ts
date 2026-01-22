@@ -27,7 +27,7 @@ describe('VehicleUsagesController', () => {
     mileageEnd: 10100,
     status: 'pending',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   beforeEach(async () => {
@@ -37,7 +37,7 @@ describe('VehicleUsagesController', () => {
       findOne: jest.fn(),
       update: jest.fn(),
       approve: jest.fn(),
-      remove: jest.fn(),
+      remove: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -45,9 +45,9 @@ describe('VehicleUsagesController', () => {
       providers: [
         {
           provide: VehicleUsagesService,
-          useValue: mockVehicleUsagesService,
-        },
-      ],
+          useValue: mockVehicleUsagesService
+        }
+      ]
     })
       .overrideGuard() // Mock guards
       .useValue({})
@@ -70,7 +70,7 @@ describe('VehicleUsagesController', () => {
         startDate: new Date('2024-01-01T08:00:00Z'),
         endDate: new Date('2024-01-01T17:00:00Z'),
         mileageStart: 10000,
-        mileageEnd: 10100,
+        mileageEnd: 10100
       };
 
       vehicleUsagesService.create.mockResolvedValue(mockVehicleUsage);
@@ -83,7 +83,7 @@ describe('VehicleUsagesController', () => {
         technician: new Types.ObjectId(mockTechnicianId.toString()),
         vehicle: new Types.ObjectId(mockVehicleId.toString()),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       });
       expect(result).toEqual(mockVehicleUsage);
     });
@@ -114,16 +114,14 @@ describe('VehicleUsagesController', () => {
     it('should throw NotFoundException if vehicle usage not found', async () => {
       vehicleUsagesService.findOne.mockResolvedValue(null);
 
-      await expect(
-        controller.findOne(mockUsageId.toString(), mockAccountId)
-      ).rejects.toThrow('Vehicle usage not found');
+      await expect(controller.findOne(mockUsageId.toString(), mockAccountId)).rejects.toThrow('Vehicle usage not found');
     });
   });
 
   describe('update', () => {
     it('should update vehicle usage', async () => {
       const updateDto: UpdateVehicleUsageDto = {
-        purpose: 'Updated purpose',
+        purpose: 'Updated purpose'
       };
 
       vehicleUsagesService.update.mockResolvedValue(mockVehicleUsage);
@@ -134,7 +132,7 @@ describe('VehicleUsagesController', () => {
         mockUsageId.toString(),
         {
           ...updateDto,
-          updatedBy: mockUserId,
+          updatedBy: mockUserId
         },
         mockAccountId
       );
@@ -143,14 +141,12 @@ describe('VehicleUsagesController', () => {
 
     it('should throw NotFoundException if vehicle usage not found', async () => {
       const updateDto: UpdateVehicleUsageDto = {
-        purpose: 'Updated purpose',
+        purpose: 'Updated purpose'
       };
 
       vehicleUsagesService.update.mockResolvedValue(null);
 
-      await expect(
-        controller.update(mockUsageId.toString(), updateDto, mockAccountId, mockUserId.toString())
-      ).rejects.toThrow('Vehicle usage not found');
+      await expect(controller.update(mockUsageId.toString(), updateDto, mockAccountId, mockUserId.toString())).rejects.toThrow('Vehicle usage not found');
     });
   });
 
@@ -167,9 +163,7 @@ describe('VehicleUsagesController', () => {
     it('should throw NotFoundException if vehicle usage not found', async () => {
       vehicleUsagesService.approve.mockResolvedValue(null);
 
-      await expect(
-        controller.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId)
-      ).rejects.toThrow('Vehicle usage not found');
+      await expect(controller.approve(mockUsageId.toString(), mockUserId.toString(), mockAccountId)).rejects.toThrow('Vehicle usage not found');
     });
   });
 
@@ -186,9 +180,7 @@ describe('VehicleUsagesController', () => {
     it('should throw NotFoundException if vehicle usage not found', async () => {
       vehicleUsagesService.remove.mockResolvedValue(null);
 
-      await expect(
-        controller.remove(mockUsageId.toString(), mockAccountId)
-      ).rejects.toThrow('Vehicle usage not found');
+      await expect(controller.remove(mockUsageId.toString(), mockAccountId)).rejects.toThrow('Vehicle usage not found');
     });
   });
 });

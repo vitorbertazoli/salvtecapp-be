@@ -27,7 +27,7 @@ describe('VehiclesController', () => {
     status: 'active',
     isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   beforeEach(async () => {
@@ -36,7 +36,7 @@ describe('VehiclesController', () => {
       findAll: jest.fn(),
       findOne: jest.fn(),
       update: jest.fn(),
-      remove: jest.fn(),
+      remove: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -44,9 +44,9 @@ describe('VehiclesController', () => {
       providers: [
         {
           provide: VehiclesService,
-          useValue: mockVehiclesService,
-        },
-      ],
+          useValue: mockVehiclesService
+        }
+      ]
     })
       .overrideGuard() // Mock guards
       .useValue({})
@@ -70,7 +70,7 @@ describe('VehiclesController', () => {
         year: 2020,
         color: 'White',
         mileage: 50000,
-        fuelType: 'Diesel',
+        fuelType: 'Diesel'
       };
 
       vehiclesService.create.mockResolvedValue(mockVehicle);
@@ -81,7 +81,7 @@ describe('VehiclesController', () => {
         ...createDto,
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       });
       expect(result).toEqual(mockVehicle);
     });
@@ -94,7 +94,7 @@ describe('VehiclesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       vehiclesService.findAll.mockResolvedValue(mockResult);
@@ -111,7 +111,7 @@ describe('VehiclesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       vehiclesService.findAll.mockResolvedValue(mockResult);
@@ -136,9 +136,7 @@ describe('VehiclesController', () => {
     it('should throw NotFoundException if vehicle not found', async () => {
       vehiclesService.findOne.mockResolvedValue(null);
 
-      await expect(
-        controller.findOne(mockVehicleId.toString(), mockAccountId)
-      ).rejects.toThrow('Vehicle not found');
+      await expect(controller.findOne(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('Vehicle not found');
     });
   });
 
@@ -146,7 +144,7 @@ describe('VehiclesController', () => {
     it('should update vehicle', async () => {
       const updateDto: UpdateVehicleDto = {
         name: 'Updated Van',
-        mileage: 60000,
+        mileage: 60000
       };
 
       vehiclesService.update.mockResolvedValue(mockVehicle);
@@ -157,7 +155,7 @@ describe('VehiclesController', () => {
         mockVehicleId.toString(),
         {
           ...updateDto,
-          updatedBy: mockUserId,
+          updatedBy: mockUserId
         },
         mockAccountId
       );
@@ -166,14 +164,12 @@ describe('VehiclesController', () => {
 
     it('should throw NotFoundException if vehicle not found', async () => {
       const updateDto: UpdateVehicleDto = {
-        name: 'Updated Van',
+        name: 'Updated Van'
       };
 
       vehiclesService.update.mockResolvedValue(null);
 
-      await expect(
-        controller.update(mockVehicleId.toString(), updateDto, mockAccountId, mockUserId.toString())
-      ).rejects.toThrow('Vehicle not found');
+      await expect(controller.update(mockVehicleId.toString(), updateDto, mockAccountId, mockUserId.toString())).rejects.toThrow('Vehicle not found');
     });
   });
 
@@ -190,9 +186,7 @@ describe('VehiclesController', () => {
     it('should throw NotFoundException if vehicle not found', async () => {
       vehiclesService.remove.mockResolvedValue(null);
 
-      await expect(
-        controller.remove(mockVehicleId.toString(), mockAccountId)
-      ).rejects.toThrow('Vehicle not found');
+      await expect(controller.remove(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('Vehicle not found');
     });
   });
 });

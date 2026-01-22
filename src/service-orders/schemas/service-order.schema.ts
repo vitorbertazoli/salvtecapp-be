@@ -26,6 +26,62 @@ export class ServiceOrderItem {
   totalValue: number;
 }
 
+export class ChangeOrder {
+  @Prop({ required: true })
+  version: number;
+
+  @Prop({ type: [ServiceOrderItem], required: true })
+  originalItems: ServiceOrderItem[];
+
+  @Prop({ type: [ServiceOrderItem], required: true })
+  modifiedItems: ServiceOrderItem[];
+
+  @Prop()
+  description?: string;
+
+  @Prop({ min: 0, max: 100 })
+  discount?: number;
+
+  @Prop({
+    type: [
+      {
+        description: { type: String, required: true },
+        amount: { type: Number, required: true }
+      }
+    ],
+    default: []
+  })
+  otherDiscounts?: {
+    description: string;
+    amount: number;
+  }[];
+
+  @Prop({ required: true, min: 0 })
+  subtotal: number;
+
+  @Prop({ required: true, min: 0 })
+  totalValue: number;
+
+  @Prop({
+    required: true,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  })
+  status: 'pending' | 'approved' | 'rejected';
+
+  @Prop()
+  approvedAt?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  approvedBy?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+
+  @Prop({ required: true, default: Date.now })
+  createdAt: Date;
+}
+
 export class Equipment {
   name: string;
   room?: string;
@@ -69,11 +125,28 @@ export class ServiceOrder {
   @Prop({ type: [ServiceOrderItem], required: true })
   items: ServiceOrderItem[];
 
+  @Prop({ type: [ChangeOrder], default: [] })
+  changeOrders: ChangeOrder[];
+
   @Prop()
   description?: string;
 
   @Prop({ min: 0, max: 100 })
   discount?: number;
+
+  @Prop({
+    type: [
+      {
+        description: { type: String, required: true },
+        amount: { type: Number, required: true }
+      }
+    ],
+    default: []
+  })
+  otherDiscounts?: {
+    description: string;
+    amount: number;
+  }[];
 
   @Prop({ required: true, min: 0 })
   subtotal: number;

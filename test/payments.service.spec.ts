@@ -24,7 +24,7 @@ describe('PaymentsService', () => {
     orderNumber: 'SO-001',
     description: 'Test service order',
     totalValue: 1000,
-    status: 'approved',
+    status: 'approved'
   };
 
   const mockPaymentOrder = {
@@ -44,7 +44,7 @@ describe('PaymentsService', () => {
     taxAmount: 100,
     transactionId: 'txn_123',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockPaymentOrderArray = [mockPaymentOrder];
@@ -54,9 +54,9 @@ describe('PaymentsService', () => {
       ...data,
       save: jest.fn().mockResolvedValue({
         ...mockPaymentOrder,
-        toObject: jest.fn().mockReturnValue(mockPaymentOrder),
+        toObject: jest.fn().mockReturnValue(mockPaymentOrder)
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -64,16 +64,16 @@ describe('PaymentsService', () => {
     mockPaymentOrderModel.findOne = jest.fn();
     mockPaymentOrderModel.findOneAndDelete = jest.fn();
     mockPaymentOrderModel.countDocuments = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(1),
+      exec: jest.fn().mockResolvedValue(1)
     });
     mockPaymentOrderModel.aggregate = jest.fn();
 
     const mockServiceOrderModel = {
-      findOne: jest.fn(),
+      findOne: jest.fn()
     };
 
     const mockServiceOrdersService = {
-      updateByAccount: jest.fn(),
+      updateByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -81,17 +81,17 @@ describe('PaymentsService', () => {
         PaymentsService,
         {
           provide: getModelToken(PaymentOrder.name),
-          useValue: mockPaymentOrderModel,
+          useValue: mockPaymentOrderModel
         },
         {
           provide: getModelToken(ServiceOrder.name),
-          useValue: mockServiceOrderModel,
+          useValue: mockServiceOrderModel
         },
         {
           provide: ServiceOrdersService,
-          useValue: mockServiceOrdersService,
-        },
-      ],
+          useValue: mockServiceOrdersService
+        }
+      ]
     }).compile();
 
     service = module.get<PaymentsService>(PaymentsService);
@@ -107,33 +107,29 @@ describe('PaymentsService', () => {
   describe('createFromServiceOrder', () => {
     it('should create a payment order from service order successfully', async () => {
       serviceOrderModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockServiceOrder),
+        exec: jest.fn().mockResolvedValue(mockServiceOrder)
       });
 
       const result = await service.createFromServiceOrder(mockAccountId, mockServiceOrderId.toString());
 
       expect(serviceOrderModel.findOne).toHaveBeenCalledWith({
         account: mockAccountId,
-        _id: mockServiceOrderId.toString(),
+        _id: mockServiceOrderId.toString()
       });
-      expect(serviceOrdersService.updateByAccount).toHaveBeenCalledWith(
-        mockServiceOrderId.toString(),
-        { status: 'payment_order_created' },
-        mockAccountId
-      );
+      expect(serviceOrdersService.updateByAccount).toHaveBeenCalledWith(mockServiceOrderId.toString(), { status: 'payment_order_created' }, mockAccountId);
       expect(result).toMatchObject({
         account: mockAccountId,
         customer: mockCustomerId,
         serviceOrder: mockServiceOrderId,
         paymentStatus: 'pending',
         paidAmount: 0,
-        totalAmount: 1000,
+        totalAmount: 1000
       });
     });
 
     it('should throw NotFoundException when service order not found', async () => {
       serviceOrderModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       await expect(service.createFromServiceOrder(mockAccountId, 'invalid-id')).rejects.toThrow(NotFoundException);
@@ -146,7 +142,7 @@ describe('PaymentsService', () => {
       const mockAggregateResult = mockPaymentOrderArray;
 
       paymentOrderModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findAll(mockAccountId, 1, 10, '', 'pending');
@@ -154,7 +150,7 @@ describe('PaymentsService', () => {
       expect(paymentOrderModel.aggregate).toHaveBeenCalled();
       expect(result).toEqual({
         data: mockAggregateResult,
-        total: 1,
+        total: 1
       });
     });
 
@@ -164,10 +160,10 @@ describe('PaymentsService', () => {
 
       paymentOrderModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         })
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregateResult),
+          exec: jest.fn().mockResolvedValue(mockAggregateResult)
         });
 
       const result = await service.findAll(mockAccountId, 1, 10, 'test', '');
@@ -175,7 +171,7 @@ describe('PaymentsService', () => {
       expect(paymentOrderModel.aggregate).toHaveBeenCalledTimes(2);
       expect(result).toEqual({
         data: mockAggregateResult,
-        total: 1,
+        total: 1
       });
     });
 
@@ -183,7 +179,7 @@ describe('PaymentsService', () => {
       const mockAggregateResult = mockPaymentOrderArray;
 
       paymentOrderModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findAll(mockAccountId, 1, 10, '', 'paid');
@@ -191,7 +187,7 @@ describe('PaymentsService', () => {
       expect(paymentOrderModel.aggregate).toHaveBeenCalled();
       expect(result).toEqual({
         data: mockAggregateResult,
-        total: 1,
+        total: 1
       });
     });
 
@@ -199,7 +195,7 @@ describe('PaymentsService', () => {
       const mockAggregateResult = mockPaymentOrderArray;
 
       paymentOrderModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findAll(mockAccountId, 2, 5, '', '');
@@ -207,7 +203,7 @@ describe('PaymentsService', () => {
       expect(paymentOrderModel.aggregate).toHaveBeenCalled();
       expect(result).toEqual({
         data: mockAggregateResult,
-        total: 1,
+        total: 1
       });
     });
   });
@@ -216,14 +212,14 @@ describe('PaymentsService', () => {
     it('should return a payment order by id and account', async () => {
       paymentOrderModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockPaymentOrder),
+        exec: jest.fn().mockResolvedValue(mockPaymentOrder)
       });
 
       const result = await service.findOne(mockPaymentOrder._id.toString(), mockAccountId);
 
       expect(paymentOrderModel.findOne).toHaveBeenCalledWith({
         _id: mockPaymentOrder._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockPaymentOrder);
     });
@@ -231,7 +227,7 @@ describe('PaymentsService', () => {
     it('should throw NotFoundException when payment order not found', async () => {
       paymentOrderModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       await expect(service.findOne('invalid-id', mockAccountId)).rejects.toThrow(NotFoundException);
@@ -241,20 +237,20 @@ describe('PaymentsService', () => {
   describe('remove', () => {
     it('should delete a payment order successfully', async () => {
       paymentOrderModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockPaymentOrder),
+        exec: jest.fn().mockResolvedValue(mockPaymentOrder)
       });
 
       await expect(service.remove(mockPaymentOrder._id.toString(), mockAccountId)).resolves.toBeUndefined();
 
       expect(paymentOrderModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockPaymentOrder._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
     });
 
     it('should throw NotFoundException when payment order not found', async () => {
       paymentOrderModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       await expect(service.remove('invalid-id', mockAccountId)).rejects.toThrow(NotFoundException);

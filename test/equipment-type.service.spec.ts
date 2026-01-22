@@ -16,7 +16,7 @@ describe('EquipmentTypeService', () => {
     createdBy: 'user123',
     updatedBy: 'user123',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockEquipmentTypeArray = [
@@ -29,15 +29,15 @@ describe('EquipmentTypeService', () => {
       createdBy: 'user123',
       updatedBy: 'user123',
       createdAt: new Date(),
-      updatedAt: new Date(),
-    },
+      updatedAt: new Date()
+    }
   ];
 
   beforeEach(async () => {
     const mockEquipmentTypeModel = {
       find: jest.fn(),
       findById: jest.fn(),
-      exec: jest.fn(),
+      exec: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -45,9 +45,9 @@ describe('EquipmentTypeService', () => {
         EquipmentTypeService,
         {
           provide: getModelToken(EquipmentType.name),
-          useValue: mockEquipmentTypeModel,
-        },
-      ],
+          useValue: mockEquipmentTypeModel
+        }
+      ]
     }).compile();
 
     service = module.get<EquipmentTypeService>(EquipmentTypeService);
@@ -61,7 +61,7 @@ describe('EquipmentTypeService', () => {
   describe('findAll', () => {
     it('should return all equipment types', async () => {
       jest.spyOn(equipmentTypeModel, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockEquipmentTypeArray),
+        exec: jest.fn().mockResolvedValue(mockEquipmentTypeArray)
       } as any);
 
       const result = await service.findAll();
@@ -72,7 +72,7 @@ describe('EquipmentTypeService', () => {
 
     it('should return empty array when no equipment types exist', async () => {
       jest.spyOn(equipmentTypeModel, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValue([]),
+        exec: jest.fn().mockResolvedValue([])
       } as any);
 
       const result = await service.findAll();
@@ -86,7 +86,7 @@ describe('EquipmentTypeService', () => {
     it('should return a single equipment type by id', async () => {
       const id = '507f1f77bcf86cd799439011';
       jest.spyOn(equipmentTypeModel, 'findById').mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockEquipmentType),
+        exec: jest.fn().mockResolvedValue(mockEquipmentType)
       } as any);
 
       const result = await service.findOne(id);
@@ -98,7 +98,7 @@ describe('EquipmentTypeService', () => {
     it('should return null when equipment type is not found', async () => {
       const id = 'nonexistent-id';
       jest.spyOn(equipmentTypeModel, 'findById').mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findOne(id);

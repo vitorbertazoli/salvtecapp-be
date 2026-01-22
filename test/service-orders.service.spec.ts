@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
-import { ServiceOrder, ServiceOrderDocument } from '../src/service-orders/schemas/service-order.schema';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { QuotesService } from '../src/quotes/quotes.service';
+import { ServiceOrder } from '../src/service-orders/schemas/service-order.schema';
+import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 
 // Mock bcrypt
 jest.mock('bcrypt', () => ({
-  hash: jest.fn().mockResolvedValue('$2a$05$CUSTOM001abcdefghijk'),
+  hash: jest.fn().mockResolvedValue('$2a$05$CUSTOM001abcdefghijk')
 }));
 
 describe('ServiceOrdersService', () => {
@@ -18,7 +18,6 @@ describe('ServiceOrdersService', () => {
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
   const mockQuoteId = new Types.ObjectId();
-  const mockTechnicianId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
 
   const mockServiceOrder = {
@@ -35,8 +34,8 @@ describe('ServiceOrdersService', () => {
         type: 'Split',
         subType: 'Wall',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     items: [
       {
@@ -44,22 +43,28 @@ describe('ServiceOrdersService', () => {
         itemId: new Types.ObjectId(),
         name: 'AC Maintenance',
         quantity: 1,
-        unitValue: 100.00,
-        totalValue: 100.00,
+        unitValue: 100.0,
+        totalValue: 100.0
       },
       {
         type: 'product',
         itemId: new Types.ObjectId(),
         name: 'Filter',
         quantity: 2,
-        unitValue: 50.00,
-        totalValue: 100.00,
-      },
+        unitValue: 50.0,
+        totalValue: 100.0
+      }
     ],
     description: 'Test service order',
     discount: 10,
-    subtotal: 200.00,
-    totalValue: 180.00,
+    otherDiscounts: [
+      {
+        description: 'Loyalty Discount',
+        amount: 10
+      }
+    ],
+    subtotal: 200.0,
+    totalValue: 180.0,
     issuedAt: new Date('2024-01-01'),
     scheduledDate: new Date('2024-01-15'),
     status: 'pending',
@@ -69,7 +74,7 @@ describe('ServiceOrdersService', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockQuote = {
@@ -80,15 +85,15 @@ describe('ServiceOrdersService', () => {
       {
         service: { _id: new Types.ObjectId(), name: 'AC Maintenance' },
         quantity: 1,
-        unitValue: 100.00,
-      },
+        unitValue: 100.0
+      }
     ],
     products: [
       {
         product: { _id: new Types.ObjectId(), name: 'Filter' },
         quantity: 2,
-        unitValue: 50.00,
-      },
+        unitValue: 50.0
+      }
     ],
     equipments: [
       {
@@ -98,13 +103,20 @@ describe('ServiceOrdersService', () => {
         type: 'Split',
         subType: 'Wall',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     description: 'Test quote description',
     discount: 10,
+    otherDiscounts: [
+      {
+        description: 'Loyalty Discount',
+        amount: 10
+      }
+    ],
+    subtotal: 200.0,
     status: 'sent',
-    totalValue: 200.00,
+    totalValue: 200.0
   };
 
   const mockServiceOrderArray = [mockServiceOrder];
@@ -115,25 +127,27 @@ describe('ServiceOrdersService', () => {
       save: jest.fn().mockResolvedValue({
         ...mockServiceOrder,
         ...data,
-        toObject: jest.fn().mockReturnValue({ ...mockServiceOrder, ...data }),
+        toObject: jest.fn().mockReturnValue({ ...mockServiceOrder, ...data })
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
     mockServiceOrderModel.find = jest.fn();
-    mockServiceOrderModel.findOne = jest.fn();
+    mockServiceOrderModel.findOne = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue(null)
+    });
     mockServiceOrderModel.findOneAndUpdate = jest.fn();
     mockServiceOrderModel.findOneAndDelete = jest.fn();
     mockServiceOrderModel.countDocuments = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(1),
+      exec: jest.fn().mockResolvedValue(1)
     });
     mockServiceOrderModel.deleteMany = jest.fn();
     mockServiceOrderModel.aggregate = jest.fn();
 
     const mockQuotesService = {
       findByIdAndAccount: jest.fn(),
-      updateByAccount: jest.fn(),
+      updateByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -141,13 +155,13 @@ describe('ServiceOrdersService', () => {
         ServiceOrdersService,
         {
           provide: getModelToken(ServiceOrder.name),
-          useValue: mockServiceOrderModel,
+          useValue: mockServiceOrderModel
         },
         {
           provide: QuotesService,
-          useValue: mockQuotesService,
-        },
-      ],
+          useValue: mockQuotesService
+        }
+      ]
     }).compile();
 
     service = module.get<ServiceOrdersService>(ServiceOrdersService);
@@ -166,11 +180,11 @@ describe('ServiceOrdersService', () => {
         customer: mockCustomerId,
         account: mockAccountId,
         items: mockServiceOrder.items,
-        subtotal: 200.00,
-        totalValue: 180.00,
+        subtotal: 200.0,
+        totalValue: 180.0,
         issuedAt: new Date('2024-01-01'),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(serviceOrderData);
@@ -180,9 +194,9 @@ describe('ServiceOrdersService', () => {
         quote: mockQuoteId,
         customer: mockCustomerId,
         account: mockAccountId,
-        subtotal: 200.00,
-        totalValue: 180.00,
-        orderNumber: expect.stringMatching(/^SO-\d{4}-[A-Z0-9]{8}$/),
+        subtotal: 200.0,
+        totalValue: 180.0,
+        orderNumber: expect.stringMatching(/^SO-\d{4}-[A-Z0-9]{8}$/)
       });
     });
 
@@ -193,11 +207,11 @@ describe('ServiceOrdersService', () => {
         customer: mockCustomerId,
         account: mockAccountId,
         items: mockServiceOrder.items,
-        subtotal: 200.00,
-        totalValue: 180.00,
+        subtotal: 200.0,
+        totalValue: 180.0,
         issuedAt: new Date('2024-01-01'),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(serviceOrderData);
@@ -211,7 +225,7 @@ describe('ServiceOrdersService', () => {
     it('should create service order from quote successfully', async () => {
       quotesService.findByIdAndAccount.mockResolvedValue(mockQuote);
 
-      const result = await service.createFromQuote(mockQuoteId.toString(), 'high', mockAccountId);
+      const result = await service.createFromQuote(mockQuoteId.toString(), 'high', mockAccountId, mockUserId);
 
       expect(quotesService.findByIdAndAccount).toHaveBeenCalledWith(mockQuoteId.toString(), mockAccountId);
       expect(quotesService.updateByAccount).toHaveBeenCalledWith(mockQuoteId.toString(), { status: 'accepted' }, mockAccountId);
@@ -222,21 +236,23 @@ describe('ServiceOrdersService', () => {
         status: 'pending',
         priority: 'high',
         subtotal: 200,
-        totalValue: 180,
+        totalValue: 170
       });
     });
 
     it('should throw error when quote not found', async () => {
       quotesService.findByIdAndAccount.mockResolvedValue(null);
 
-      await expect(service.createFromQuote('invalid-id', 'normal', mockAccountId)).rejects.toThrow('Quote not found');
+      await expect(service.createFromQuote('invalid-id', 'normal', mockAccountId, mockUserId)).rejects.toThrow('Quote not found');
     });
 
-    it('should throw error when quote status is not sent or draft', async () => {
-      const invalidQuote = { ...mockQuote, status: 'accepted' };
+    it('should throw error when quote status is not sent, draft, or accepted', async () => {
+      const invalidQuote = { ...mockQuote, status: 'rejected' };
       quotesService.findByIdAndAccount.mockResolvedValue(invalidQuote);
 
-      await expect(service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId)).rejects.toThrow('Quote must be in sent or draft status to create service order');
+      await expect(service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId, mockUserId)).rejects.toThrow(
+        'Quote must be in sent, draft, or accepted status to create service order'
+      );
     });
   });
 
@@ -245,7 +261,7 @@ describe('ServiceOrdersService', () => {
       const mockAggregateResult = mockServiceOrderArray;
 
       serviceOrderModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', 'pending');
@@ -256,7 +272,7 @@ describe('ServiceOrdersService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -266,10 +282,10 @@ describe('ServiceOrdersService', () => {
 
       serviceOrderModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregateResult),
+          exec: jest.fn().mockResolvedValue(mockAggregateResult)
         })
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'test', '');
@@ -280,7 +296,7 @@ describe('ServiceOrdersService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -288,7 +304,7 @@ describe('ServiceOrdersService', () => {
       const mockAggregateResult = mockServiceOrderArray;
 
       serviceOrderModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', '', mockCustomerId.toString());
@@ -299,7 +315,7 @@ describe('ServiceOrdersService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -307,7 +323,7 @@ describe('ServiceOrdersService', () => {
       const mockAggregateResult = mockServiceOrderArray;
 
       serviceOrderModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
 
       const result = await service.findByAccount(mockAccountId, 2, 5, '', '');
@@ -317,7 +333,7 @@ describe('ServiceOrdersService', () => {
         total: 1,
         page: 2,
         limit: 5,
-        totalPages: 1,
+        totalPages: 1
       });
     });
   });
@@ -326,14 +342,14 @@ describe('ServiceOrdersService', () => {
     it('should return a service order by id and account', async () => {
       serviceOrderModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockServiceOrder),
+        exec: jest.fn().mockResolvedValue(mockServiceOrder)
       });
 
       const result = await service.findByIdAndAccount(mockServiceOrder._id.toString(), mockAccountId);
 
       expect(serviceOrderModel.findOne).toHaveBeenCalledWith({
         _id: mockServiceOrder._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockServiceOrder);
     });
@@ -341,7 +357,7 @@ describe('ServiceOrdersService', () => {
     it('should return null when service order not found', async () => {
       serviceOrderModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.findByIdAndAccount('invalid-id', mockAccountId);
@@ -355,34 +371,32 @@ describe('ServiceOrdersService', () => {
       const updateData = {
         status: 'in_progress',
         notes: 'Updated notes',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       serviceOrderModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue({
           ...mockServiceOrder,
-          ...updateData,
-        }),
+          ...updateData
+        })
       });
 
       const result = await service.updateByAccount(mockServiceOrder._id.toString(), updateData, mockAccountId);
 
-      expect(serviceOrderModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockServiceOrder._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(serviceOrderModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockServiceOrder._id.toString(), account: mockAccountId }, updateData, {
+        new: true
+      });
       expect(result).toMatchObject({
         ...mockServiceOrder,
-        ...updateData,
+        ...updateData
       });
     });
 
     it('should return null when service order not found', async () => {
       serviceOrderModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.updateByAccount('invalid-id', { status: 'completed' }, mockAccountId);
@@ -394,21 +408,21 @@ describe('ServiceOrdersService', () => {
   describe('deleteByAccount', () => {
     it('should delete a service order successfully', async () => {
       serviceOrderModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockServiceOrder),
+        exec: jest.fn().mockResolvedValue(mockServiceOrder)
       });
 
       const result = await service.deleteByAccount(mockServiceOrder._id.toString(), mockAccountId);
 
       expect(serviceOrderModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockServiceOrder._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockServiceOrder);
     });
 
     it('should return null when service order not found', async () => {
       serviceOrderModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.deleteByAccount('invalid-id', mockAccountId);
@@ -421,7 +435,7 @@ describe('ServiceOrdersService', () => {
     it('should delete all service orders for an account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
       serviceOrderModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockDeleteResult),
+        exec: jest.fn().mockResolvedValue(mockDeleteResult)
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);
@@ -437,7 +451,7 @@ describe('ServiceOrdersService', () => {
         populate: jest.fn().mockReturnThis(),
         select: jest.fn().mockReturnThis(),
         sort: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockServiceOrderArray),
+        exec: jest.fn().mockResolvedValue(mockServiceOrderArray)
       });
 
       const result = await service.findByCustomerAndAccount(mockCustomerId.toString(), mockAccountId);
@@ -445,7 +459,7 @@ describe('ServiceOrdersService', () => {
       expect(serviceOrderModel.find).toHaveBeenCalledWith({
         customer: new Types.ObjectId(mockCustomerId.toString()),
         account: mockAccountId,
-        status: { $in: ['pending', 'scheduled', 'in_progress'] },
+        status: { $in: ['pending', 'scheduled', 'in_progress'] }
       });
       expect(result).toEqual(mockServiceOrderArray);
     });

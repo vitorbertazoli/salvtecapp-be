@@ -9,7 +9,6 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req) => {
-          console.log('Refresh strategy extractor - Cookies:', req.cookies);
           return req?.cookies?.refresh_token;
         }
       ]),
@@ -19,10 +18,8 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
   }
 
   async validate(payload: any) {
-    console.log('Refresh Strategy validate called with payload:', payload);
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
-      console.log('User not found for refresh token ID:', payload.sub);
       throw new UnauthorizedException('User not found');
     }
 
@@ -39,7 +36,6 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
       throw new UnauthorizedException('Account is not active. Please contact support.');
     }
 
-    console.log('User found for refresh token:', user.email);
     return { id: user.id, email: user.email };
   }
 }

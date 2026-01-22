@@ -17,7 +17,7 @@ describe('FollowUpsService', () => {
   const mockCustomer = {
     _id: mockCustomerId,
     name: 'John Doe',
-    email: 'john@example.com',
+    email: 'john@example.com'
   };
 
   const mockFollowUp = {
@@ -28,7 +28,7 @@ describe('FollowUpsService', () => {
     status: 'pending',
     notes: ['Initial note'],
     createdBy: mockUserId,
-    updatedBy: mockUserId,
+    updatedBy: mockUserId
   };
 
   const mockFollowUpArray = [mockFollowUp];
@@ -38,9 +38,9 @@ describe('FollowUpsService', () => {
       ...data,
       save: jest.fn().mockResolvedValue({
         ...mockFollowUp,
-        toObject: jest.fn().mockReturnValue(mockFollowUp),
+        toObject: jest.fn().mockReturnValue(mockFollowUp)
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -49,13 +49,13 @@ describe('FollowUpsService', () => {
     mockFollowUpModel.findOneAndUpdate = jest.fn();
     mockFollowUpModel.findOneAndDelete = jest.fn();
     mockFollowUpModel.countDocuments = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(1),
+      exec: jest.fn().mockResolvedValue(1)
     });
     mockFollowUpModel.deleteMany = jest.fn();
     mockFollowUpModel.aggregate = jest.fn();
 
     const mockCustomersService = {
-      findByIdAndAccount: jest.fn(),
+      findByIdAndAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,13 +63,13 @@ describe('FollowUpsService', () => {
         FollowUpsService,
         {
           provide: getModelToken(FollowUp.name),
-          useValue: mockFollowUpModel,
+          useValue: mockFollowUpModel
         },
         {
           provide: CustomersService,
-          useValue: mockCustomersService,
-        },
-      ],
+          useValue: mockCustomersService
+        }
+      ]
     }).compile();
 
     service = module.get<FollowUpsService>(FollowUpsService);
@@ -89,7 +89,7 @@ describe('FollowUpsService', () => {
         startDate: new Date('2024-01-15'),
         notes: ['Initial note'],
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(mockCustomer);
@@ -106,7 +106,7 @@ describe('FollowUpsService', () => {
         account: mockAccountId,
         startDate: new Date('2024-01-15'),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(null);
@@ -121,7 +121,7 @@ describe('FollowUpsService', () => {
         startDate: new Date('2024-01-15'),
         notes: 'Single note' as any,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(mockCustomer);
@@ -131,7 +131,7 @@ describe('FollowUpsService', () => {
       // The notes should be converted to array in the mock
       expect(followUpModel).toHaveBeenCalledWith(
         expect.objectContaining({
-          notes: ['Single note'],
+          notes: ['Single note']
         })
       );
     });
@@ -143,7 +143,7 @@ describe('FollowUpsService', () => {
         startDate: new Date('2024-01-15'),
         notes: 123 as any,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(mockCustomer);
@@ -152,7 +152,7 @@ describe('FollowUpsService', () => {
 
       expect(followUpModel).toHaveBeenCalledWith(
         expect.objectContaining({
-          notes: [],
+          notes: []
         })
       );
     });
@@ -161,7 +161,7 @@ describe('FollowUpsService', () => {
   describe('findAll', () => {
     it('should return all follow-ups', async () => {
       const mockQuery = {
-        exec: jest.fn().mockResolvedValue(mockFollowUpArray),
+        exec: jest.fn().mockResolvedValue(mockFollowUpArray)
       };
 
       followUpModel.find.mockReturnValue(mockQuery);
@@ -180,13 +180,22 @@ describe('FollowUpsService', () => {
 
       followUpModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregateResult),
+          exec: jest.fn().mockResolvedValue(mockAggregateResult)
         })
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         });
 
-      const result = await service.findByAccount(mockAccountId, 1, 10, 'search', 'pending', mockCustomerId.toString(), new Date('2024-01-01'), new Date('2024-01-31'));
+      const result = await service.findByAccount(
+        mockAccountId,
+        1,
+        10,
+        'search',
+        'pending',
+        mockCustomerId.toString(),
+        new Date('2024-01-01'),
+        new Date('2024-01-31')
+      );
 
       expect(followUpModel.aggregate).toHaveBeenCalledTimes(2);
       expect(result).toEqual({
@@ -194,7 +203,7 @@ describe('FollowUpsService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -202,24 +211,24 @@ describe('FollowUpsService', () => {
       const mockAggregateResult = [mockFollowUp];
 
       followUpModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
       followUpModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(1),
+        exec: jest.fn().mockResolvedValue(1)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', 'pending');
 
       expect(followUpModel.countDocuments).toHaveBeenCalledWith({
         account: mockAccountId,
-        status: 'pending',
+        status: 'pending'
       });
       expect(result).toEqual({
         followUps: mockAggregateResult,
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -227,17 +236,17 @@ describe('FollowUpsService', () => {
       const mockAggregateResult = [mockFollowUp];
 
       followUpModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
       followUpModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(1),
+        exec: jest.fn().mockResolvedValue(1)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', undefined, mockCustomerId.toString());
 
       expect(followUpModel.countDocuments).toHaveBeenCalledWith({
         account: mockAccountId,
-        customer: mockCustomerId,
+        customer: mockCustomerId
       });
       expect(result.followUps).toEqual(mockAggregateResult);
     });
@@ -246,10 +255,10 @@ describe('FollowUpsService', () => {
       const mockAggregateResult = [mockFollowUp];
 
       followUpModel.aggregate.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockAggregateResult),
+        exec: jest.fn().mockResolvedValue(mockAggregateResult)
       });
       followUpModel.countDocuments.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(1),
+        exec: jest.fn().mockResolvedValue(1)
       });
 
       const startDate = new Date('2024-01-01');
@@ -261,8 +270,8 @@ describe('FollowUpsService', () => {
         account: mockAccountId,
         startDate: {
           $gte: startDate,
-          $lte: endDate,
-        },
+          $lte: endDate
+        }
       });
       expect(result.followUps).toEqual(mockAggregateResult);
     });
@@ -272,7 +281,7 @@ describe('FollowUpsService', () => {
     it('should return follow-up by id and account', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockFollowUp),
+        exec: jest.fn().mockResolvedValue(mockFollowUp)
       };
 
       followUpModel.findOne.mockReturnValue(mockQuery);
@@ -281,7 +290,7 @@ describe('FollowUpsService', () => {
 
       expect(followUpModel.findOne).toHaveBeenCalledWith({
         _id: mockFollowUp._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockFollowUp);
     });
@@ -289,7 +298,7 @@ describe('FollowUpsService', () => {
     it('should return null when follow-up not found', async () => {
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       };
 
       followUpModel.findOne.mockReturnValue(mockQuery);
@@ -304,47 +313,43 @@ describe('FollowUpsService', () => {
     it('should update follow-up successfully', async () => {
       const updateData = {
         status: 'completed',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockFollowUp),
+        exec: jest.fn().mockResolvedValue(mockFollowUp)
       };
 
       followUpModel.findOneAndUpdate.mockReturnValue(mockQuery);
 
       const result = await service.updateByAccount(mockFollowUp._id.toString(), updateData, mockAccountId);
 
-      expect(followUpModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockFollowUp._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(followUpModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockFollowUp._id.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(mockFollowUp);
     });
 
     it('should append notes to existing notes array', async () => {
       const updateData = {
         notes: ['New note'],
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const existingFollowUp = {
         ...mockFollowUp,
-        notes: ['Existing note'],
+        notes: ['Existing note']
       };
 
       const mockExistingQuery = {
-        exec: jest.fn().mockResolvedValue(existingFollowUp),
+        exec: jest.fn().mockResolvedValue(existingFollowUp)
       };
 
       const mockUpdateQuery = {
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue({
           ...existingFollowUp,
-          notes: ['Existing note', 'New note'],
-        }),
+          notes: ['Existing note', 'New note']
+        })
       };
 
       followUpModel.findOne.mockReturnValue(mockExistingQuery);
@@ -356,7 +361,7 @@ describe('FollowUpsService', () => {
         { _id: mockFollowUp._id.toString(), account: mockAccountId },
         {
           ...updateData,
-          notes: ['Existing note', 'New note'],
+          notes: ['Existing note', 'New note']
         },
         { new: true }
       );
@@ -366,12 +371,12 @@ describe('FollowUpsService', () => {
     it('should return null when follow-up not found', async () => {
       const updateData = {
         status: 'completed',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const mockQuery = {
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       };
 
       followUpModel.findOneAndUpdate.mockReturnValue(mockQuery);
@@ -385,21 +390,21 @@ describe('FollowUpsService', () => {
   describe('deleteByAccount', () => {
     it('should delete follow-up successfully', async () => {
       followUpModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockFollowUp),
+        exec: jest.fn().mockResolvedValue(mockFollowUp)
       });
 
       const result = await service.deleteByAccount(mockFollowUp._id.toString(), mockAccountId);
 
       expect(followUpModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockFollowUp._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockFollowUp);
     });
 
     it('should return null when follow-up not found', async () => {
       followUpModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.deleteByAccount('nonexistent-id', mockAccountId);
@@ -412,7 +417,7 @@ describe('FollowUpsService', () => {
     it('should delete all follow-ups for account', async () => {
       const deleteResult = { deletedCount: 5 };
       followUpModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(deleteResult),
+        exec: jest.fn().mockResolvedValue(deleteResult)
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);

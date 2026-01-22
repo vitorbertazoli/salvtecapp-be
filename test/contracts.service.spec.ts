@@ -19,7 +19,7 @@ describe('ContractsService', () => {
     _id: mockCustomerId,
     name: 'Test Customer',
     email: 'customer@example.com',
-    phoneNumber: '1234567890',
+    phoneNumber: '1234567890'
   };
 
   const mockContract = {
@@ -35,14 +35,14 @@ describe('ContractsService', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockContractDocument = {
     ...mockContract,
     toObject: jest.fn().mockReturnValue(mockContract),
     save: jest.fn(),
-    populate: jest.fn(),
+    populate: jest.fn()
   };
 
   beforeEach(async () => {
@@ -50,7 +50,7 @@ describe('ContractsService', () => {
       ...mockContract,
       toObject: jest.fn().mockReturnValue(mockContract),
       save: jest.fn(),
-      populate: jest.fn(),
+      populate: jest.fn()
     };
 
     const mockContractModel = jest.fn().mockImplementation((data) => ({
@@ -59,8 +59,8 @@ describe('ContractsService', () => {
       save: jest.fn().mockResolvedValue({
         ...data,
         ...mockContract,
-        toObject: jest.fn().mockReturnValue({ ...data, ...mockContract }),
-      }),
+        toObject: jest.fn().mockReturnValue({ ...data, ...mockContract })
+      })
     }));
 
     // Add static methods
@@ -73,7 +73,7 @@ describe('ContractsService', () => {
     mockContractModel.aggregate = jest.fn();
 
     const mockCustomersService = {
-      findByIdAndAccount: jest.fn(),
+      findByIdAndAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -81,13 +81,13 @@ describe('ContractsService', () => {
         ContractsService,
         {
           provide: getModelToken(Contract.name),
-          useValue: mockContractModel,
+          useValue: mockContractModel
         },
         {
           provide: CustomersService,
-          useValue: mockCustomersService,
-        },
-      ],
+          useValue: mockCustomersService
+        }
+      ]
     }).compile();
 
     service = module.get<ContractsService>(ContractsService);
@@ -111,7 +111,7 @@ describe('ContractsService', () => {
         customer: mockCustomerId,
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(mockCustomer as any);
@@ -127,7 +127,7 @@ describe('ContractsService', () => {
     it('should throw error when customer not found', async () => {
       const contractData = {
         customer: mockCustomerId,
-        account: mockAccountId,
+        account: mockAccountId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(null);
@@ -140,7 +140,7 @@ describe('ContractsService', () => {
     it('should return all contracts', async () => {
       const mockContracts = [mockContract];
       contractModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockContracts),
+        exec: jest.fn().mockResolvedValue(mockContracts)
       } as any);
 
       const result = await service.findAll();
@@ -157,10 +157,10 @@ describe('ContractsService', () => {
 
       contractModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregatedContracts),
+          exec: jest.fn().mockResolvedValue(mockAggregatedContracts)
         } as any)
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         } as any);
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'test', 'active');
@@ -171,7 +171,7 @@ describe('ContractsService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -181,10 +181,10 @@ describe('ContractsService', () => {
 
       contractModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregatedContracts),
+          exec: jest.fn().mockResolvedValue(mockAggregatedContracts)
         } as any)
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         } as any);
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', undefined);
@@ -195,7 +195,7 @@ describe('ContractsService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -205,10 +205,10 @@ describe('ContractsService', () => {
 
       contractModel.aggregate
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockAggregatedContracts),
+          exec: jest.fn().mockResolvedValue(mockAggregatedContracts)
         } as any)
         .mockReturnValueOnce({
-          exec: jest.fn().mockResolvedValue(mockCountResult),
+          exec: jest.fn().mockResolvedValue(mockCountResult)
         } as any);
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '', undefined);
@@ -218,7 +218,7 @@ describe('ContractsService', () => {
         total: 0,
         page: 1,
         limit: 10,
-        totalPages: 0,
+        totalPages: 0
       });
     });
   });
@@ -226,7 +226,7 @@ describe('ContractsService', () => {
   describe('findOne', () => {
     it('should return a contract by id', async () => {
       contractModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockContract),
+        exec: jest.fn().mockResolvedValue(mockContract)
       } as any);
 
       const result = await service.findOne(mockContractId);
@@ -237,7 +237,7 @@ describe('ContractsService', () => {
 
     it('should return null when contract not found', async () => {
       contractModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findOne(mockContractId);
@@ -251,12 +251,12 @@ describe('ContractsService', () => {
       const populatedContract = {
         ...mockContract,
         account: { name: 'Test Account', id: mockAccountId },
-        customer: { name: 'Test Customer', email: 'customer@example.com', phoneNumber: '1234567890' },
+        customer: { name: 'Test Customer', email: 'customer@example.com', phoneNumber: '1234567890' }
       };
 
       contractModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(populatedContract),
+        exec: jest.fn().mockResolvedValue(populatedContract)
       } as any);
 
       const result = await service.findByIdAndAccount(mockContractId, mockAccountId);
@@ -268,7 +268,7 @@ describe('ContractsService', () => {
     it('should return null when contract not found', async () => {
       contractModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.findByIdAndAccount(mockContractId, mockAccountId);
@@ -282,7 +282,7 @@ describe('ContractsService', () => {
       const updateData = {
         terms: 'Updated terms',
         customer: mockCustomerId.toString(),
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const updatedContract = { ...mockContract, ...updateData };
@@ -290,7 +290,7 @@ describe('ContractsService', () => {
       customersService.findByIdAndAccount.mockResolvedValue(mockCustomer as any);
       contractModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(updatedContract),
+        exec: jest.fn().mockResolvedValue(updatedContract)
       } as any);
 
       const result = await service.updateByAccount(mockContractId, updateData, mockAccountId);
@@ -307,14 +307,14 @@ describe('ContractsService', () => {
     it('should update contract without customer change', async () => {
       const updateData = {
         terms: 'Updated terms',
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const updatedContract = { ...mockContract, ...updateData };
 
       contractModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(updatedContract),
+        exec: jest.fn().mockResolvedValue(updatedContract)
       } as any);
 
       const result = await service.updateByAccount(mockContractId, updateData, mockAccountId);
@@ -326,7 +326,7 @@ describe('ContractsService', () => {
     it('should throw error when customer not found', async () => {
       const updateData = {
         customer: mockCustomerId.toString(),
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       customersService.findByIdAndAccount.mockResolvedValue(null);
@@ -338,7 +338,7 @@ describe('ContractsService', () => {
   describe('deleteByAccount', () => {
     it('should delete contract successfully', async () => {
       contractModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockContract),
+        exec: jest.fn().mockResolvedValue(mockContract)
       } as any);
 
       const result = await service.deleteByAccount(mockContractId, mockAccountId);
@@ -349,7 +349,7 @@ describe('ContractsService', () => {
 
     it('should return null when contract not found', async () => {
       contractModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       } as any);
 
       const result = await service.deleteByAccount(mockContractId, mockAccountId);
@@ -362,7 +362,7 @@ describe('ContractsService', () => {
     it('should delete all contracts for account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
       contractModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockDeleteResult),
+        exec: jest.fn().mockResolvedValue(mockDeleteResult)
       } as any);
 
       const result = await service.deleteAllByAccount(mockAccountId);

@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QuotesController } from '../src/quotes/quotes.controller';
-import { QuotesService } from '../src/quotes/quotes.service';
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
 import { CreateQuoteDto } from '../src/quotes/dto/create-quote.dto';
 import { UpdateQuoteDto } from '../src/quotes/dto/update-quote.dto';
+import { QuotesController } from '../src/quotes/quotes.controller';
+import { QuotesService } from '../src/quotes/quotes.service';
 
 describe('QuotesController', () => {
   let controller: QuotesController;
@@ -29,31 +29,31 @@ describe('QuotesController', () => {
         type: 'Split',
         subType: 'Wall',
         maker: 'Test Maker',
-        model: 'Test Model',
-      },
+        model: 'Test Model'
+      }
     ],
     services: [
       {
         service: mockServiceId,
         quantity: 1,
-        unitValue: 100.00,
-      },
+        unitValue: 100.0
+      }
     ],
     products: [
       {
         product: mockProductId,
         quantity: 2,
-        unitValue: 50.00,
-      },
+        unitValue: 50.0
+      }
     ],
-    totalValue: 200.00,
+    totalValue: 200.0,
     description: 'Test quote description',
     discount: 10,
     otherDiscounts: [
       {
         description: 'Special discount',
-        amount: 20.00,
-      },
+        amount: 20.0
+      }
     ],
     status: 'draft',
     validUntil: new Date('2024-12-31'),
@@ -61,7 +61,7 @@ describe('QuotesController', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockQuoteArray = [mockQuote];
@@ -72,7 +72,7 @@ describe('QuotesController', () => {
     findByIdAndAccount: jest.fn(),
     updateByAccount: jest.fn(),
     sendQuote: jest.fn(),
-    deleteByAccount: jest.fn(),
+    deleteByAccount: jest.fn()
   };
 
   beforeEach(async () => {
@@ -81,9 +81,9 @@ describe('QuotesController', () => {
       providers: [
         {
           provide: QuotesService,
-          useValue: mockQuotesService,
-        },
-      ],
+          useValue: mockQuotesService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })
@@ -107,19 +107,19 @@ describe('QuotesController', () => {
           {
             service: mockServiceId.toString(),
             quantity: 1,
-            unitValue: 100.00,
-          },
+            unitValue: 100.0
+          }
         ],
         products: [
           {
             product: mockProductId.toString(),
             quantity: 2,
-            unitValue: 50.00,
-          },
+            unitValue: 50.0
+          }
         ],
-        totalValue: 200.00,
+        totalValue: 200.0,
         validUntil: '2024-12-31',
-        issuedAt: '2024-01-01',
+        issuedAt: '2024-01-01'
       };
 
       const expectedQuoteData = {
@@ -129,17 +129,17 @@ describe('QuotesController', () => {
         services: [
           {
             ...createQuoteDto.services![0],
-            service: new Types.ObjectId(mockServiceId.toString()),
-          },
+            service: new Types.ObjectId(mockServiceId.toString())
+          }
         ],
         products: [
           {
             ...createQuoteDto.products![0],
-            product: new Types.ObjectId(mockProductId.toString()),
-          },
+            product: new Types.ObjectId(mockProductId.toString())
+          }
         ],
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockQuotesService.create.mockResolvedValue(mockQuote);
@@ -153,9 +153,9 @@ describe('QuotesController', () => {
     it('should create a quote with minimal data', async () => {
       const createQuoteDto: CreateQuoteDto = {
         customer: mockCustomerId.toString(),
-        totalValue: 100.00,
+        totalValue: 100.0,
         validUntil: '2024-12-31',
-        issuedAt: '2024-01-01',
+        issuedAt: '2024-01-01'
       };
 
       const expectedQuoteData = {
@@ -163,7 +163,7 @@ describe('QuotesController', () => {
         account: mockAccountId,
         customer: new Types.ObjectId(mockCustomerId.toString()),
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockQuotesService.create.mockResolvedValue(mockQuote);
@@ -182,7 +182,7 @@ describe('QuotesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockQuotesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -198,7 +198,7 @@ describe('QuotesController', () => {
         total: 1,
         page: 2,
         limit: 20,
-        totalPages: 1,
+        totalPages: 1
       };
       mockQuotesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -214,7 +214,7 @@ describe('QuotesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockQuotesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -230,7 +230,7 @@ describe('QuotesController', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
       mockQuotesService.findByAccount.mockResolvedValue(mockResult);
 
@@ -256,50 +256,50 @@ describe('QuotesController', () => {
     it('should update a quote', async () => {
       const updateQuoteDto: UpdateQuoteDto = {
         description: 'Updated description',
-        totalValue: 250.00,
+        totalValue: 250.0
       };
 
       const expectedQuoteData = {
         ...updateQuoteDto,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockQuotesService.updateByAccount.mockResolvedValue({
         ...mockQuote,
-        ...updateQuoteDto,
+        ...updateQuoteDto
       });
 
       const result = await controller.update(mockQuote._id.toString(), updateQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuotesService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId);
+      expect(mockQuotesService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, mockUserId);
       expect(result).toMatchObject({
         ...mockQuote,
-        ...updateQuoteDto,
+        ...updateQuoteDto
       });
     });
 
     it('should update a quote with customer change', async () => {
       const updateQuoteDto: UpdateQuoteDto = {
-        customer: mockCustomerId.toString(),
+        customer: mockCustomerId.toString()
       };
 
       const expectedQuoteData = {
         ...updateQuoteDto,
         customer: new Types.ObjectId(mockCustomerId.toString()),
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       mockQuotesService.updateByAccount.mockResolvedValue({
         ...mockQuote,
-        customer: mockCustomerId,
+        customer: mockCustomerId
       });
 
       const result = await controller.update(mockQuote._id.toString(), updateQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuotesService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId);
+      expect(mockQuotesService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, mockUserId);
       expect(result).toMatchObject({
         ...mockQuote,
-        customer: mockCustomerId,
+        customer: mockCustomerId
       });
     });
   });

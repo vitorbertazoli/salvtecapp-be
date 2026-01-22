@@ -20,7 +20,7 @@ describe('AccountsController', () => {
     _id: mockAccountId,
     name: 'Test Account',
     email: 'test@example.com',
-    logoUrl: 'https://example.com/logo.png',
+    logoUrl: 'https://example.com/logo.png'
   };
 
   const mockFile = {
@@ -32,13 +32,13 @@ describe('AccountsController', () => {
     destination: './uploads/logos',
     filename: '1234567890-logo.png',
     path: './uploads/logos/1234567890-logo.png',
-    buffer: Buffer.from('fake-image-data'),
+    buffer: Buffer.from('fake-image-data')
   };
 
   beforeEach(async () => {
     const mockAccountsService = {
       findOne: jest.fn(),
-      update: jest.fn(),
+      update: jest.fn()
     };
 
     const mockUsersService = {
@@ -58,21 +58,21 @@ describe('AccountsController', () => {
       providers: [
         {
           provide: AccountsService,
-          useValue: mockAccountsService,
+          useValue: mockAccountsService
         },
         {
           provide: UsersService,
-          useValue: mockUsersService,
+          useValue: mockUsersService
         },
         {
           provide: RolesService,
-          useValue: mockRolesService,
+          useValue: mockRolesService
         },
         {
           provide: EmailService,
-          useValue: mockEmailService,
-        },
-      ],
+          useValue: mockEmailService
+        }
+      ]
     }).compile();
 
     controller = module.get<AccountsController>(AccountsController);
@@ -115,7 +115,7 @@ describe('AccountsController', () => {
     it('should update account successfully when user has access', async () => {
       const accountId = mockAccountId.toString();
       const updateData: UpdateAccountDto = {
-        name: 'Updated Account Name',
+        name: 'Updated Account Name'
       };
 
       const updatedAccount = { ...mockAccount, ...updateData };
@@ -131,7 +131,7 @@ describe('AccountsController', () => {
       const accountId = 'different-account-id';
       const differentAccountId = new Types.ObjectId();
       const updateData: UpdateAccountDto = {
-        name: 'Updated Account Name',
+        name: 'Updated Account Name'
       };
 
       const result = await controller.update(accountId, updateData, differentAccountId);
@@ -145,7 +145,7 @@ describe('AccountsController', () => {
     it('should handle partial updates', async () => {
       const accountId = mockAccountId.toString();
       const updateData: UpdateAccountDto = {
-        name: 'Only Name Updated',
+        name: 'Only Name Updated'
       };
 
       const updatedAccount = { ...mockAccount, name: 'Only Name Updated' };
@@ -192,7 +192,7 @@ describe('AccountsController', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
         expect((error as HttpException).getStatus()).toBe(400);
-        expect((error as any).message).toBe('No file uploaded');
+        expect(error.message).toBe('No file uploaded');
         expect(accountsService.update).not.toHaveBeenCalled();
       }
     });
@@ -203,7 +203,7 @@ describe('AccountsController', () => {
         ...mockFile,
         originalname: 'logo.jpeg',
         mimetype: 'image/jpeg',
-        filename: '1234567890-logo.jpeg',
+        filename: '1234567890-logo.jpeg'
       };
       const expectedLogoUrl = `/uploads/logos/${jpegFile.filename}`;
 
@@ -220,7 +220,7 @@ describe('AccountsController', () => {
       const complexFile = {
         ...mockFile,
         originalname: 'my-complex-logo-name with spaces.png',
-        filename: '1234567890-my-complex-logo-name with spaces.png',
+        filename: '1234567890-my-complex-logo-name with spaces.png'
       };
       const expectedLogoUrl = `/uploads/logos/${complexFile.filename}`;
 

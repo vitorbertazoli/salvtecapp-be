@@ -13,7 +13,11 @@ export class PaymentsController {
 
   @Post()
   @Roles('ADMIN')
-  async createFromServiceOrder(@GetAccountId() accountId: Types.ObjectId, @Query('serviceOrderId') serviceOrderId: string, @GetUser("id") userId: string): Promise<PaymentOrder> {
+  async createFromServiceOrder(
+    @GetAccountId() accountId: Types.ObjectId,
+    @Query('serviceOrderId') serviceOrderId: string,
+    @GetUser('id') userId: string
+  ): Promise<PaymentOrder> {
     return this.paymentsService.createFromServiceOrder(accountId, serviceOrderId, new Types.ObjectId(userId));
   }
 

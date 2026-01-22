@@ -17,7 +17,7 @@ describe('RolesController', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockRoleArray = [
@@ -29,12 +29,12 @@ describe('RolesController', () => {
       createdBy: mockUserId,
       updatedBy: mockUserId,
       createdAt: new Date(),
-      updatedAt: new Date(),
-    },
+      updatedAt: new Date()
+    }
   ];
 
   const mockRolesService = {
-    findAll: jest.fn(),
+    findAll: jest.fn()
   };
 
   beforeEach(async () => {
@@ -43,9 +43,9 @@ describe('RolesController', () => {
       providers: [
         {
           provide: RolesService,
-          useValue: mockRolesService,
-        },
-      ],
+          useValue: mockRolesService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })

@@ -29,7 +29,7 @@ describe('ContractsController', () => {
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockPaginatedResult = {
@@ -37,7 +37,7 @@ describe('ContractsController', () => {
     total: 1,
     page: 1,
     limit: 10,
-    totalPages: 1,
+    totalPages: 1
   };
 
   beforeEach(async () => {
@@ -49,7 +49,7 @@ describe('ContractsController', () => {
       findByIdAndAccount: jest.fn(),
       updateByAccount: jest.fn(),
       deleteByAccount: jest.fn(),
-      deleteAllByAccount: jest.fn(),
+      deleteAllByAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -57,9 +57,9 @@ describe('ContractsController', () => {
       providers: [
         {
           provide: ContractsService,
-          useValue: mockContractsService,
-        },
-      ],
+          useValue: mockContractsService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: () => true })
@@ -84,7 +84,7 @@ describe('ContractsController', () => {
         frequency: 'monthly',
         terms: 'Test contract terms',
         value: 1000,
-        customer: mockCustomerId,
+        customer: mockCustomerId
       };
 
       contractsService.create.mockResolvedValue(mockContract as any);
@@ -96,7 +96,7 @@ describe('ContractsController', () => {
         account: mockAccountId,
         customer: new Types.ObjectId(mockCustomerId),
         createdBy: new Types.ObjectId(mockUserId),
-        updatedBy: new Types.ObjectId(mockUserId),
+        updatedBy: new Types.ObjectId(mockUserId)
       });
       expect(result).toEqual(mockContract);
     });
@@ -157,7 +157,7 @@ describe('ContractsController', () => {
       const updateDto: UpdateContractDto = {
         terms: 'Updated terms',
         value: 1500,
-        customer: mockCustomerId,
+        customer: mockCustomerId
       };
 
       const updatedContract = { ...mockContract, ...updateDto };
@@ -170,7 +170,7 @@ describe('ContractsController', () => {
         {
           ...updateDto,
           customer: new Types.ObjectId(mockCustomerId),
-          updatedBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId)
         },
         mockAccountId
       );
@@ -179,7 +179,7 @@ describe('ContractsController', () => {
 
     it('should update contract without customer change', async () => {
       const updateDto: UpdateContractDto = {
-        terms: 'Updated terms only',
+        terms: 'Updated terms only'
       };
 
       const updatedContract = { ...mockContract, ...updateDto };
@@ -191,7 +191,7 @@ describe('ContractsController', () => {
         mockContractId,
         {
           ...updateDto,
-          updatedBy: new Types.ObjectId(mockUserId),
+          updatedBy: new Types.ObjectId(mockUserId)
         },
         mockAccountId
       );

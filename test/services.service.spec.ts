@@ -15,12 +15,12 @@ describe('ServicesService', () => {
     _id: new Types.ObjectId(),
     name: 'Test Service',
     description: 'A test service',
-    value: 150.00,
+    value: 150.0,
     account: mockAccountId,
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockServiceArray = [mockService];
@@ -37,10 +37,10 @@ describe('ServicesService', () => {
           ...data,
           _id: new Types.ObjectId(),
           createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+          updatedAt: new Date()
+        })
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -49,7 +49,7 @@ describe('ServicesService', () => {
     mockServiceModel.findOneAndUpdate = jest.fn();
     mockServiceModel.findOneAndDelete = jest.fn();
     mockServiceModel.countDocuments = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(1),
+      exec: jest.fn().mockResolvedValue(1)
     });
     mockServiceModel.deleteMany = jest.fn();
 
@@ -58,9 +58,9 @@ describe('ServicesService', () => {
         ServicesService,
         {
           provide: getModelToken(Service.name),
-          useValue: mockServiceModel,
-        },
-      ],
+          useValue: mockServiceModel
+        }
+      ]
     }).compile();
 
     service = module.get<ServicesService>(ServicesService);
@@ -76,22 +76,22 @@ describe('ServicesService', () => {
       const serviceData = {
         name: 'New Service',
         description: 'New service description',
-        value: 200.00,
+        value: 200.0,
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const mockCreatedService = {
         ...serviceData,
         _id: new Types.ObjectId(),
         createdAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       };
 
       serviceModel.mockImplementation((data) => ({
         ...data,
-        save: jest.fn().mockResolvedValue(mockCreatedService),
+        save: jest.fn().mockResolvedValue(mockCreatedService)
       }));
 
       const result = await service.create(serviceData);
@@ -108,8 +108,8 @@ describe('ServicesService', () => {
 
       serviceModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockPopulatedService),
-        }),
+          exec: jest.fn().mockResolvedValue(mockPopulatedService)
+        })
       });
 
       const result = await service.findOne(mockService._id.toString(), mockAccountId);
@@ -124,8 +124,8 @@ describe('ServicesService', () => {
 
       serviceModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockPopulatedService),
-        }),
+          exec: jest.fn().mockResolvedValue(mockPopulatedService)
+        })
       });
 
       const result = await service.findOne(mockService._id.toString());
@@ -137,8 +137,8 @@ describe('ServicesService', () => {
     it('should return null when service not found', async () => {
       serviceModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(null),
-        }),
+          exec: jest.fn().mockResolvedValue(null)
+        })
       });
 
       const result = await service.findOne('nonexistent-id', mockAccountId);
@@ -154,7 +154,7 @@ describe('ServicesService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       serviceModel.find.mockReturnValue({
@@ -162,11 +162,11 @@ describe('ServicesService', () => {
           sort: jest.fn().mockReturnValue({
             skip: jest.fn().mockReturnValue({
               limit: jest.fn().mockReturnValue({
-                exec: jest.fn().mockResolvedValue(mockServiceArray),
-              }),
-            }),
-          }),
-        }),
+                exec: jest.fn().mockResolvedValue(mockServiceArray)
+              })
+            })
+          })
+        })
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '');
@@ -182,15 +182,12 @@ describe('ServicesService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       };
 
       const expectedQuery = {
         account: mockAccountId,
-        $or: [
-          { name: { $regex: searchTerm, $options: 'i' } },
-          { description: { $regex: searchTerm, $options: 'i' } },
-        ],
+        $or: [{ name: { $regex: searchTerm, $options: 'i' } }, { description: { $regex: searchTerm, $options: 'i' } }]
       };
 
       serviceModel.find.mockReturnValue({
@@ -198,11 +195,11 @@ describe('ServicesService', () => {
           sort: jest.fn().mockReturnValue({
             skip: jest.fn().mockReturnValue({
               limit: jest.fn().mockReturnValue({
-                exec: jest.fn().mockResolvedValue(mockServiceArray),
-              }),
-            }),
-          }),
-        }),
+                exec: jest.fn().mockResolvedValue(mockServiceArray)
+              })
+            })
+          })
+        })
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, searchTerm);
@@ -217,7 +214,7 @@ describe('ServicesService', () => {
         total: 1,
         page: 2,
         limit: 20,
-        totalPages: 1,
+        totalPages: 1
       };
 
       serviceModel.find.mockReturnValue({
@@ -225,11 +222,11 @@ describe('ServicesService', () => {
           sort: jest.fn().mockReturnValue({
             skip: jest.fn().mockReturnValue({
               limit: jest.fn().mockReturnValue({
-                exec: jest.fn().mockResolvedValue(mockServiceArray),
-              }),
-            }),
-          }),
-        }),
+                exec: jest.fn().mockResolvedValue(mockServiceArray)
+              })
+            })
+          })
+        })
       });
 
       const result = await service.findByAccount(mockAccountId, 2, 20, '');
@@ -243,29 +240,25 @@ describe('ServicesService', () => {
     it('should update a service successfully', async () => {
       const updateData = {
         name: 'Updated Service',
-        value: 250.00,
-        updatedBy: mockUserId,
+        value: 250.0,
+        updatedBy: mockUserId
       };
 
       const mockUpdatedService = {
         ...mockService,
         ...updateData,
-        account: { name: 'Test Account' },
+        account: { name: 'Test Account' }
       };
 
       serviceModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(mockUpdatedService),
-        }),
+          exec: jest.fn().mockResolvedValue(mockUpdatedService)
+        })
       });
 
       const result = await service.update(mockService._id.toString(), updateData, mockAccountId);
 
-      expect(serviceModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockService._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(serviceModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockService._id.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(mockUpdatedService);
     });
 
@@ -274,8 +267,8 @@ describe('ServicesService', () => {
 
       serviceModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnValue({
-          exec: jest.fn().mockResolvedValue(null),
-        }),
+          exec: jest.fn().mockResolvedValue(null)
+        })
       });
 
       const result = await service.update('nonexistent-id', updateData, mockAccountId);
@@ -287,34 +280,34 @@ describe('ServicesService', () => {
   describe('delete', () => {
     it('should delete a service by id and account', async () => {
       serviceModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockService),
+        exec: jest.fn().mockResolvedValue(mockService)
       });
 
       const result = await service.delete(mockService._id.toString(), mockAccountId);
 
       expect(serviceModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockService._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockService);
     });
 
     it('should delete a service by id without account filter', async () => {
       serviceModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockService),
+        exec: jest.fn().mockResolvedValue(mockService)
       });
 
       const result = await service.delete(mockService._id.toString());
 
       expect(serviceModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: mockService._id.toString(),
+        _id: mockService._id.toString()
       });
       expect(result).toEqual(mockService);
     });
 
     it('should return null when service not found', async () => {
       serviceModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.delete('nonexistent-id', mockAccountId);
@@ -327,7 +320,7 @@ describe('ServicesService', () => {
     it('should delete all services for an account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
       serviceModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockDeleteResult),
+        exec: jest.fn().mockResolvedValue(mockDeleteResult)
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);

@@ -80,7 +80,7 @@ export class QuotesController {
       updatedBy: new Types.ObjectId(userId)
     } as any;
 
-    return this.quotesService.updateByAccount(id, quoteData, accountId);
+    return this.quotesService.updateByAccount(id, quoteData, accountId, new Types.ObjectId(userId));
   }
 
   @Put(':id/send')

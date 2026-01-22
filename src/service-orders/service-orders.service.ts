@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
@@ -38,9 +38,15 @@ export class ServiceOrdersService {
       throw new Error('Quote not found');
     }
 
-    // Check if quote is in sent or draft status
-    if (quote.status !== 'sent' && quote.status !== 'draft') {
-      throw new Error('Quote must be in sent or draft status to create service order');
+    // Check if service order already exists for this quote
+    const existingServiceOrder = await this.serviceOrderModel.findOne({ quote: new Types.ObjectId(quoteId) }).exec();
+    if (existingServiceOrder) {
+      throw new Error('Service order already exists for this quote');
+    }
+
+    // Check if quote is in sent, draft, or accepted status
+    if (quote.status !== 'sent' && quote.status !== 'draft' && quote.status !== 'accepted') {
+      throw new Error('Quote must be in sent, draft, or accepted status to create service order');
     }
 
     // Create service order items from quote services and products
@@ -76,7 +82,9 @@ export class ServiceOrdersService {
 
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.totalValue, 0);
-    const totalValue = subtotal * (1 - (quote.discount || 0) / 100);
+    const discountAmount = subtotal * ((quote.discount || 0) / 100);
+    const otherDiscountsTotal = (quote.otherDiscounts || []).reduce((sum, od) => sum + od.amount, 0);
+    const totalValue = subtotal - discountAmount - otherDiscountsTotal;
 
     // Create service order
     const serviceOrderData = {
@@ -87,6 +95,7 @@ export class ServiceOrdersService {
       items,
       description: quote.description,
       discount: quote.discount || 0,
+      otherDiscounts: quote.otherDiscounts || [],
       subtotal,
       totalValue,
       issuedAt: new Date(),
@@ -299,5 +308,111 @@ export class ServiceOrdersService {
       .select('orderNumber description status priority scheduledDate createdAt customer assignedTechnician')
       .sort({ createdAt: -1 })
       .exec();
+  }
+
+  async createChangeOrder(
+    serviceOrderId: string,
+    modifiedItems: ServiceOrderItem[],
+    accountId: Types.ObjectId,
+    userId: Types.ObjectId,
+    description?: string,
+    discount?: number,
+    otherDiscounts?: { description: string; amount: number }[]
+  ): Promise<ServiceOrder> {
+    const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
+    if (!serviceOrder) {
+      throw new Error('Service order not found');
+    }
+
+    // Calculate new version
+    const version = (serviceOrder.changeOrders?.length || 0) + 1;
+
+    // Calculate totals for modified items
+    const subtotal = modifiedItems.reduce((sum, item) => sum + item.totalValue, 0);
+    const discountAmount = subtotal * ((discount || 0) / 100);
+    const otherDiscountsTotal = (otherDiscounts || []).reduce((sum, od) => sum + od.amount, 0);
+    const totalValue = subtotal - discountAmount - otherDiscountsTotal;
+
+    const changeOrder = {
+      version,
+      originalItems: serviceOrder.items,
+      modifiedItems,
+      description,
+      discount: discount || 0,
+      otherDiscounts: otherDiscounts || [],
+      subtotal,
+      totalValue,
+      status: 'pending' as const,
+      createdBy: userId,
+      createdAt: new Date()
+    };
+
+    // Add change order to service order
+    serviceOrder.changeOrders = serviceOrder.changeOrders || [];
+    serviceOrder.changeOrders.push(changeOrder);
+    serviceOrder.updatedBy = userId;
+
+    return serviceOrder.save();
+  }
+
+  async approveChangeOrder(serviceOrderId: string, changeOrderVersion: number, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
+    const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
+    if (!serviceOrder) {
+      throw new NotFoundException('Service order not found');
+    }
+
+    const changeOrder = serviceOrder.changeOrders?.find((co) => co.version === changeOrderVersion);
+    if (!changeOrder) {
+      throw new NotFoundException('Change order not found');
+    }
+
+    if (changeOrder.status !== 'pending') {
+      throw new BadRequestException('Change order is not pending');
+    }
+
+    // Update change order status
+    changeOrder.status = 'approved';
+    changeOrder.approvedAt = new Date();
+    changeOrder.approvedBy = userId;
+
+    // Update service order items and totals
+    serviceOrder.items = changeOrder.modifiedItems;
+    serviceOrder.subtotal = changeOrder.subtotal;
+    serviceOrder.totalValue = changeOrder.totalValue;
+    serviceOrder.discount = changeOrder.discount;
+    serviceOrder.otherDiscounts = changeOrder.otherDiscounts;
+    serviceOrder.updatedBy = userId;
+
+    // Mark changeOrders as modified for Mongoose to detect the change
+    serviceOrder.markModified('changeOrders');
+
+    return serviceOrder.save();
+  }
+
+  async rejectChangeOrder(serviceOrderId: string, changeOrderVersion: number, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
+    const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
+    if (!serviceOrder) {
+      throw new NotFoundException('Service order not found');
+    }
+
+    const changeOrder = serviceOrder.changeOrders?.find((co) => co.version === changeOrderVersion);
+    if (!changeOrder) {
+      throw new NotFoundException('Change order not found');
+    }
+
+    if (changeOrder.status !== 'pending') {
+      throw new BadRequestException('Change order is not pending');
+    }
+
+    // Update change order status
+    changeOrder.status = 'rejected';
+    changeOrder.approvedBy = userId; // Use approvedBy for rejection as well
+
+    serviceOrder.updatedBy = userId;
+
+    // Mark changeOrders as modified for Mongoose to detect the change
+    serviceOrder.markModified('changeOrders');
+
+    return serviceOrder.save();
   }
 }

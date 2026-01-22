@@ -15,7 +15,7 @@ describe('EquipmentTypeController', () => {
     createdBy: 'user123',
     updatedBy: 'user123',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockEquipmentTypeArray = [
@@ -28,13 +28,13 @@ describe('EquipmentTypeController', () => {
       createdBy: 'user123',
       updatedBy: 'user123',
       createdAt: new Date(),
-      updatedAt: new Date(),
-    },
+      updatedAt: new Date()
+    }
   ];
 
   const mockEquipmentTypeService = {
     findAll: jest.fn(),
-    findOne: jest.fn(),
+    findOne: jest.fn()
   };
 
   beforeEach(async () => {
@@ -43,9 +43,9 @@ describe('EquipmentTypeController', () => {
       providers: [
         {
           provide: EquipmentTypeService,
-          useValue: mockEquipmentTypeService,
-        },
-      ],
+          useValue: mockEquipmentTypeService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })

@@ -17,13 +17,13 @@ describe('ProductsService', () => {
     description: 'A test product',
     maker: 'Test Maker',
     model: 'Test Model',
-    value: 100.50,
+    value: 100.5,
     sku: 'TEST-001',
     account: mockAccountId,
     createdBy: mockUserId,
     updatedBy: mockUserId,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockProductArray = [mockProduct];
@@ -40,10 +40,10 @@ describe('ProductsService', () => {
           ...data,
           _id: new Types.ObjectId(),
           createdAt: new Date(),
-          updatedAt: new Date(),
-        }),
+          updatedAt: new Date()
+        })
       }),
-      populate: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockReturnThis()
     }));
 
     // Add static methods
@@ -52,7 +52,7 @@ describe('ProductsService', () => {
     mockProductModel.findOneAndUpdate = jest.fn();
     mockProductModel.findOneAndDelete = jest.fn();
     mockProductModel.countDocuments = jest.fn().mockReturnValue({
-      exec: jest.fn().mockResolvedValue(1),
+      exec: jest.fn().mockResolvedValue(1)
     });
     mockProductModel.deleteMany = jest.fn();
 
@@ -61,9 +61,9 @@ describe('ProductsService', () => {
         ProductsService,
         {
           provide: getModelToken(Product.name),
-          useValue: mockProductModel,
-        },
-      ],
+          useValue: mockProductModel
+        }
+      ]
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
@@ -81,11 +81,11 @@ describe('ProductsService', () => {
         description: 'New product description',
         maker: 'New Maker',
         model: 'New Model',
-        value: 200.00,
+        value: 200.0,
         sku: 'NEW-001',
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       };
 
       const result = await service.create(productData);
@@ -96,11 +96,11 @@ describe('ProductsService', () => {
         description: 'New product description',
         maker: 'New Maker',
         model: 'New Model',
-        value: 200.00,
+        value: 200.0,
         sku: 'NEW-001',
         account: mockAccountId,
         createdBy: mockUserId,
-        updatedBy: mockUserId,
+        updatedBy: mockUserId
       });
     });
   });
@@ -109,14 +109,14 @@ describe('ProductsService', () => {
     it('should return a product by id and account', async () => {
       productModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockProduct),
+        exec: jest.fn().mockResolvedValue(mockProduct)
       });
 
       const result = await service.findOne(mockProduct._id.toString(), mockAccountId);
 
       expect(productModel.findOne).toHaveBeenCalledWith({
         _id: mockProduct._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockProduct);
     });
@@ -124,7 +124,7 @@ describe('ProductsService', () => {
     it('should return null when product not found', async () => {
       productModel.findOne.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.findOne('invalid-id', mockAccountId);
@@ -140,7 +140,7 @@ describe('ProductsService', () => {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockProductArray),
+        exec: jest.fn().mockResolvedValue(mockProductArray)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, '');
@@ -151,7 +151,7 @@ describe('ProductsService', () => {
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -161,7 +161,7 @@ describe('ProductsService', () => {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockProductArray),
+        exec: jest.fn().mockResolvedValue(mockProductArray)
       });
 
       const result = await service.findByAccount(mockAccountId, 1, 10, 'test');
@@ -173,15 +173,15 @@ describe('ProductsService', () => {
           { description: { $regex: 'test', $options: 'i' } },
           { maker: { $regex: 'test', $options: 'i' } },
           { model: { $regex: 'test', $options: 'i' } },
-          { sku: { $regex: 'test', $options: 'i' } },
-        ],
+          { sku: { $regex: 'test', $options: 'i' } }
+        ]
       });
       expect(result).toEqual({
         products: mockProductArray,
         total: 1,
         page: 1,
         limit: 10,
-        totalPages: 1,
+        totalPages: 1
       });
     });
 
@@ -191,7 +191,7 @@ describe('ProductsService', () => {
         sort: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockProductArray),
+        exec: jest.fn().mockResolvedValue(mockProductArray)
       });
 
       const result = await service.findByAccount(mockAccountId, 2, 5, '');
@@ -201,7 +201,7 @@ describe('ProductsService', () => {
         total: 1,
         page: 2,
         limit: 5,
-        totalPages: 1,
+        totalPages: 1
       });
     });
   });
@@ -210,35 +210,31 @@ describe('ProductsService', () => {
     it('should update a product successfully', async () => {
       const updateData = {
         name: 'Updated Product',
-        value: 150.00,
-        updatedBy: mockUserId,
+        value: 150.0,
+        updatedBy: mockUserId
       };
 
       productModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue({
           ...mockProduct,
-          ...updateData,
-        }),
+          ...updateData
+        })
       });
 
       const result = await service.update(mockProduct._id.toString(), updateData, mockAccountId);
 
-      expect(productModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockProduct._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(productModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockProduct._id.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toMatchObject({
         ...mockProduct,
-        ...updateData,
+        ...updateData
       });
     });
 
     it('should return null when product not found', async () => {
       productModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.update('invalid-id', { name: 'Updated' }, mockAccountId);
@@ -250,34 +246,34 @@ describe('ProductsService', () => {
   describe('delete', () => {
     it('should delete a product with account scoping', async () => {
       productModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockProduct),
+        exec: jest.fn().mockResolvedValue(mockProduct)
       });
 
       const result = await service.delete(mockProduct._id.toString(), mockAccountId);
 
       expect(productModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockProduct._id.toString(),
-        account: mockAccountId,
+        account: mockAccountId
       });
       expect(result).toEqual(mockProduct);
     });
 
     it('should delete a product without account scoping', async () => {
       productModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockProduct),
+        exec: jest.fn().mockResolvedValue(mockProduct)
       });
 
       const result = await service.delete(mockProduct._id.toString());
 
       expect(productModel.findOneAndDelete).toHaveBeenCalledWith({
-        _id: mockProduct._id.toString(),
+        _id: mockProduct._id.toString()
       });
       expect(result).toEqual(mockProduct);
     });
 
     it('should return null when product not found', async () => {
       productModel.findOneAndDelete.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null),
+        exec: jest.fn().mockResolvedValue(null)
       });
 
       const result = await service.delete('invalid-id', mockAccountId);
@@ -290,7 +286,7 @@ describe('ProductsService', () => {
     it('should delete all products for an account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
       productModel.deleteMany.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockDeleteResult),
+        exec: jest.fn().mockResolvedValue(mockDeleteResult)
       });
 
       const result = await service.deleteAllByAccount(mockAccountId);

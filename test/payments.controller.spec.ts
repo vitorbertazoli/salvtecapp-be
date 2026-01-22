@@ -31,7 +31,7 @@ describe('PaymentsController', () => {
     taxAmount: 100,
     transactionId: 'txn_123',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockPaymentOrderArray = [mockPaymentOrder];
@@ -40,7 +40,7 @@ describe('PaymentsController', () => {
     createFromServiceOrder: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
-    remove: jest.fn(),
+    remove: jest.fn()
   };
 
   beforeEach(async () => {
@@ -49,9 +49,9 @@ describe('PaymentsController', () => {
       providers: [
         {
           provide: PaymentsService,
-          useValue: mockPaymentsService,
-        },
-      ],
+          useValue: mockPaymentsService
+        }
+      ]
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn(() => true) })

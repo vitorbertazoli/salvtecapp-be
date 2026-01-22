@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { ApproveChangeOrderDto } from './dto/approve-change-order.dto';
+import { CreateChangeOrderDto } from './dto/create-change-order.dto';
 import { CreateFromQuoteDto } from './dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
@@ -75,5 +77,46 @@ export class ServiceOrdersController {
   @Roles('ADMIN', 'SUPERVISOR')
   async delete(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.serviceOrdersService.deleteByAccount(id, accountId);
+  }
+
+  @Post(':id/change-orders')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async createChangeOrder(
+    @Param('id') id: string,
+    @Body() dto: CreateChangeOrderDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    const modifiedItems = dto.modifiedItems.map((item) => ({
+      ...item,
+      itemId: new Types.ObjectId(item.itemId)
+    }));
+
+    return this.serviceOrdersService.createChangeOrder(
+      id,
+      modifiedItems,
+      accountId,
+      new Types.ObjectId(userId),
+      dto.description,
+      dto.discount,
+      dto.otherDiscounts
+    );
+  }
+
+  @Put(':id/change-orders/:version')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async approveOrRejectChangeOrder(
+    @Param('id') id: string,
+    @Param('version') version: string,
+    @Body() dto: ApproveChangeOrderDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    const changeOrderVersion = parseInt(version, 10);
+    if (dto.action === 'approve') {
+      return this.serviceOrdersService.approveChangeOrder(id, changeOrderVersion, accountId, new Types.ObjectId(userId));
+    } else {
+      return this.serviceOrdersService.rejectChangeOrder(id, changeOrderVersion, accountId, new Types.ObjectId(userId));
+    }
   }
 }
