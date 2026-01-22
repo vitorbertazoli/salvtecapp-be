@@ -766,7 +766,7 @@ export class QuotesService {
             <div style="background-color: #007bff; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center;">
                 <p style="margin: 0; font-size: 16px; font-weight: bold;">Aprovar Orçamento</p>
                 <p style="margin: 10px 0 0 0;">
-                    <a href="${frontendUrl}/quotes/approval/${approvalToken}" style="background-color: white; color: #007bff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Clique aqui para aprovar</a>
+                    <a href="${frontendUrl}/public/quotes/approval/${approvalToken}" style="background-color: white; color: #007bff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Clique aqui para aprovar</a>
                 </p>
             </div>
             `
