@@ -5,12 +5,16 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
+import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { QuotesService } from './quotes.service';
 
 @Controller('quotes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class QuotesController {
-  constructor(private readonly quotesService: QuotesService) {}
+  constructor(
+    private readonly quotesService: QuotesService,
+    private readonly quoteToServiceOrderService: QuoteToServiceOrderService
+  ) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can create quotes
@@ -56,7 +60,7 @@ export class QuotesController {
 
   @Get(':id')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
-    return this.quotesService.findByIdAndAccount(id, accountId);
+    return this.quoteToServiceOrderService.findByIdAndAccount(id, accountId);
   }
 
   @Put(':id')
@@ -80,7 +84,7 @@ export class QuotesController {
       updatedBy: new Types.ObjectId(userId)
     } as any;
 
-    return this.quotesService.updateByAccount(id, quoteData, accountId, new Types.ObjectId(userId));
+    return this.quoteToServiceOrderService.updateByAccount(id, quoteData, accountId, new Types.ObjectId(userId));
   }
 
   @Put(':id/send')

@@ -1,7 +1,7 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { QuotesService } from '../src/quotes/quotes.service';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrder } from '../src/service-orders/schemas/service-order.schema';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 
@@ -13,7 +13,7 @@ jest.mock('bcrypt', () => ({
 describe('ServiceOrdersService', () => {
   let service: ServiceOrdersService;
   let serviceOrderModel: any;
-  let quotesService: any;
+  let quoteToServiceOrderService: any;
 
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
@@ -145,10 +145,7 @@ describe('ServiceOrdersService', () => {
     mockServiceOrderModel.deleteMany = jest.fn();
     mockServiceOrderModel.aggregate = jest.fn();
 
-    const mockQuotesService = {
-      findByIdAndAccount: jest.fn(),
-      updateByAccount: jest.fn()
-    };
+    const mockQuoteToServiceOrderService = {};
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -158,15 +155,15 @@ describe('ServiceOrdersService', () => {
           useValue: mockServiceOrderModel
         },
         {
-          provide: QuotesService,
-          useValue: mockQuotesService
+          provide: QuoteToServiceOrderService,
+          useValue: mockQuoteToServiceOrderService
         }
       ]
     }).compile();
 
     service = module.get<ServiceOrdersService>(ServiceOrdersService);
     serviceOrderModel = module.get(getModelToken(ServiceOrder.name));
-    quotesService = module.get(QuotesService);
+    quoteToServiceOrderService = module.get(QuoteToServiceOrderService);
   });
 
   it('should be defined', () => {
@@ -218,41 +215,6 @@ describe('ServiceOrdersService', () => {
 
       expect(serviceOrderModel).toHaveBeenCalledWith(serviceOrderData);
       expect(result.orderNumber).toBe('SO-2024-CUSTOM001');
-    });
-  });
-
-  describe('createFromQuote', () => {
-    it('should create service order from quote successfully', async () => {
-      quotesService.findByIdAndAccount.mockResolvedValue(mockQuote);
-
-      const result = await service.createFromQuote(mockQuoteId.toString(), 'high', mockAccountId, mockUserId);
-
-      expect(quotesService.findByIdAndAccount).toHaveBeenCalledWith(mockQuoteId.toString(), mockAccountId);
-      expect(quotesService.updateByAccount).toHaveBeenCalledWith(mockQuoteId.toString(), { status: 'accepted' }, mockAccountId);
-      expect(result).toMatchObject({
-        quote: mockQuoteId,
-        customer: mockCustomerId,
-        account: mockAccountId,
-        status: 'pending',
-        priority: 'high',
-        subtotal: 200,
-        totalValue: 170
-      });
-    });
-
-    it('should throw error when quote not found', async () => {
-      quotesService.findByIdAndAccount.mockResolvedValue(null);
-
-      await expect(service.createFromQuote('invalid-id', 'normal', mockAccountId, mockUserId)).rejects.toThrow('Quote not found');
-    });
-
-    it('should throw error when quote status is not sent, draft, or accepted', async () => {
-      const invalidQuote = { ...mockQuote, status: 'rejected' };
-      quotesService.findByIdAndAccount.mockResolvedValue(invalidQuote);
-
-      await expect(service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId, mockUserId)).rejects.toThrow(
-        'Quote must be in sent, draft, or accepted status to create service order'
-      );
     });
   });
 

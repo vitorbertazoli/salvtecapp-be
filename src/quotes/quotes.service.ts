@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
 import { EmailService } from '../utils/email.service';
+import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
 
 @Injectable()
@@ -11,7 +12,8 @@ export class QuotesService {
   constructor(
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
     private emailService: EmailService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private quoteToServiceOrderService: QuoteToServiceOrderService,
   ) {}
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
@@ -108,51 +110,6 @@ export class QuotesService {
     };
   }
 
-  async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<QuoteDocument | null> {
-    const quote = await this.quoteModel
-      .findOne({ _id: id, account: accountId })
-      .populate('account', 'name id')
-      .populate('customer', 'name email id')
-      .populate('services.service', 'name')
-      .populate('products.product', 'name')
-      .exec();
-
-    return quote;
-  }
-
-  async updateByAccount(id: string, quoteData: Partial<Quote>, accountId: Types.ObjectId, userId?: Types.ObjectId): Promise<Quote | null> {
-    const query = { _id: id, account: accountId };
-
-    // Check current quote status
-    const currentQuote = await this.quoteModel.findOne(query).exec();
-    if (!currentQuote) {
-      return null;
-    }
-
-    // If quote has been accepted, do not allow changes
-    if (currentQuote.status === 'accepted') {
-      throw new BadRequestException('Quote has been accepted and cannot be modified. Use change order process.');
-    }
-
-    // If quote has been sent, reset status to draft when updating
-    // But allow status changes from 'sent' to 'accepted' (for service order creation)
-    const updateData = { ...quoteData };
-    if (currentQuote.status === 'sent') {
-      // Allow status change from 'sent' to 'accepted', but reset to 'draft' for other updates
-      if (!(quoteData.status === 'accepted' && currentQuote.status === 'sent')) {
-        updateData.status = 'draft';
-      }
-    }
-
-    const updatedQuote = await this.quoteModel
-      .findOneAndUpdate(query, updateData, { new: true })
-      .populate('account', 'name id')
-      .populate('customer', 'name email id')
-      .exec();
-
-    return updatedQuote;
-  }
-
   async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<Quote | null> {
     const query = { _id: id, account: accountId };
     return this.quoteModel.findOneAndDelete(query).exec();
@@ -212,7 +169,7 @@ export class QuotesService {
     return { success: true, message: 'Quote sent successfully' };
   }
 
-  async approveQuoteByToken(token: string, approvalData: { approved: boolean; notes?: string }): Promise<{ success: boolean; message: string; quote?: any }> {
+  async approveQuoteByToken(token: string, approvalData: { approved: boolean; notes?: string }): Promise<{ success: boolean; message: string; }> {
     // Find quote by token and check if token is still valid
     const quote = await this.quoteModel
       .findOne({
@@ -231,14 +188,29 @@ export class QuotesService {
     }
 
     // Update quote status based on approval and clear the token
-    const newStatus = approvalData.approved ? 'accepted' : 'rejected';
-    const message = approvalData.approved ? 'Quote approved successfully' : 'Quote rejected';
-
-    const updatedQuote = await this.quoteModel
+    if (approvalData.approved) {
+      const updatedQuote = await this.quoteModel
       .findOneAndUpdate(
         { _id: quote._id },
         {
-          status: newStatus,
+          approvalToken: null,
+          approvalTokenExpires: null,
+          notes: approvalData.notes || quote.notes,
+        },
+        { new: true }
+      )
+      const serviceOrder = await this.quoteToServiceOrderService.createFromQuote(
+          quote._id.toString(),
+          'normal', // Default priority
+          quote.account._id || quote.account,
+          quote.updatedBy
+        );
+    } else {
+      const updatedQuote = await this.quoteModel
+      .findOneAndUpdate(
+        { _id: quote._id },
+        {
+          status: 'rejected',
           approvalToken: null,
           approvalTokenExpires: null,
           notes: approvalData.notes || quote.notes,
@@ -246,16 +218,12 @@ export class QuotesService {
         },
         { new: true }
       )
-      .populate('account', 'name')
-      .populate('customer', 'name email')
-      .populate('services.service', 'name description')
-      .populate('products.product', 'name description maker model sku')
-      .exec();
+    }
+    const message = approvalData.approved ? 'Quote approved successfully' : 'Quote rejected';
 
     return {
-      success: true,
-      message,
-      quote: updatedQuote
+      success: approvalData.approved,
+      message
     };
   }
 

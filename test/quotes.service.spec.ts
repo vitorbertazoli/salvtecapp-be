@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { QuotesService } from '../src/quotes/quotes.service';
 import { Quote } from '../src/quotes/schemas/quote.schema';
-import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { EmailService } from '../src/utils/email.service';
 
 describe('QuotesService', () => {
@@ -93,8 +93,9 @@ describe('QuotesService', () => {
       sendEmail: jest.fn()
     };
 
-    const mockServiceOrdersService = {
-      createFromQuote: jest.fn()
+    const mockQuoteToServiceOrderService = {
+      createFromQuote: jest.fn(),
+      updateByAccount: jest.fn()
     };
 
     const mockConfigService = {
@@ -116,8 +117,8 @@ describe('QuotesService', () => {
           useValue: mockEmailService
         },
         {
-          provide: ServiceOrdersService,
-          useValue: mockServiceOrdersService
+          provide: QuoteToServiceOrderService,
+          useValue: mockQuoteToServiceOrderService
         },
         {
           provide: ConfigService,
@@ -241,123 +242,6 @@ describe('QuotesService', () => {
         limit: 5,
         totalPages: 1
       });
-    });
-  });
-
-  describe('findByIdAndAccount', () => {
-    it('should return a quote by id and account', async () => {
-      quoteModel.findOne.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockQuote)
-      });
-
-      const result = await service.findByIdAndAccount(mockQuote._id.toString(), mockAccountId);
-
-      expect(quoteModel.findOne).toHaveBeenCalledWith({
-        _id: mockQuote._id.toString(),
-        account: mockAccountId
-      });
-      expect(result).toEqual(mockQuote);
-    });
-
-    it('should return null when quote not found', async () => {
-      quoteModel.findOne.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(null)
-      });
-
-      const result = await service.findByIdAndAccount('invalid-id', mockAccountId);
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('updateByAccount', () => {
-    it('should update a quote successfully', async () => {
-      const updateData = {
-        description: 'Updated description',
-        totalValue: 250.0,
-        updatedBy: mockUserId
-      };
-
-      quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'draft' })
-      });
-
-      quoteModel.findOneAndUpdate.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue({
-          ...mockQuote,
-          ...updateData
-        })
-      });
-
-      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
-
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockQuote._id.toString(), account: mockAccountId }, updateData, { new: true });
-      expect(result).toMatchObject({
-        ...mockQuote,
-        ...updateData
-      });
-    });
-
-    it('should reset status to draft when updating sent quote', async () => {
-      const updateData = {
-        description: 'Updated description',
-        updatedBy: mockUserId
-      };
-
-      quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'sent' })
-      });
-
-      quoteModel.findOneAndUpdate.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue({
-          ...mockQuote,
-          ...updateData,
-          status: 'draft'
-        })
-      });
-
-      const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
-
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockQuote._id.toString(), account: mockAccountId },
-        { ...updateData, status: 'draft' },
-        { new: true }
-      );
-      expect(result).toMatchObject({
-        ...mockQuote,
-        ...updateData,
-        status: 'draft'
-      });
-    });
-
-    it('should throw BadRequestException when trying to update accepted quote', async () => {
-      const updateData = {
-        description: 'Updated description',
-        updatedBy: mockUserId
-      };
-
-      quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'accepted' })
-      });
-
-      await expect(service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId)).rejects.toThrow(BadRequestException);
-      await expect(service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId)).rejects.toThrow(
-        'Quote has been accepted and cannot be modified. Use change order process.'
-      );
-    });
-
-    it('should return null when quote not found', async () => {
-      quoteModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(null)
-      });
-
-      const result = await service.updateByAccount('invalid-id', { description: 'Updated' }, mockAccountId, mockUserId);
-
-      expect(result).toBeNull();
     });
   });
 

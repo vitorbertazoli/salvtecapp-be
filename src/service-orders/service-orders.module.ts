@@ -1,6 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { QuotesModule } from '../quotes/quotes.module';
+import { QuoteToServiceOrderModule } from '../quote-to-service-order/quote-to-service-order.module';
 import { ServiceOrder, ServiceOrderSchema } from './schemas/service-order.schema';
 import { ServiceOrdersController } from './service-orders.controller';
 import { ServiceOrdersService } from './service-orders.service';
@@ -8,7 +8,7 @@ import { ServiceOrdersService } from './service-orders.service';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: ServiceOrder.name, schema: ServiceOrderSchema }]),
-    forwardRef(() => QuotesModule)
+    QuoteToServiceOrderModule
   ],
   controllers: [ServiceOrdersController],
   providers: [ServiceOrdersService],

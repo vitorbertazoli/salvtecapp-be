@@ -6,6 +6,7 @@ import { CreateQuoteDto } from '../src/quotes/dto/create-quote.dto';
 import { UpdateQuoteDto } from '../src/quotes/dto/update-quote.dto';
 import { QuotesController } from '../src/quotes/quotes.controller';
 import { QuotesService } from '../src/quotes/quotes.service';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 
 describe('QuotesController', () => {
   let controller: QuotesController;
@@ -75,6 +76,12 @@ describe('QuotesController', () => {
     deleteByAccount: jest.fn()
   };
 
+  const mockQuoteToServiceOrderService = {
+    findByIdAndAccount: jest.fn(),
+    updateByAccount: jest.fn(),
+    createFromQuote: jest.fn()
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [QuotesController],
@@ -82,6 +89,10 @@ describe('QuotesController', () => {
         {
           provide: QuotesService,
           useValue: mockQuotesService
+        },
+        {
+          provide: QuoteToServiceOrderService,
+          useValue: mockQuoteToServiceOrderService
         }
       ]
     })
@@ -243,11 +254,11 @@ describe('QuotesController', () => {
 
   describe('findOne', () => {
     it('should return a single quote', async () => {
-      mockQuotesService.findByIdAndAccount.mockResolvedValue(mockQuote);
+      mockQuoteToServiceOrderService.findByIdAndAccount.mockResolvedValue(mockQuote);
 
       const result = await controller.findOne(mockQuote._id.toString(), mockAccountId);
 
-      expect(mockQuotesService.findByIdAndAccount).toHaveBeenCalledWith(mockQuote._id.toString(), mockAccountId);
+      expect(mockQuoteToServiceOrderService.findByIdAndAccount).toHaveBeenCalledWith(mockQuote._id.toString(), mockAccountId);
       expect(result).toEqual(mockQuote);
     });
   });
@@ -261,17 +272,17 @@ describe('QuotesController', () => {
 
       const expectedQuoteData = {
         ...updateQuoteDto,
-        updatedBy: mockUserId
+        updatedBy: new Types.ObjectId(mockUserId)
       };
 
-      mockQuotesService.updateByAccount.mockResolvedValue({
+      mockQuoteToServiceOrderService.updateByAccount.mockResolvedValue({
         ...mockQuote,
         ...updateQuoteDto
       });
 
       const result = await controller.update(mockQuote._id.toString(), updateQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuotesService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, mockUserId);
+      expect(mockQuoteToServiceOrderService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, new Types.ObjectId(mockUserId));
       expect(result).toMatchObject({
         ...mockQuote,
         ...updateQuoteDto
@@ -286,17 +297,17 @@ describe('QuotesController', () => {
       const expectedQuoteData = {
         ...updateQuoteDto,
         customer: new Types.ObjectId(mockCustomerId.toString()),
-        updatedBy: mockUserId
+        updatedBy: new Types.ObjectId(mockUserId)
       };
 
-      mockQuotesService.updateByAccount.mockResolvedValue({
+      mockQuoteToServiceOrderService.updateByAccount.mockResolvedValue({
         ...mockQuote,
         customer: mockCustomerId
       });
 
       const result = await controller.update(mockQuote._id.toString(), updateQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuotesService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, mockUserId);
+      expect(mockQuoteToServiceOrderService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, new Types.ObjectId(mockUserId));
       expect(result).toMatchObject({
         ...mockQuote,
         customer: mockCustomerId

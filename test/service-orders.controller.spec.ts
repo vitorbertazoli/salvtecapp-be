@@ -5,6 +5,7 @@ import { RolesGuard } from '../src/auth/guards/roles.guard';
 import { CreateFromQuoteDto } from '../src/service-orders/dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from '../src/service-orders/dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from '../src/service-orders/dto/update-service-order.dto';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrdersController } from '../src/service-orders/service-orders.controller';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 
@@ -73,12 +74,15 @@ describe('ServiceOrdersController', () => {
 
   const mockServiceOrdersService = {
     create: jest.fn(),
-    createFromQuote: jest.fn(),
     findByAccount: jest.fn(),
     findByCustomerAndAccount: jest.fn(),
     findByIdAndAccount: jest.fn(),
     updateByAccount: jest.fn(),
     deleteByAccount: jest.fn()
+  };
+
+  const mockQuoteToServiceOrderService = {
+    createFromQuote: jest.fn()
   };
 
   beforeEach(async () => {
@@ -88,6 +92,10 @@ describe('ServiceOrdersController', () => {
         {
           provide: ServiceOrdersService,
           useValue: mockServiceOrdersService
+        },
+        {
+          provide: QuoteToServiceOrderService,
+          useValue: mockQuoteToServiceOrderService
         }
       ]
     })
@@ -148,11 +156,11 @@ describe('ServiceOrdersController', () => {
         priority: 'high'
       };
 
-      mockServiceOrdersService.createFromQuote.mockResolvedValue(mockServiceOrder);
+      mockQuoteToServiceOrderService.createFromQuote.mockResolvedValue(mockServiceOrder);
 
       const result = await controller.createFromQuote(createFromQuoteDto, mockAccountId);
 
-      expect(mockServiceOrdersService.createFromQuote).toHaveBeenCalledWith(mockQuoteId.toString(), 'high', mockAccountId, expect.anything());
+      expect(mockQuoteToServiceOrderService.createFromQuote).toHaveBeenCalledWith(mockQuoteId.toString(), 'high', mockAccountId, expect.anything());
       expect(result).toEqual(mockServiceOrder);
     });
   });

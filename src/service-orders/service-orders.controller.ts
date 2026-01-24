@@ -8,12 +8,16 @@ import { CreateChangeOrderDto } from './dto/create-change-order.dto';
 import { CreateFromQuoteDto } from './dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
+import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrdersService } from './service-orders.service';
 
 @Controller('service-orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ServiceOrdersController {
-  constructor(private readonly serviceOrdersService: ServiceOrdersService) {}
+  constructor(
+    private readonly serviceOrdersService: ServiceOrdersService,
+    private readonly quoteToServiceOrderService: QuoteToServiceOrderService
+  ) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR')
@@ -30,7 +34,7 @@ export class ServiceOrdersController {
   @Post('from-quote')
   @Roles('ADMIN', 'SUPERVISOR')
   async createFromQuote(@Body() body: CreateFromQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    return this.serviceOrdersService.createFromQuote(body.quoteId, body.priority, accountId, new Types.ObjectId(userId));
+    return this.quoteToServiceOrderService.createFromQuote(body.quoteId, body.priority, accountId, new Types.ObjectId(userId));
   }
 
   @Get()
