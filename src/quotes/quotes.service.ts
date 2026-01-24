@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
-import { EmailService } from '../utils/email.service';
 import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
+import { EmailService } from '../utils/email.service';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class QuotesService {
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
     private emailService: EmailService,
     private configService: ConfigService,
-    private quoteToServiceOrderService: QuoteToServiceOrderService,
+    private quoteToServiceOrderService: QuoteToServiceOrderService
   ) {}
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
@@ -169,7 +169,7 @@ export class QuotesService {
     return { success: true, message: 'Quote sent successfully' };
   }
 
-  async approveQuoteByToken(token: string, approvalData: { approved: boolean; notes?: string }): Promise<{ success: boolean; message: string; }> {
+  async approveQuoteByToken(token: string, approvalData: { approved: boolean; notes?: string }): Promise<{ success: boolean; message: string }> {
     // Find quote by token and check if token is still valid
     const quote = await this.quoteModel
       .findOne({
@@ -189,25 +189,23 @@ export class QuotesService {
 
     // Update quote status based on approval and clear the token
     if (approvalData.approved) {
-      const updatedQuote = await this.quoteModel
-      .findOneAndUpdate(
+      await this.quoteModel.findOneAndUpdate(
         { _id: quote._id },
         {
           approvalToken: null,
           approvalTokenExpires: null,
-          notes: approvalData.notes || quote.notes,
+          notes: approvalData.notes || quote.notes
         },
         { new: true }
-      )
-      const serviceOrder = await this.quoteToServiceOrderService.createFromQuote(
-          quote._id.toString(),
-          'normal', // Default priority
-          quote.account._id || quote.account,
-          quote.updatedBy
-        );
+      );
+      await this.quoteToServiceOrderService.createFromQuote(
+        quote._id.toString(),
+        'normal', // Default priority
+        quote.account._id || quote.account,
+        quote.updatedBy
+      );
     } else {
-      const updatedQuote = await this.quoteModel
-      .findOneAndUpdate(
+      await this.quoteModel.findOneAndUpdate(
         { _id: quote._id },
         {
           status: 'rejected',
@@ -217,7 +215,7 @@ export class QuotesService {
           updatedBy: quote.updatedBy // Keep the same updatedBy
         },
         { new: true }
-      )
+      );
     }
     const message = approvalData.approved ? 'Quote approved successfully' : 'Quote rejected';
 

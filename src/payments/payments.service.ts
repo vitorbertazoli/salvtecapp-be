@@ -3,7 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ServiceOrder } from '../service-orders/schemas/service-order.schema';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
-import { PaymentOrder, PaymentOrderDocument } from './schemas/payment-order.schema';
+import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
+import { PaymentOrder, PaymentOrderDocument, PaymentTransaction } from './schemas/payment-order.schema';
 
 @Injectable()
 export class PaymentsService {
@@ -24,7 +25,7 @@ export class PaymentsService {
       customer: serviceOrder.customer,
       serviceOrder: serviceOrder._id,
       paymentStatus: 'pending',
-      paidAmount: 0,
+      payments: [], // Initialize empty payments array
       totalAmount: serviceOrder.totalValue,
       createdBy: userId,
       updatedBy: userId
@@ -130,5 +131,71 @@ export class PaymentsService {
     if (!result) {
       throw new NotFoundException('Payment order not found');
     }
+  }
+
+  async update(id: string, accountId: Types.ObjectId, updateData: UpdatePaymentOrderDto, userId: Types.ObjectId): Promise<PaymentOrder> {
+    const paymentOrder = await this.paymentOrderModel.findOne({ _id: id, account: accountId }).exec();
+    if (!paymentOrder) {
+      throw new NotFoundException('Payment order not found');
+    }
+
+    const updateFields: any = { updatedBy: userId };
+
+    // Handle adding new payment transactions
+    if (updateData.addPayments && updateData.addPayments.length > 0) {
+      const newPayments: PaymentTransaction[] = updateData.addPayments.map((payment) => ({
+        amount: payment.amount,
+        paymentMethod: payment.paymentMethod,
+        transactionId: payment.transactionId,
+        paymentDate: payment.paymentDate ? new Date(payment.paymentDate) : new Date(),
+        notes: payment.notes,
+        recordedBy: userId
+      }));
+
+      // Add new payments to existing payments array
+      updateFields.$push = { payments: { $each: newPayments } };
+    }
+
+    // Update other fields
+    const allowedFields = ['paymentStatus', 'dueDate', 'invoiceNumber', 'notes', 'discountAmount', 'taxAmount'];
+    for (const field of allowedFields) {
+      if (updateData[field as keyof UpdatePaymentOrderDto] !== undefined) {
+        updateFields[field] = updateData[field as keyof UpdatePaymentOrderDto];
+      }
+    }
+
+    const updatedPaymentOrder = await this.paymentOrderModel
+      .findOneAndUpdate({ _id: id, account: accountId }, updateFields, { new: true })
+      .populate('customer', 'name email')
+      .populate('serviceOrder', 'orderNumber description totalValue completedAt status')
+      .exec();
+
+    if (!updatedPaymentOrder) {
+      throw new NotFoundException('Payment order not found');
+    }
+
+    // Calculate total paid amount and update status if not manually set
+    const totalPaid = updatedPaymentOrder.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+    const adjustedTotal = updatedPaymentOrder.totalAmount - (updatedPaymentOrder.discountAmount || 0);
+
+    let newStatus = updatedPaymentOrder.paymentStatus;
+    if (!updateData.paymentStatus) {
+      // Only auto-update status if not manually set
+      if (totalPaid >= adjustedTotal) {
+        newStatus = 'paid';
+      } else if (totalPaid > 0) {
+        newStatus = 'partial';
+      } else {
+        newStatus = 'pending';
+      }
+    }
+
+    // Update status if it changed
+    if (newStatus !== updatedPaymentOrder.paymentStatus) {
+      updatedPaymentOrder.paymentStatus = newStatus;
+      await updatedPaymentOrder.save();
+    }
+
+    return updatedPaymentOrder;
   }
 }

@@ -1,8 +1,9 @@
-import { Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
 import { PaymentsService } from './payments.service';
 import { PaymentOrder } from './schemas/payment-order.schema';
 
@@ -11,7 +12,7 @@ import { PaymentOrder } from './schemas/payment-order.schema';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post()
+  @Post('from-service-order')
   @Roles('ADMIN')
   async createFromServiceOrder(
     @GetAccountId() accountId: Types.ObjectId,
@@ -37,6 +38,17 @@ export class PaymentsController {
   @Roles('ADMIN')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<PaymentOrder> {
     return this.paymentsService.findOne(id, accountId);
+  }
+
+  @Put(':id')
+  @Roles('ADMIN')
+  async update(
+    @Param('id') id: string,
+    @GetAccountId() accountId: Types.ObjectId,
+    @Body() updateData: UpdatePaymentOrderDto,
+    @GetUser('id') userId: string
+  ): Promise<PaymentOrder> {
+    return this.paymentsService.update(id, accountId, updateData, new Types.ObjectId(userId));
   }
 
   @Delete(':id')
