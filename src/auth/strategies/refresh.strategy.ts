@@ -20,20 +20,20 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
   async validate(payload: any) {
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('auth.errors.userNotFound');
     }
 
     // Check if account is active
     if (user.account?.status === 'pending') {
-      throw new UnauthorizedException('Account not verified. Please check your email for verification instructions.');
+      throw new UnauthorizedException('auth.errors.accountNotVerified');
     }
 
     if (user.account?.status === 'suspended') {
-      throw new UnauthorizedException('Account is suspended. Please contact support.');
+      throw new UnauthorizedException('auth.errors.accountSuspended');
     }
 
     if (user.account?.status !== 'active') {
-      throw new UnauthorizedException('Account is not active. Please contact support.');
+      throw new UnauthorizedException('auth.errors.accountNotActive');
     }
 
     return { id: user.id, email: user.email };

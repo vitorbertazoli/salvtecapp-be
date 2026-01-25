@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { VehicleUsage, VehicleUsageDocument } from './schemas/vehicle-usages.schema';
-import { T } from 'node_modules/@faker-js/faker/dist/airline-CWrCIUHH';
 
 @Injectable()
 export class VehicleUsagesService {
@@ -51,10 +50,10 @@ export class VehicleUsagesService {
   async update(id: string, updateDto: Partial<VehicleUsage>, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
     const query = { _id: id, account: accountId };
     const existing = await this.vehicleUsageModel.findOne(query);
-    if (!existing) throw new ForbiddenException('Vehicle usage not found');
+    if (!existing) throw new ForbiddenException('vehicleUsages.notFound');
 
     if (existing.status === 'approved') {
-      throw new ForbiddenException('Cannot edit approved entries');
+      throw new ForbiddenException('vehicleUsages.errors.cannotEditApprovedEntries');
     }
 
     return this.vehicleUsageModel.findOneAndUpdate(query, updateDto, { new: true }).exec();
@@ -63,10 +62,10 @@ export class VehicleUsagesService {
   async approve(id: string, userId: Types.ObjectId, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
     const query = { _id: id, account: accountId };
     const existing = await this.vehicleUsageModel.findOne(query);
-    if (!existing) throw new ForbiddenException('Vehicle usage not found');
+    if (!existing) throw new ForbiddenException('vehicleUsages.notFound');
 
     if (existing.status === 'approved') {
-      throw new ForbiddenException('Already approved');
+      throw new ForbiddenException('vehicleUsages.errors.alreadyApproved');
     }
 
     return this.vehicleUsageModel.findByIdAndUpdate(id, { status: 'approved', approvedBy: userId, approvedAt: new Date() }, { new: true }).exec();
@@ -75,10 +74,10 @@ export class VehicleUsagesService {
   async remove(id: string, accountId: Types.ObjectId): Promise<VehicleUsage | null> {
     const query = { _id: id, account: accountId };
     const existing = await this.vehicleUsageModel.findOne(query);
-    if (!existing) throw new ForbiddenException('Vehicle usage not found');
+    if (!existing) throw new ForbiddenException('vehicleUsages.notFound');
 
     if (existing.status === 'approved') {
-      throw new ForbiddenException('Cannot delete approved entries');
+      throw new ForbiddenException('vehicleUsages.errors.cannotDeleteApprovedEntries');
     }
 
     return this.vehicleUsageModel.findOneAndDelete(query).exec();

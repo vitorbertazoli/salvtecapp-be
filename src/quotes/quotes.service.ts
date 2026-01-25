@@ -133,11 +133,11 @@ export class QuotesService {
       .exec();
 
     if (!quote) {
-      throw new NotFoundException('Quote not found');
+      throw new NotFoundException('quotes.errors.quoteNotFound');
     }
 
     if (!quote.customer || !(quote.customer as any).email) {
-      throw new NotFoundException('Customer email not found');
+      throw new NotFoundException('quotes.errors.customerEmailNotFound');
     }
 
     // Generate approval token and expiration date (use quote's validUntil date)
@@ -184,7 +184,7 @@ export class QuotesService {
       .exec();
 
     if (!quote) {
-      throw new NotFoundException('Invalid or expired approval token');
+      throw new NotFoundException('quotes.errors.invalidApprovalToken');
     }
 
     // Update quote status based on approval and clear the token
@@ -240,7 +240,7 @@ export class QuotesService {
       .exec();
 
     if (!quote) {
-      throw new NotFoundException('Invalid or expired token');
+      throw new NotFoundException('quotes.errors.invalidToken');
     }
 
     return quote;

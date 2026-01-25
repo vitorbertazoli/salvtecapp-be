@@ -1,13 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { AuthService } from '../src/auth/auth.service';
-import { UsersService } from '../src/users/users.service';
 import { AccountsService } from '../src/accounts/accounts.service';
+import { AuthService } from '../src/auth/auth.service';
 import { TechniciansService } from '../src/technicians/technicians.service';
+import { UsersService } from '../src/users/users.service';
 import { EmailService } from '../src/utils/email.service';
-import { Types } from 'mongoose';
 
 // Mock bcrypt
 jest.mock('bcrypt', () => ({
@@ -200,7 +199,7 @@ describe('AuthService', () => {
       usersService.findOneByEmail.mockResolvedValue(pendingAccountUser);
 
       await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow(
-        'Account not verified. Please check your email for verification instructions.'
+        'auth.errors.accountNotVerified'
       );
     });
 
@@ -211,14 +210,14 @@ describe('AuthService', () => {
       };
       usersService.findOneByEmail.mockResolvedValue(suspendedAccountUser);
 
-      await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow('Account is suspended. Please contact support.');
+      await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow('auth.errors.accountSuspended');
     });
 
     it('should throw error when user is inactive', async () => {
       const inactiveUser = { ...mockUser, status: 'inactive' };
       usersService.findOneByEmail.mockResolvedValue(inactiveUser);
 
-      await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow('User account is not active');
+      await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow('auth.errors.userNotActive');
     });
   });
 
@@ -306,7 +305,7 @@ describe('AuthService', () => {
       const userFromGuard = { id: mockUserId.toString() };
       usersService.findById.mockResolvedValue(null);
 
-      await expect(service.refreshToken(userFromGuard)).rejects.toThrow('User not found');
+      await expect(service.refreshToken(userFromGuard)).rejects.toThrow('auth.errors.userNotFound');
     });
   });
 
@@ -363,7 +362,7 @@ describe('AuthService', () => {
     it('should throw error with invalid token', async () => {
       usersService.findByResetToken.mockResolvedValue(null);
 
-      await expect(service.resetPassword('invalid_token', 'newpassword123')).rejects.toThrow('Invalid or expired reset token');
+      await expect(service.resetPassword('invalid_token', 'newpassword123')).rejects.toThrow('auth.errors.invalidResetToken');
     });
   });
 });

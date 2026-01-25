@@ -17,7 +17,7 @@ export class PaymentsService {
   async createFromServiceOrder(accountId: Types.ObjectId, serviceOrderId: string, userId: Types.ObjectId): Promise<PaymentOrder> {
     const serviceOrder = await this.serviceOrderModel.findOne({ account: accountId, _id: serviceOrderId }).exec();
     if (!serviceOrder) {
-      throw new NotFoundException('Service order not found');
+      throw new NotFoundException('payments.errors.serviceOrderNotFound');
     }
 
     const paymentOrder = new this.paymentOrderModel({
@@ -121,7 +121,7 @@ export class PaymentsService {
       .populate('serviceOrder', 'orderNumber description totalValue completedAt status')
       .exec();
     if (!paymentOrder) {
-      throw new NotFoundException('Payment order not found');
+      throw new NotFoundException('payments.errors.paymentOrderNotFound');
     }
     return paymentOrder;
   }
@@ -129,14 +129,14 @@ export class PaymentsService {
   async remove(id: string, accountId: Types.ObjectId): Promise<void> {
     const result = await this.paymentOrderModel.findOneAndDelete({ _id: id, account: accountId }).exec();
     if (!result) {
-      throw new NotFoundException('Payment order not found');
+      throw new NotFoundException('payments.errors.paymentOrderNotFound');
     }
   }
 
   async update(id: string, accountId: Types.ObjectId, updateData: UpdatePaymentOrderDto, userId: Types.ObjectId): Promise<PaymentOrder> {
     const paymentOrder = await this.paymentOrderModel.findOne({ _id: id, account: accountId }).exec();
     if (!paymentOrder) {
-      throw new NotFoundException('Payment order not found');
+      throw new NotFoundException('payments.errors.paymentOrderNotFound');
     }
 
     const updateFields: any = { updatedBy: userId };
@@ -171,7 +171,7 @@ export class PaymentsService {
       .exec();
 
     if (!updatedPaymentOrder) {
-      throw new NotFoundException('Payment order not found');
+      throw new NotFoundException('payments.errors.paymentOrderNotFound');
     }
 
     // Calculate total paid amount and update status if not manually set

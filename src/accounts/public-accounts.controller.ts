@@ -1,10 +1,10 @@
-import { BadRequestException, Body, Controller, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, NotFoundException, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import * as crypto from 'crypto';
+import { Types } from 'mongoose';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Types } from 'mongoose';
 import { RolesService } from '../roles/roles.service';
 import { RoleDocument } from '../roles/schemas/role.schema';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -49,7 +49,7 @@ export class PublicAccountsController {
       }),
       fileFilter: (req, file, callback) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-          return callback(new Error('Only image files are allowed!'), false);
+          throw new BadRequestException('accounts.errors.onlyImageFilesAllowed');
         }
         callback(null, true);
       },
@@ -69,13 +69,13 @@ export class PublicAccountsController {
     // Check if account already exists
     const existingAccount = await this.accountsService.findByAccountName(accountName);
     if (existingAccount) {
-      throw new Error('Account with this name already exists');
+      throw new BadRequestException('accounts.errors.accountNameExists');
     }
 
     // Check if user email already exists
     const existingUser = await this.usersService.findOneByEmail(createAccountDto.email);
     if (existingUser) {
-      throw new Error('User with this email already exists');
+      throw new BadRequestException('accounts.errors.userEmailExists');
     }
 
     // Generate verification token
@@ -140,27 +140,27 @@ export class PublicAccountsController {
         lastName: user.lastName,
         email: user.email
       },
-      message: 'Account created successfully. Please check your email to verify your account.'
+      message: 'accounts.success.accountCreated'
     };
   }
 
   @Post('verify-email')
   async verifyEmail(@Query('token') token: string) {
     if (!token) {
-      throw new Error('Verification token is required');
+      throw new BadRequestException('accounts.errors.verificationTokenRequired');
     }
 
     const account = await this.accountsService.findByVerificationToken(token);
     if (!account) {
-      throw new Error('Invalid or expired verification token');
+      throw new BadRequestException('accounts.errors.invalidVerificationToken');
     }
 
     if (account.status === 'active') {
-      throw new BadRequestException('Account is already verified');
+      throw new BadRequestException('accounts.errors.accountAlreadyVerified');
     }
 
     if (account.verificationTokenExpires && account.verificationTokenExpires < new Date()) {
-      throw new Error('Verification token has expired');
+      throw new BadRequestException('accounts.errors.verificationTokenExpired');
     }
 
     // Update account status to active and clear verification token
@@ -171,7 +171,7 @@ export class PublicAccountsController {
     });
 
     return {
-      message: 'Email verified successfully. Your account is now active.',
+      message: 'accounts.success.emailVerified',
       account: {
         id: account._id,
         name: account.name,
@@ -183,18 +183,18 @@ export class PublicAccountsController {
   @Post('resend-verification')
   async resendVerification(@Body() body: { email: string }) {
     if (!body.email) {
-      throw new Error('Email is required');
+      throw new BadRequestException('accounts.errors.emailRequired');
     }
 
     // Find user by email
     const user = await this.usersService.findOneByEmail(body.email);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('accounts.errors.userNotFound');
     }
 
     // Check if account is already active
     if (user.account?.status === 'active') {
-      throw new Error('Account is already verified');
+      throw new BadRequestException('accounts.errors.accountAlreadyVerified');
     }
 
     // Generate new verification token
@@ -212,11 +212,11 @@ export class PublicAccountsController {
       await this.emailService.sendVerificationEmail(user.email, `${user.firstName} ${user.lastName}`, verificationToken);
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
-      throw new Error('Failed to send verification email');
+      throw new BadRequestException('accounts.errors.failedToSendVerificationEmail');
     }
 
     return {
-      message: 'Verification email sent successfully. Please check your email.'
+      message: 'accounts.success.verificationEmailSent'
     };
   }
 }

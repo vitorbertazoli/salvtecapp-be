@@ -40,7 +40,7 @@ export class TechniciansService {
     // Check if email already exists
     const existingEmailUser = await this.usersService.findOneByAccountAndEmail(account, userAccountData.email);
     if (existingEmailUser) {
-      throw new BadRequestException('Email already exists');
+      throw new BadRequestException('technicians.errors.emailAlreadyExists');
     }
 
     // Get role IDs for the roles

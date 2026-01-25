@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
@@ -21,7 +21,7 @@ export class EventsService {
     const technician = await this.technicianModel.findById(eventData.technician);
 
     if (!customer || !technician) {
-      throw new Error('Invalid customer or technician');
+      throw new BadRequestException('events.errors.invalidCustomerOrTechnician');
     }
 
     // Build title
@@ -260,7 +260,7 @@ export class EventsService {
     const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('events.errors.eventNotFound');
     }
     event.status = 'completed';
     event.completedAt = new Date();

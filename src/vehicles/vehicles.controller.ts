@@ -41,7 +41,7 @@ export class VehiclesController {
   @Get(':id')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     const vehicle = await this.vehiclesService.findOne(id, accountId);
-    if (!vehicle) throw new NotFoundException('Vehicle not found');
+    if (!vehicle) throw new NotFoundException('vehicles.notFound');
     return vehicle;
   }
 
@@ -54,7 +54,7 @@ export class VehiclesController {
     } as any;
 
     const vehicle = await this.vehiclesService.update(id, vehicleData, accountId);
-    if (!vehicle) throw new NotFoundException('Vehicle not found');
+    if (!vehicle) throw new NotFoundException('vehicles.notFound');
     return vehicle;
   }
 
@@ -62,7 +62,7 @@ export class VehiclesController {
   @Roles('ADMIN', 'SUPERVISOR')
   async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     const vehicle = await this.vehiclesService.remove(id, accountId);
-    if (!vehicle) throw new NotFoundException('Vehicle not found');
+    if (!vehicle) throw new NotFoundException('vehicles.notFound');
     return vehicle;
   }
 }

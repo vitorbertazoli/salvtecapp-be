@@ -1,11 +1,10 @@
-import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { QuotesService } from '../src/quotes/quotes.service';
 import { Quote } from '../src/quotes/schemas/quote.schema';
-import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { EmailService } from '../src/utils/email.service';
 
 describe('QuotesService', () => {
@@ -328,7 +327,7 @@ describe('QuotesService', () => {
         exec: jest.fn().mockResolvedValue(null)
       });
 
-      await expect(service.sendQuote('invalid-id', mockAccountId, mockUserId)).rejects.toThrow('Quote not found');
+      await expect(service.sendQuote('invalid-id', mockAccountId, mockUserId)).rejects.toThrow('quotes.errors.quoteNotFound');
     });
 
     it('should throw error when customer email not found', async () => {
@@ -343,7 +342,7 @@ describe('QuotesService', () => {
         exec: jest.fn().mockResolvedValue(mockPopulatedQuote)
       });
 
-      await expect(service.sendQuote(mockQuote._id.toString(), mockAccountId, mockUserId)).rejects.toThrow('Customer email not found');
+      await expect(service.sendQuote(mockQuote._id.toString(), mockAccountId, mockUserId)).rejects.toThrow('quotes.errors.customerEmailNotFound');
     });
   });
 });

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -60,7 +60,7 @@ export class AuthService {
   async refreshToken(userFromGuard: any) {
     const user = await this.usersService.findById(userFromGuard.id);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('auth.errors.userNotFound');
     }
 
     // Validate account and user status
@@ -101,7 +101,7 @@ export class AuthService {
     // Find user by reset token
     const user = await this.usersService.findByResetToken(token);
     if (!user) {
-      throw new Error('Invalid or expired reset token');
+      throw new BadRequestException('auth.errors.invalidResetToken');
     }
 
     // Hash the new password
@@ -126,15 +126,15 @@ export class AuthService {
    */
   private validateAccountStatus(account: any): void {
     if (account?.status === 'pending') {
-      throw new Error('Account not verified. Please check your email for verification instructions.');
+      throw new BadRequestException('auth.errors.accountNotVerified');
     }
 
     if (account?.status === 'suspended') {
-      throw new Error('Account is suspended. Please contact support.');
+      throw new BadRequestException('auth.errors.accountSuspended');
     }
 
     if (account?.status !== 'active') {
-      throw new Error('Account is not active. Please contact support.');
+      throw new BadRequestException('auth.errors.accountNotActive');
     }
   }
 
@@ -143,7 +143,7 @@ export class AuthService {
    */
   private validateUserStatus(user: any): void {
     if (user.status !== 'active') {
-      throw new Error('User account is not active');
+      throw new BadRequestException('auth.errors.userNotActive');
     }
   }
 

@@ -91,7 +91,7 @@ describe('TechniciansController', () => {
         }
       };
 
-      await expect(controller.create(createTechnicianDto, mockAccountId, mockUserId)).rejects.toThrow('User account data is required to create a technician');
+      await expect(controller.create(createTechnicianDto, mockAccountId, mockUserId)).rejects.toThrow('technicians.errors.userAccountDataRequired');
     });
 
     it('should create a technician with user account', async () => {

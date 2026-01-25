@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, Param, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpException, Param, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Types } from 'mongoose';
 import { diskStorage } from 'multer';
@@ -38,7 +38,7 @@ export class AccountsController {
   @Roles('ADMIN')
   async findById(@Param('id') id: string, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
-      return new HttpException('Access denied', 403);
+      return new HttpException('accounts.errors.accessDenied', 403);
     }
 
     return this.accountsService.findOne(accountid);
@@ -48,7 +48,7 @@ export class AccountsController {
   @Roles('ADMIN')
   async update(@Param('id') id: string, @Body() accountData: UpdateAccountDto, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
-      return new HttpException('Access denied', 403);
+      return new HttpException('accounts.errors.accessDenied', 403);
     }
 
     return this.accountsService.update(id, accountData);
@@ -67,7 +67,7 @@ export class AccountsController {
       }),
       fileFilter: (req, file, callback) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-          return callback(new Error('Only image files are allowed!'), false);
+          throw new BadRequestException('accounts.errors.onlyImageFilesAllowed');
         }
         callback(null, true);
       },
@@ -78,11 +78,11 @@ export class AccountsController {
   )
   async uploadLogo(@Param('id') id: string, @UploadedFile() file: UploadedFile, @GetAccountId() accountid: Types.ObjectId) {
     if (id !== accountid.toString()) {
-      return new HttpException('Access denied', 403);
+      return new HttpException('accounts.errors.accessDenied', 403);
     }
 
     if (!file) {
-      throw new HttpException('No file uploaded', 400);
+      throw new HttpException('accounts.errors.noFileUploaded', 400);
     }
 
     // Save the file and get the URL

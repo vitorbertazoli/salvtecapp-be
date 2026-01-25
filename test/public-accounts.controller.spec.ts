@@ -191,7 +191,7 @@ describe('PublicAccountsController', () => {
           lastName: mockUser.lastName,
           email: mockUser.email
         },
-        message: 'Account created successfully. Please check your email to verify your account.'
+        message: 'accounts.success.accountCreated'
       });
     });
 
@@ -261,7 +261,7 @@ describe('PublicAccountsController', () => {
     it('should throw error if account name already exists', async () => {
       accountsService.findByAccountName.mockResolvedValue(mockAccount);
 
-      await expect(controller.create(createAccountDto)).rejects.toThrow('Account with this name already exists');
+      await expect(controller.create(createAccountDto)).rejects.toThrow('accounts.errors.accountNameExists');
 
       expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
       expect(usersService.findOneByEmail).not.toHaveBeenCalled();
@@ -271,7 +271,7 @@ describe('PublicAccountsController', () => {
       accountsService.findByAccountName.mockResolvedValue(null);
       usersService.findOneByEmail.mockResolvedValue(mockUser);
 
-      await expect(controller.create(createAccountDto)).rejects.toThrow('User with this email already exists');
+      await expect(controller.create(createAccountDto)).rejects.toThrow('accounts.errors.userEmailExists');
 
       expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
       expect(usersService.findOneByEmail).toHaveBeenCalledWith(createAccountDto.email);
@@ -294,7 +294,7 @@ describe('PublicAccountsController', () => {
         verificationTokenExpires: undefined
       });
       expect(result).toEqual({
-        message: 'Email verified successfully. Your account is now active.',
+        message: 'accounts.success.emailVerified',
         account: {
           id: mockAccount._id,
           name: mockAccount.name,
@@ -304,7 +304,7 @@ describe('PublicAccountsController', () => {
     });
 
     it('should throw error if token is missing', async () => {
-      await expect(controller.verifyEmail('')).rejects.toThrow('Verification token is required');
+      await expect(controller.verifyEmail('')).rejects.toThrow('accounts.errors.verificationTokenRequired');
       expect(accountsService.findByVerificationToken).not.toHaveBeenCalled();
     });
 
@@ -312,7 +312,7 @@ describe('PublicAccountsController', () => {
       const token = 'invalid-token';
       accountsService.findByVerificationToken.mockResolvedValue(null);
 
-      await expect(controller.verifyEmail(token)).rejects.toThrow('Invalid or expired verification token');
+      await expect(controller.verifyEmail(token)).rejects.toThrow('accounts.errors.invalidVerificationToken');
     });
 
     it('should throw BadRequestException if account is already active', async () => {
@@ -332,7 +332,7 @@ describe('PublicAccountsController', () => {
       };
       accountsService.findByVerificationToken.mockResolvedValue(expiredAccount);
 
-      await expect(controller.verifyEmail(token)).rejects.toThrow('Verification token has expired');
+      await expect(controller.verifyEmail(token)).rejects.toThrow('accounts.errors.verificationTokenExpired');
       expect(accountsService.update).not.toHaveBeenCalled();
     });
   });
@@ -354,26 +354,26 @@ describe('PublicAccountsController', () => {
       });
       expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(mockUser.email, `${mockUser.firstName} ${mockUser.lastName}`, expect.any(String));
       expect(result).toEqual({
-        message: 'Verification email sent successfully. Please check your email.'
+        message: 'accounts.success.verificationEmailSent'
       });
     });
 
     it('should throw error if email is missing', async () => {
-      await expect(controller.resendVerification({ email: '' })).rejects.toThrow('Email is required');
+      await expect(controller.resendVerification({ email: '' })).rejects.toThrow('accounts.errors.emailRequired');
       expect(usersService.findOneByEmail).not.toHaveBeenCalled();
     });
 
     it('should throw error if user not found', async () => {
       usersService.findOneByEmail.mockResolvedValue(null);
 
-      await expect(controller.resendVerification(resendBody)).rejects.toThrow('User not found');
+      await expect(controller.resendVerification(resendBody)).rejects.toThrow('accounts.errors.userNotFound');
     });
 
     it('should throw error if account is already active', async () => {
       const activeUser = { ...mockUser, account: { ...mockAccount, status: 'active' } };
       usersService.findOneByEmail.mockResolvedValue(activeUser);
 
-      await expect(controller.resendVerification(resendBody)).rejects.toThrow('Account is already verified');
+      await expect(controller.resendVerification(resendBody)).rejects.toThrow('accounts.errors.accountAlreadyVerified');
       expect(accountsService.update).not.toHaveBeenCalled();
     });
 
@@ -384,7 +384,7 @@ describe('PublicAccountsController', () => {
       accountsService.update.mockResolvedValue(mockAccount);
       emailService.sendVerificationEmail.mockRejectedValue(new Error('Email service error'));
 
-      await expect(controller.resendVerification(resendBody)).rejects.toThrow('Failed to send verification email');
+      await expect(controller.resendVerification(resendBody)).rejects.toThrow('accounts.errors.failedToSendVerificationEmail');
 
       consoleErrorSpy.mockRestore();
     });

@@ -282,7 +282,12 @@ describe('QuotesController', () => {
 
       const result = await controller.update(mockQuote._id.toString(), updateQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuoteToServiceOrderService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, new Types.ObjectId(mockUserId));
+      expect(mockQuoteToServiceOrderService.updateByAccount).toHaveBeenCalledWith(
+        mockQuote._id.toString(),
+        expectedQuoteData,
+        mockAccountId,
+        new Types.ObjectId(mockUserId)
+      );
       expect(result).toMatchObject({
         ...mockQuote,
         ...updateQuoteDto
@@ -307,7 +312,12 @@ describe('QuotesController', () => {
 
       const result = await controller.update(mockQuote._id.toString(), updateQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuoteToServiceOrderService.updateByAccount).toHaveBeenCalledWith(mockQuote._id.toString(), expectedQuoteData, mockAccountId, new Types.ObjectId(mockUserId));
+      expect(mockQuoteToServiceOrderService.updateByAccount).toHaveBeenCalledWith(
+        mockQuote._id.toString(),
+        expectedQuoteData,
+        mockAccountId,
+        new Types.ObjectId(mockUserId)
+      );
       expect(result).toMatchObject({
         ...mockQuote,
         customer: mockCustomerId

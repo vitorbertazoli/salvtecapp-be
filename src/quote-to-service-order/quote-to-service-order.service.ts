@@ -35,7 +35,7 @@ export class QuoteToServiceOrderService {
 
     // If quote has been accepted, do not allow changes
     if (currentQuote.status === 'accepted') {
-      throw new BadRequestException('Quote has been accepted and cannot be modified. Use change order process.');
+      throw new BadRequestException('quotes.errors.quoteAlreadyAccepted');
     }
 
     // If quote has been sent, reset status to draft when updating
@@ -66,18 +66,18 @@ export class QuoteToServiceOrderService {
     // Fetch the quote with populated services and products
     const quote = await this.findByIdAndAccount(quoteId, accountId);
     if (!quote) {
-      throw new Error('Quote not found');
+      throw new NotFoundException('quotes.errors.quoteNotFound');
     }
 
     // Check if service order already exists for this quote
     const existingServiceOrder = await this.serviceOrderModel.findOne({ quote: new Types.ObjectId(quoteId) }).exec();
     if (existingServiceOrder) {
-      throw new Error('Service order already exists for this quote');
+      throw new BadRequestException('quotes.errors.serviceOrderAlreadyExists');
     }
 
     // Check if quote is in sent, draft, or accepted status
     if (quote.status !== 'sent' && quote.status !== 'draft' && quote.status !== 'accepted') {
-      throw new Error('Quote must be in sent, draft, or accepted status to create service order');
+      throw new BadRequestException('quotes.errors.invalidQuoteStatus');
     }
 
     // Create service order items from quote services and products

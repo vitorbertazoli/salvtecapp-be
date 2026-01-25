@@ -9,7 +9,7 @@ export class PublicQuotesController {
   async getQuoteForApproval(@Param('token') token: string) {
     const quote = await this.quotesService.getQuoteByToken(token);
     if (!quote) {
-      throw new NotFoundException('Quote not found or token expired');
+      throw new NotFoundException('quotes.errors.quoteNotFoundOrTokenExpired');
     }
 
     // Return formatted quote data for the frontend
@@ -36,7 +36,7 @@ export class PublicQuotesController {
   async approveQuote(@Param('token') token: string, @Body() approvalData: { approved: boolean; notes?: string }) {
     const result = await this.quotesService.approveQuoteByToken(token, approvalData);
     if (!result) {
-      throw new NotFoundException('Quote not found or token expired');
+      throw new NotFoundException('quotes.errors.quoteNotFoundOrTokenExpired');
     }
 
     return result;

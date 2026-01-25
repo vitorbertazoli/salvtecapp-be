@@ -97,7 +97,7 @@ describe('PublicQuotesController', () => {
     it('should throw NotFoundException for invalid token', async () => {
       mockQuotesService.getQuoteByToken.mockResolvedValue(null);
 
-      await expect(controller.getQuoteForApproval('invalid-token')).rejects.toThrow('Quote not found or token expired');
+      await expect(controller.getQuoteForApproval('invalid-token')).rejects.toThrow('quotes.errors.quoteNotFoundOrTokenExpired');
     });
   });
 
@@ -136,7 +136,7 @@ describe('PublicQuotesController', () => {
       const approvalData = { approved: true };
       mockQuotesService.approveQuoteByToken.mockResolvedValue(null);
 
-      await expect(controller.approveQuote('invalid-token', approvalData)).rejects.toThrow('Quote not found or token expired');
+      await expect(controller.approveQuote('invalid-token', approvalData)).rejects.toThrow('quotes.errors.quoteNotFoundOrTokenExpired');
     });
   });
 });

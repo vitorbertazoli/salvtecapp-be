@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
+import { Customer } from '../src/customers/schemas/customer.schema';
 import { EventsService } from '../src/events/events.service';
-import { Event, EventDocument } from '../src/events/schemas/event.schema';
-import { Customer, CustomerDocument } from '../src/customers/schemas/customer.schema';
-import { Technician, TechnicianDocument } from '../src/technicians/schemas/technician.schema';
+import { Event } from '../src/events/schemas/event.schema';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
+import { Technician } from '../src/technicians/schemas/technician.schema';
 
 describe('EventsService', () => {
   let service: EventsService;
@@ -160,7 +160,7 @@ describe('EventsService', () => {
       customerModel.findById.mockResolvedValue(null);
       technicianModel.findById.mockResolvedValue(mockTechnician as any);
 
-      await expect(service.create(eventData, mockAccountId)).rejects.toThrow('Invalid customer or technician');
+      await expect(service.create(eventData, mockAccountId)).rejects.toThrow('events.errors.invalidCustomerOrTechnician');
     });
 
     it('should throw error when technician not found', async () => {
@@ -175,7 +175,7 @@ describe('EventsService', () => {
       customerModel.findById.mockResolvedValue(mockCustomer as any);
       technicianModel.findById.mockResolvedValue(null);
 
-      await expect(service.create(eventData, mockAccountId)).rejects.toThrow('Invalid customer or technician');
+      await expect(service.create(eventData, mockAccountId)).rejects.toThrow('events.errors.invalidCustomerOrTechnician');
     });
 
     it('should create event without service order', async () => {
@@ -530,7 +530,7 @@ describe('EventsService', () => {
     it('should throw NotFoundException when event not found', async () => {
       jest.spyOn(eventModel, 'findOne').mockResolvedValue(null);
 
-      await expect(service.completeByAccount('nonexistent-id', mockUserId, mockAccountId)).rejects.toThrow('Event not found');
+      await expect(service.completeByAccount('nonexistent-id', mockUserId, mockAccountId)).rejects.toThrow('events.errors.eventNotFound');
     });
   });
 });

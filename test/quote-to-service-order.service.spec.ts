@@ -177,11 +177,7 @@ describe('QuoteToServiceOrderService', () => {
 
       const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
 
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockQuote._id.toString(), account: mockAccountId },
-        updateData,
-        { new: true }
-      );
+      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockQuote._id.toString(), account: mockAccountId }, updateData, { new: true });
       expect(result).toMatchObject({
         ...mockQuote,
         ...updateData
@@ -214,11 +210,7 @@ describe('QuoteToServiceOrderService', () => {
 
       const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
 
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockQuote._id.toString(), account: mockAccountId },
-        expectedUpdateData,
-        { new: true }
-      );
+      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockQuote._id.toString(), account: mockAccountId }, expectedUpdateData, { new: true });
       expect(result.status).toBe('draft');
     });
 
@@ -232,9 +224,7 @@ describe('QuoteToServiceOrderService', () => {
         exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'accepted' })
       });
 
-      await expect(
-        service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId)).rejects.toThrow(BadRequestException);
     });
 
     it('should return null when quote not found', async () => {
@@ -261,12 +251,7 @@ describe('QuoteToServiceOrderService', () => {
       // Mock the updateByAccount method
       jest.spyOn(service, 'updateByAccount').mockResolvedValue(mockQuote as any);
 
-      const result = await service.createFromQuote(
-        mockQuoteId.toString(),
-        'normal',
-        mockAccountId,
-        mockUserId
-      );
+      const result = await service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId, mockUserId);
 
       expect(service.findByIdAndAccount).toHaveBeenCalledWith(mockQuoteId.toString(), mockAccountId);
       expect(serviceOrderModel).toHaveBeenCalledWith(
@@ -295,9 +280,7 @@ describe('QuoteToServiceOrderService', () => {
     it('should throw error when quote not found', async () => {
       jest.spyOn(service, 'findByIdAndAccount').mockResolvedValue(null);
 
-      await expect(
-        service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId, mockUserId)
-      ).rejects.toThrow('Quote not found');
+      await expect(service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId, mockUserId)).rejects.toThrow('quotes.errors.quoteNotFound');
     });
   });
 });

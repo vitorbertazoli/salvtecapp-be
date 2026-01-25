@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 export interface EmailOptions {
   to: string | string[];
@@ -21,7 +21,7 @@ export class EmailService {
     const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
 
     if (!accessKeyId || !secretAccessKey) {
-      throw new Error('AWS credentials not configured. Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.');
+      throw new BadRequestException('email.errors.awsCredentialsNotConfigured');
     }
 
     this.sesClient = new SESClient({
@@ -38,7 +38,7 @@ export class EmailService {
 
     const fromEmail = from || this.configService.get<string>('AWS_SES_FROM_EMAIL');
     if (!fromEmail) {
-      throw new Error('From email not configured. Set AWS_SES_FROM_EMAIL environment variable.');
+      throw new BadRequestException('email.errors.emailConfigurationMissing');
     }
 
     const toAddresses = Array.isArray(to) ? to : [to];
@@ -67,7 +67,7 @@ export class EmailService {
       await this.sesClient.send(command);
     } catch (error) {
       console.error('Error sending email:', error);
-      throw new Error(`Failed to send email: ${error.message}`);
+      throw new BadRequestException('email.errors.failedToSendEmail');
     }
   }
 

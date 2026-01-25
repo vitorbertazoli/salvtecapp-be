@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
-import { MasterAdminGuard } from '../src/admin/guards/master-admin.guard';
 import { Types } from 'mongoose';
 import { AdminController } from '../src/admin/admin.controller';
 import { AdminService } from '../src/admin/admin.service';
 import { UpdateAccountStatusDto } from '../src/admin/dto/update-account-status.dto';
+import { MasterAdminGuard } from '../src/admin/guards/master-admin.guard';
+import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 
 describe('AdminController', () => {
   let controller: AdminController;
@@ -160,7 +160,7 @@ describe('AdminController', () => {
     it('should throw error when trying to delete own account', async () => {
       const ownAccountId = mockCurrentUserAccountId;
 
-      await expect(controller.deleteAccount(ownAccountId, ownAccountId.toString())).rejects.toThrow('You cannot delete your own account while logged in.');
+      await expect(controller.deleteAccount(ownAccountId, ownAccountId.toString())).rejects.toThrow('admin.errors.cannotDeleteOwnAccount');
 
       expect(adminService.deleteAccount).not.toHaveBeenCalled();
     });

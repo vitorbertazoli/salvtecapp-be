@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
@@ -20,7 +20,7 @@ export class UsersService {
   ): Promise<User> {
     const user = await this.userModel.findOne({ email }).exec();
     if (user) {
-      throw new HttpException('User with this email already exists', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('users.errors.emailAlreadyExists');
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const createdUser = new this.userModel({

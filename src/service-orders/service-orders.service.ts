@@ -235,7 +235,7 @@ export class ServiceOrdersService {
   ): Promise<ServiceOrder> {
     const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
     if (!serviceOrder) {
-      throw new Error('Service order not found');
+      throw new NotFoundException('serviceOrders.errors.notFound');
     }
 
     // Calculate new version
@@ -274,16 +274,16 @@ export class ServiceOrdersService {
   async approveChangeOrder(serviceOrderId: string, changeOrderVersion: number, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
     const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
     if (!serviceOrder) {
-      throw new NotFoundException('Service order not found');
+      throw new NotFoundException('serviceOrders.notFound');
     }
 
     const changeOrder = serviceOrder.changeOrders?.find((co) => co.version === changeOrderVersion);
     if (!changeOrder) {
-      throw new NotFoundException('Change order not found');
+      throw new NotFoundException('serviceOrders.errors.changeOrderNotFound');
     }
 
     if (changeOrder.status !== 'pending') {
-      throw new BadRequestException('Change order is not pending');
+      throw new BadRequestException('serviceOrders.errors.changeOrderNotPending');
     }
 
     // Update change order status
@@ -309,16 +309,16 @@ export class ServiceOrdersService {
   async rejectChangeOrder(serviceOrderId: string, changeOrderVersion: number, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
     const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
     if (!serviceOrder) {
-      throw new NotFoundException('Service order not found');
+      throw new NotFoundException('serviceOrders.notFound');
     }
 
     const changeOrder = serviceOrder.changeOrders?.find((co) => co.version === changeOrderVersion);
     if (!changeOrder) {
-      throw new NotFoundException('Change order not found');
+      throw new NotFoundException('serviceOrders.errors.changeOrderNotFound');
     }
 
     if (changeOrder.status !== 'pending') {
-      throw new BadRequestException('Change order is not pending');
+      throw new BadRequestException('serviceOrders.errors.changeOrderNotPending');
     }
 
     // Update change order status

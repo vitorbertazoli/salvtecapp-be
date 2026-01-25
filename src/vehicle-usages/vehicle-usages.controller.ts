@@ -35,7 +35,7 @@ export class VehicleUsagesController {
   @Get(':id')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     const usage = await this.vehicleUsagesService.findOne(id, accountId);
-    if (!usage) throw new NotFoundException('Vehicle usage not found');
+    if (!usage) throw new NotFoundException('vehicleUsages.notFound');
     return usage;
   }
 
@@ -48,7 +48,7 @@ export class VehicleUsagesController {
     } as any;
 
     const usage = await this.vehicleUsagesService.update(id, vehicleUsageData, accountId);
-    if (!usage) throw new NotFoundException('Vehicle usage not found');
+    if (!usage) throw new NotFoundException('vehicleUsages.notFound');
     return usage;
   }
 
@@ -56,7 +56,7 @@ export class VehicleUsagesController {
   @Roles('SUPERVISOR', 'ADMIN')
   async approve(@Param('id') id: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     const usage = await this.vehicleUsagesService.approve(id, new Types.ObjectId(userId), accountId);
-    if (!usage) throw new NotFoundException('Vehicle usage not found');
+    if (!usage) throw new NotFoundException('vehicleUsages.notFound');
     return usage;
   }
 
@@ -64,7 +64,7 @@ export class VehicleUsagesController {
   @Roles('ADMIN')
   async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     const usage = await this.vehicleUsagesService.remove(id, accountId);
-    if (!usage) throw new NotFoundException('Vehicle usage not found');
+    if (!usage) throw new NotFoundException('vehicleUsages.notFound');
     return usage;
   }
 }

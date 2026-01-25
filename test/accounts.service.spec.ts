@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Model, Types } from 'mongoose';
 import { AccountsService } from '../src/accounts/accounts.service';
 import { Account, AccountDocument } from '../src/accounts/schemas/account.schema';
@@ -10,7 +10,7 @@ describe('AccountsService', () => {
 
   const mockAccountId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
-  const mockAccount: Account = {
+  const mockAccount = {
     _id: mockAccountId,
     name: 'test-account',
     plan: 'free',
@@ -33,7 +33,7 @@ describe('AccountsService', () => {
       findByIdAndDelete: jest.fn()
     };
 
-    // Mock the constructor behavior
+    // Create a proper mock constructor that also has static methods
     const MockModel = jest.fn().mockImplementation((data) => {
       const instance = { ...data };
       instance.save = jest.fn().mockResolvedValue({ ...data, _id: mockAccountId });
@@ -41,11 +41,7 @@ describe('AccountsService', () => {
     });
 
     // Add static methods to the constructor
-    MockModel.find = mockAccountModel.find;
-    MockModel.findById = mockAccountModel.findById;
-    MockModel.findOne = mockAccountModel.findOne;
-    MockModel.findByIdAndUpdate = mockAccountModel.findByIdAndUpdate;
-    MockModel.findByIdAndDelete = mockAccountModel.findByIdAndDelete;
+    Object.assign(MockModel, mockAccountModel);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

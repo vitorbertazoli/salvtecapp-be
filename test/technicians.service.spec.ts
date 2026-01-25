@@ -279,7 +279,7 @@ describe('TechniciansService', () => {
       usersService.findOneByAccountAndEmail.mockResolvedValue(mockUser);
 
       await expect(service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData)).rejects.toThrow(
-        'Email already exists'
+        'technicians.errors.emailAlreadyExists'
       );
     });
   });

@@ -17,7 +17,7 @@ export class FollowUpsService {
     // check if customer exists
     const customerExists = await this.customersService.findByIdAndAccount(customerId, followUpData.account!);
     if (!customerExists) {
-      throw new NotFoundException('Customer not found');
+      throw new NotFoundException('followUps.errors.customerNotFound');
     }
 
     // Ensure notes is an array

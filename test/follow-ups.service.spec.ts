@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
-import { FollowUp, FollowUpDocument } from '../src/follow-ups/schemas/follow-up.schema';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
 import { CustomersService } from '../src/customers/customers.service';
+import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
+import { FollowUp } from '../src/follow-ups/schemas/follow-up.schema';
 
 describe('FollowUpsService', () => {
   let service: FollowUpsService;
@@ -111,7 +111,7 @@ describe('FollowUpsService', () => {
 
       customersService.findByIdAndAccount.mockResolvedValue(null);
 
-      await expect(service.create(followUpData)).rejects.toThrow('Customer not found');
+      await expect(service.create(followUpData)).rejects.toThrow('followUps.errors.customerNotFound');
     });
 
     it('should handle string notes by converting to array', async () => {

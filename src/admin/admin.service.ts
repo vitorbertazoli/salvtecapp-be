@@ -1,16 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
+import { AccountDocument } from '../accounts/schemas/account.schema';
 import { CustomersService } from '../customers/customers.service';
-import { UsersService } from '../users/users.service';
+import { EventsService } from '../events/events.service';
+import { FollowUpsService } from '../follow-ups/follow-ups.service';
 import { ProductsService } from '../products/products.service';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
 import { ServicesService } from '../services/services.service';
 import { TechniciansService } from '../technicians/technicians.service';
-import { EventsService } from '../events/events.service';
-import { FollowUpsService } from '../follow-ups/follow-ups.service';
-import { AccountDocument } from '../accounts/schemas/account.schema';
-import { Types } from 'mongoose';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AdminService {
@@ -86,7 +86,7 @@ export class AdminService {
     const updatedAccount = (await this.accountsService.update(accountId, { status })) as AccountDocument;
 
     if (!updatedAccount) {
-      throw new Error('Account not found');
+      throw new NotFoundException('admin.errors.accountNotFound');
     }
 
     return {
@@ -102,7 +102,7 @@ export class AdminService {
     // First verify the account exists
     const account = await this.accountsService.findOne(accountId);
     if (!account) {
-      throw new Error('Account not found');
+      throw new NotFoundException('admin.errors.accountNotFound');
     }
 
     // Perform cascade deletion in the correct order to handle dependencies
@@ -137,13 +137,13 @@ export class AdminService {
     const deletedAccount = (await this.accountsService.delete(accountId)) as AccountDocument;
 
     if (!deletedAccount) {
-      throw new Error('Failed to delete account');
+      throw new BadRequestException('admin.errors.failedToDeleteAccount');
     }
 
     return {
       id: deletedAccount._id.toString(),
       name: deletedAccount.name,
-      message: 'Account and all related data deleted successfully'
+      message: 'admin.success.accountDeleted'
     };
   }
 }

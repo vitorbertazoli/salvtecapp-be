@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
+import { Types } from 'mongoose';
+import { User } from '../src/users/schemas/user.schema';
 import { UsersService } from '../src/users/users.service';
-import { User, UserDocument } from '../src/users/schemas/user.schema';
 
 // Mock bcrypt
 jest.mock('bcrypt');
@@ -170,7 +170,7 @@ describe('UsersService', () => {
       userModel.findOne.mockReturnValue(mockQuery);
 
       await expect(service.create(mockAccountId, 'João', 'Silva', 'joao.silva@example.com', 'password123', [], mockCreatedBy, mockUpdatedBy)).rejects.toThrow(
-        'User with this email already exists'
+        'users.errors.emailAlreadyExists'
       );
     });
   });

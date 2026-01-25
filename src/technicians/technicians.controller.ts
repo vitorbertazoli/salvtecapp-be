@@ -17,7 +17,7 @@ export class TechniciansController {
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
   async create(@Body() createTechnicianDto: CreateTechnicianDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     if (!createTechnicianDto.userAccount) {
-      throw new BadRequestException('User account data is required to create a technician');
+      throw new BadRequestException('technicians.errors.userAccountDataRequired');
     }
 
     const userAccount = {

@@ -8,11 +8,7 @@ import { QuotesService } from './quotes.service';
 import { Quote, QuoteSchema } from './schemas/quote.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Quote.name, schema: QuoteSchema }]),
-    EmailModule,
-    QuoteToServiceOrderModule
-  ],
+  imports: [MongooseModule.forFeature([{ name: Quote.name, schema: QuoteSchema }]), EmailModule, QuoteToServiceOrderModule],
   controllers: [QuotesController, PublicQuotesController],
   providers: [QuotesService],
   exports: [QuotesService]

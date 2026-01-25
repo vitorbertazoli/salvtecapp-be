@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UsersService } from '../../users/users.service';
 import { TechniciansService } from 'src/technicians/technicians.service';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -20,20 +20,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('auth.errors.userNotFound');
     }
 
     // Check if account is active
     if (user.account?.status === 'pending') {
-      throw new UnauthorizedException('Account not verified. Please check your email for verification instructions.');
+      throw new UnauthorizedException('auth.errors.accountNotVerified');
     }
 
     if (user.account?.status === 'suspended') {
-      throw new UnauthorizedException('Account is suspended. Please contact support.');
+      throw new UnauthorizedException('auth.errors.accountSuspended');
     }
 
     if (user.account?.status !== 'active') {
-      throw new UnauthorizedException('Account is not active. Please contact support.');
+      throw new UnauthorizedException('auth.errors.accountNotActive');
     }
 
     // if this user is a TECHNICIAN, ensure their technician id gets added to the user object

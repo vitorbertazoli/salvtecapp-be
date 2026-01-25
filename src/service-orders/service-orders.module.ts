@@ -6,10 +6,7 @@ import { ServiceOrdersController } from './service-orders.controller';
 import { ServiceOrdersService } from './service-orders.service';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: ServiceOrder.name, schema: ServiceOrderSchema }]),
-    QuoteToServiceOrderModule
-  ],
+  imports: [MongooseModule.forFeature([{ name: ServiceOrder.name, schema: ServiceOrderSchema }]), QuoteToServiceOrderModule],
   controllers: [ServiceOrdersController],
   providers: [ServiceOrdersService],
   exports: [ServiceOrdersService]

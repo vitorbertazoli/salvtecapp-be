@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { AdminService } from '../src/admin/admin.service';
 import { AccountsService } from '../src/accounts/accounts.service';
+import { AccountDocument } from '../src/accounts/schemas/account.schema';
+import { AdminService } from '../src/admin/admin.service';
 import { CustomersService } from '../src/customers/customers.service';
-import { UsersService } from '../src/users/users.service';
+import { EventsService } from '../src/events/events.service';
+import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
 import { ProductsService } from '../src/products/products.service';
 import { QuotesService } from '../src/quotes/quotes.service';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 import { ServicesService } from '../src/services/services.service';
 import { TechniciansService } from '../src/technicians/technicians.service';
-import { EventsService } from '../src/events/events.service';
-import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
-import { AccountDocument } from '../src/accounts/schemas/account.schema';
+import { UsersService } from '../src/users/users.service';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -276,7 +276,7 @@ describe('AdminService', () => {
     it('should throw error if account not found', async () => {
       accountsService.update.mockResolvedValue(null);
 
-      await expect(service.updateAccountStatus(mockAccountId.toString(), 'active')).rejects.toThrow('Account not found');
+      await expect(service.updateAccountStatus(mockAccountId.toString(), 'active')).rejects.toThrow('admin.errors.accountNotFound');
       expect(accountsService.update).toHaveBeenCalledWith(mockAccountId.toString(), { status: 'active' });
     });
   });
@@ -316,14 +316,14 @@ describe('AdminService', () => {
       expect(result).toEqual({
         id: mockAccount._id.toString(),
         name: mockAccount.name,
-        message: 'Account and all related data deleted successfully'
+        message: 'admin.success.accountDeleted'
       });
     });
 
     it('should throw error if account not found', async () => {
       accountsService.findOne.mockResolvedValue(null);
 
-      await expect(service.deleteAccount(mockAccountId)).rejects.toThrow('Account not found');
+      await expect(service.deleteAccount(mockAccountId)).rejects.toThrow('admin.errors.accountNotFound');
       expect(accountsService.findOne).toHaveBeenCalledWith(mockAccountId);
 
       // Verify no cascade deletions are called
@@ -346,7 +346,7 @@ describe('AdminService', () => {
       productsService.deleteAllByAccount.mockResolvedValue(undefined);
       usersService.deleteAllByAccount.mockResolvedValue(undefined);
 
-      await expect(service.deleteAccount(mockAccountId)).rejects.toThrow('Failed to delete account');
+      await expect(service.deleteAccount(mockAccountId)).rejects.toThrow('admin.errors.failedToDeleteAccount');
     });
   });
 });

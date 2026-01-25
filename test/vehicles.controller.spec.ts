@@ -136,7 +136,7 @@ describe('VehiclesController', () => {
     it('should throw NotFoundException if vehicle not found', async () => {
       vehiclesService.findOne.mockResolvedValue(null);
 
-      await expect(controller.findOne(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('Vehicle not found');
+      await expect(controller.findOne(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('vehicles.notFound');
     });
   });
 
@@ -169,7 +169,7 @@ describe('VehiclesController', () => {
 
       vehiclesService.update.mockResolvedValue(null);
 
-      await expect(controller.update(mockVehicleId.toString(), updateDto, mockAccountId, mockUserId.toString())).rejects.toThrow('Vehicle not found');
+      await expect(controller.update(mockVehicleId.toString(), updateDto, mockAccountId, mockUserId.toString())).rejects.toThrow('vehicles.notFound');
     });
   });
 
@@ -186,7 +186,7 @@ describe('VehiclesController', () => {
     it('should throw NotFoundException if vehicle not found', async () => {
       vehiclesService.remove.mockResolvedValue(null);
 
-      await expect(controller.remove(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('Vehicle not found');
+      await expect(controller.remove(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('vehicles.notFound');
     });
   });
 });

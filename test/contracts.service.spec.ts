@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Model, Types } from 'mongoose';
 import { ContractsService } from '../src/contracts/contracts.service';
 import { Contract, ContractDocument } from '../src/contracts/schemas/contract.schema';
@@ -132,7 +132,7 @@ describe('ContractsService', () => {
 
       customersService.findByIdAndAccount.mockResolvedValue(null);
 
-      await expect(service.create(contractData)).rejects.toThrow('Customer not found for the given account');
+      await expect(service.create(contractData)).rejects.toThrow('contracts.customerNotFound');
     });
   });
 
@@ -331,7 +331,7 @@ describe('ContractsService', () => {
 
       customersService.findByIdAndAccount.mockResolvedValue(null);
 
-      await expect(service.updateByAccount(mockContractId, updateData, mockAccountId)).rejects.toThrow('Customer not found for the given account');
+      await expect(service.updateByAccount(mockContractId, updateData, mockAccountId)).rejects.toThrow('contracts.customerNotFound');
     });
   });
 

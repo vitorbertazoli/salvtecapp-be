@@ -1,12 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { AccountsController } from '../src/accounts/accounts.controller';
 import { AccountsService } from '../src/accounts/accounts.service';
-import { UsersService } from '../src/users/users.service';
-import { RolesService } from '../src/roles/roles.service';
-import { EmailService } from '../src/utils/email.service';
 import { UpdateAccountDto } from '../src/accounts/dto/update-account.dto';
+import { RolesService } from '../src/roles/roles.service';
+import { UsersService } from '../src/users/users.service';
+import { EmailService } from '../src/utils/email.service';
 
 describe('AccountsController', () => {
   let controller: AccountsController;
@@ -106,7 +106,7 @@ describe('AccountsController', () => {
 
       expect(result).toBeInstanceOf(HttpException);
       expect((result as HttpException).getStatus()).toBe(403);
-      expect((result as any).message).toBe('Access denied');
+      expect((result as any).message).toBe('accounts.errors.accessDenied');
       expect(accountsService.findOne).not.toHaveBeenCalled();
     });
   });
@@ -138,7 +138,7 @@ describe('AccountsController', () => {
 
       expect(result).toBeInstanceOf(HttpException);
       expect((result as HttpException).getStatus()).toBe(403);
-      expect((result as any).message).toBe('Access denied');
+      expect((result as any).message).toBe('accounts.errors.accessDenied');
       expect(accountsService.update).not.toHaveBeenCalled();
     });
 
@@ -179,7 +179,7 @@ describe('AccountsController', () => {
 
       expect(result).toBeInstanceOf(HttpException);
       expect((result as HttpException).getStatus()).toBe(403);
-      expect((result as any).message).toBe('Access denied');
+      expect((result as any).message).toBe('accounts.errors.accessDenied');
       expect(accountsService.update).not.toHaveBeenCalled();
     });
 
@@ -192,7 +192,7 @@ describe('AccountsController', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
         expect((error as HttpException).getStatus()).toBe(400);
-        expect(error.message).toBe('No file uploaded');
+        expect(error.message).toBe('accounts.errors.noFileUploaded');
         expect(accountsService.update).not.toHaveBeenCalled();
       }
     });

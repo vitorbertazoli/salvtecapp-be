@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class MasterAdminGuard implements CanActivate {
@@ -7,11 +7,11 @@ export class MasterAdminGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException('admin.errors.userNotAuthenticated');
     }
 
     if (!user.isMasterAdmin) {
-      throw new ForbiddenException('Master admin access required');
+      throw new ForbiddenException('admin.errors.masterAdminAccessRequired');
     }
 
     return true;

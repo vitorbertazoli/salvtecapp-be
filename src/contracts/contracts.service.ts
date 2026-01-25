@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CustomersService } from '../customers/customers.service';
@@ -16,7 +16,7 @@ export class ContractsService {
     const customer = await this.customerService.findByIdAndAccount(contractData.customer, contractData.account);
 
     if (!customer) {
-      throw new Error('Customer not found for the given account');
+      throw new NotFoundException('contracts.customerNotFound');
     }
     contractData.customer = customer;
     const createdContract = new this.contractModel(contractData);
@@ -149,7 +149,7 @@ export class ContractsService {
       const customer = await this.customerService.findByIdAndAccount(contractData.customer as string, accountId);
 
       if (!customer) {
-        throw new Error('Customer not found for the given account');
+        throw new NotFoundException('contracts.customerNotFound');
       }
       contractData.customer = customer._id;
     }
