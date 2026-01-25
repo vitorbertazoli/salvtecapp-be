@@ -55,16 +55,16 @@ class UserAccountDto {
   @IsOptional()
   @IsString({ each: true })
   roles?: string[];
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
 }
 
 export class UpdateTechnicianDto {
   @IsOptional()
   @IsString()
   cpf?: string;
-
-  @IsOptional()
-  @IsString()
-  phoneNumber?: string;
 
   @IsOptional()
   @IsEnum(['active', 'inactive', 'suspended'])

@@ -22,7 +22,6 @@ describe('TechniciansService', () => {
     _id: mockTechnicianId,
     account: mockAccountId,
     cpf: '12345678901',
-    phoneNumber: '+5511999999999',
     status: 'active' as const,
     startDate: new Date('2024-01-01'),
     address: {
@@ -176,12 +175,11 @@ describe('TechniciansService', () => {
       });
       usersService.create.mockResolvedValue(mockUser);
 
-      const result = await service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData);
+      const result = await service.create(mockAccountId, '12345678901', addressData, mockCreatedBy, mockUpdatedBy, userAccountData);
 
       expect(technicianModel).toHaveBeenCalledWith({
         account: new Types.ObjectId(mockAccountId),
         cpf: '12345678901',
-        phoneNumber: '+5511999999999',
         address: {
           ...addressData,
           country: 'Brazil'
@@ -193,7 +191,6 @@ describe('TechniciansService', () => {
       expect(result).toMatchObject({
         account: mockAccountId,
         cpf: '12345678901',
-        phoneNumber: '+5511999999999',
         address: {
           ...addressData,
           country: 'Brazil'
@@ -227,7 +224,7 @@ describe('TechniciansService', () => {
       });
       usersService.create.mockResolvedValue(mockUser);
 
-      const result = await service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData);
+      const result = await service.create(mockAccountId, '12345678901', addressData, mockCreatedBy, mockUpdatedBy, userAccountData);
 
       expect(usersService.findOneByAccountAndEmail).toHaveBeenCalledWith(mockAccountId, 'joao.silva@example.com');
       expect(roleModel.find).toHaveBeenCalledWith({ name: { $in: ['TECHNICIAN'] } });
@@ -239,12 +236,12 @@ describe('TechniciansService', () => {
         'password123',
         [mockRole._id.toString()],
         mockCreatedBy,
-        mockUpdatedBy
+        mockUpdatedBy,
+        userAccountData.phoneNumber
       );
       expect(result).toMatchObject({
         account: mockAccountId,
         cpf: '12345678901',
-        phoneNumber: '+5511999999999',
         address: {
           street: 'Rua Teste',
           number: '123',
@@ -273,12 +270,13 @@ describe('TechniciansService', () => {
         firstName: 'João',
         lastName: 'Silva',
         email: 'joao.silva@example.com',
-        roles: ['TECHNICIAN']
+        roles: ['TECHNICIAN'],
+        phoneNumber: '+5511999999999'
       };
 
       usersService.findOneByAccountAndEmail.mockResolvedValue(mockUser);
 
-      await expect(service.create(mockAccountId, '12345678901', '+5511999999999', addressData, mockCreatedBy, mockUpdatedBy, userAccountData)).rejects.toThrow(
+      await expect(service.create(mockAccountId, '12345678901', addressData, mockCreatedBy, mockUpdatedBy, userAccountData)).rejects.toThrow(
         'technicians.errors.emailAlreadyExists'
       );
     });
@@ -396,7 +394,7 @@ describe('TechniciansService', () => {
         account: mockAccountId
       });
       expect(mockQuery.populate).toHaveBeenCalledWith('account', 'name id');
-      expect(mockQuery.populate).toHaveBeenCalledWith('user', 'email firstName lastName');
+      expect(mockQuery.populate).toHaveBeenCalledWith('user', 'email firstName lastName phoneNumber');
       expect(result).toEqual(mockTechnician);
     });
 

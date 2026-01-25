@@ -28,7 +28,6 @@ export class TechniciansController {
     return this.techniciansService.create(
       accountId,
       createTechnicianDto.cpf,
-      createTechnicianDto.phoneNumber,
       createTechnicianDto.address,
       new Types.ObjectId(userId),
       new Types.ObjectId(userId),
@@ -78,7 +77,6 @@ export class TechniciansController {
     const { userAccount, ...technicianData } = updateTechnicianDto;
     const technicianUpdateData: Partial<Technician> & { address?: any; userAccount?: any } = {
       cpf: technicianData.cpf,
-      phoneNumber: technicianData.phoneNumber,
       status: technicianData.status,
       updatedBy: new Types.ObjectId(userId),
       address: technicianData.address,

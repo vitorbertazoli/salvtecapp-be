@@ -16,7 +16,8 @@ export class UsersService {
     password: string,
     roles: string[] = [],
     createdBy: Types.ObjectId,
-    updatedBy: Types.ObjectId
+    updatedBy: Types.ObjectId,
+    phoneNumber?: string
   ): Promise<User> {
     const user = await this.userModel.findOne({ email }).exec();
     if (user) {
@@ -30,6 +31,7 @@ export class UsersService {
       email,
       passwordHash: hashedPassword,
       roles: roles.map((role) => new Types.ObjectId(role)),
+      phoneNumber,
       createdBy,
       updatedBy
     });
@@ -235,6 +237,11 @@ export class UsersService {
 
   async updateResetToken(email: string, resetToken: string, resetTokenExpiry: Date): Promise<UserDocument | null> {
     return this.userModel.findOneAndUpdate({ email }, { resetToken, resetTokenExpiry }, { new: true }).exec();
+  }
+
+  async updateProfilePicture(id: string, profilePicture: string, accountId: Types.ObjectId): Promise<User | null> {
+    const query = { _id: new Types.ObjectId(id), account: accountId };
+    return this.userModel.findOneAndUpdate(query, { profilePicture }, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
   }
 
   async findByResetToken(resetToken: string): Promise<UserDocument | null> {

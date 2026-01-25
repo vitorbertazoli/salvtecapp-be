@@ -46,6 +46,12 @@ export class User {
 
   @Prop()
   language?: string;
+
+  @Prop()
+  profilePicture?: string;
+
+  @Prop()
+  phoneNumber?: string;
 }
 
 export interface IUser {
@@ -59,6 +65,8 @@ export interface IUser {
   resetToken?: string;
   resetTokenExpiry?: Date;
   language?: string;
+  profilePicture?: string;
+  phoneNumber?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

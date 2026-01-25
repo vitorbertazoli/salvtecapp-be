@@ -1,5 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Types } from 'mongoose';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -118,6 +136,7 @@ export class UsersController {
         password: updateUserDto.password,
         status: updateUserDto.status,
         language: updateUserDto.language,
+        phoneNumber: updateUserDto.phoneNumber,
         updatedBy: user.id,
         // Convert role strings to ObjectIds if roles are provided
         ...(updateUserDto.roles && {
@@ -151,5 +170,51 @@ export class UsersController {
     }
     await this.usersService.delete(id, accountId);
     return { message: 'User deleted successfully' };
+  }
+
+  @Post(':id/profile-picture')
+  @UseInterceptors(
+    FileInterceptor('profilePicture', {
+      storage: diskStorage({
+        destination: './uploads/profile-pictures',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${req.params.id}-${uniqueSuffix}${ext}`);
+        }
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          return callback(new Error('Only image files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+      }
+    })
+  )
+  async uploadProfilePicture(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser() user: any
+  ) {
+    // Check if user has ADMIN role or is updating their own profile
+    const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
+    const isOwnProfile = user.id === id;
+
+    if (!isAdmin && !isOwnProfile) {
+      throw new ForbiddenException('Not authorized to update this profile');
+    }
+
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    const profilePictureUrl = `/uploads/profile-pictures/${file.filename}`;
+    await this.usersService.updateProfilePicture(id, profilePictureUrl, accountId);
+
+    return { profilePicture: profilePictureUrl };
   }
 }

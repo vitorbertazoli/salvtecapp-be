@@ -19,7 +19,6 @@ describe('TechniciansController', () => {
     _id: mockTechnicianId,
     account: mockAccountId,
     cpf: '12345678901',
-    phoneNumber: '+5511999999999',
     status: 'active' as const,
     startDate: new Date('2024-01-01'),
     address: {
@@ -121,7 +120,6 @@ describe('TechniciansController', () => {
       expect(mockTechniciansService.create).toHaveBeenCalledWith(
         mockAccountId,
         '12345678901',
-        '+5511999999999',
         createTechnicianDto.address,
         mockUserId,
         mockUserId,
@@ -262,12 +260,9 @@ describe('TechniciansController', () => {
 
       const expectedTechnicianData = {
         cpf: '98765432100',
-        phoneNumber: '+5511888888888',
         status: 'inactive',
         updatedBy: mockUserId,
-        address: updateTechnicianDto.address,
-        startDate: undefined,
-        endDate: undefined
+        address: updateTechnicianDto.address
       };
 
       mockTechniciansService.update.mockResolvedValue({

@@ -30,4 +30,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   language?: string;
+
+  @IsOptional()
+  @IsString()
+  profilePicture?: string;
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
 }

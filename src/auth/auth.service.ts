@@ -163,6 +163,8 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      phoneNumber: user.phoneNumber,
+      profilePicture: user.profilePicture,
       roles: user.roles.map((role: any) => role.name) || [],
       technicianId: technicianId,
       ...(user.isMasterAdmin && { isMasterAdmin: user.isMasterAdmin })

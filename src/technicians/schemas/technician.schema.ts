@@ -50,9 +50,6 @@ export class Technician {
   @Prop({ type: Types.ObjectId, ref: 'User' })
   user?: Types.ObjectId;
 
-  @Prop({ required: true })
-  phoneNumber: string;
-
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;
 
@@ -69,7 +66,6 @@ export interface ITechnician {
   endDate?: Date;
   address: Address;
   user?: string;
-  phoneNumber: string;
 }
 
 export const TechnicianSchema = SchemaFactory.createForClass(Technician);

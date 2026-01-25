@@ -16,7 +16,6 @@ export class TechniciansService {
   async create(
     account: Types.ObjectId,
     cpf: string,
-    phoneNumber: string,
     addressData: {
       street: string;
       number: string;
@@ -35,6 +34,7 @@ export class TechniciansService {
       lastName: string;
       email: string;
       roles: string[];
+      phoneNumber?: string;
     }
   ): Promise<Technician> {
     // Check if email already exists
@@ -54,7 +54,8 @@ export class TechniciansService {
       userAccountData.password,
       roleIds,
       createdBy,
-      updatedBy
+      updatedBy,
+      userAccountData.phoneNumber
     );
 
     // Create the technician with embedded address
@@ -66,7 +67,6 @@ export class TechniciansService {
     const createdTechnician = new this.technicianModel({
       account: new Types.ObjectId(account),
       cpf,
-      phoneNumber,
       address,
       user: user,
       createdBy,
@@ -97,9 +97,9 @@ export class TechniciansService {
 
     // Build aggregation pipeline for search
     const pipeline: any[] = [
-      // {
-      //   $match: { account: accountId }
-      // },
+      {
+        $match: { account: accountId }
+      },
       {
         $lookup: {
           from: 'users',
@@ -112,6 +112,28 @@ export class TechniciansService {
         $unwind: {
           path: '$user',
           preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          account: 1,
+          cpf: 1,
+          startDate: 1,
+          endDate: 1,
+          address: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          createdBy: 1,
+          updatedBy: 1,
+          user: {
+            _id: 1,
+            email: 1,
+            firstName: 1,
+            lastName: 1,
+            phoneNumber: 1,
+            profilePicture: 1
+          }
         }
       }
     ];
@@ -221,6 +243,7 @@ export class TechniciansService {
         if (userAccountData.firstName !== undefined) userUpdateData.firstName = userAccountData.firstName;
         if (userAccountData.lastName !== undefined) userUpdateData.lastName = userAccountData.lastName;
         if (userAccountData.email !== undefined) userUpdateData.email = userAccountData.email;
+        if (userAccountData.phoneNumber !== undefined) userUpdateData.phoneNumber = userAccountData.phoneNumber;
 
         // Always ensure roles is only TECHNICIAN
         userUpdateData.roles = await this.getRoleIds(['TECHNICIAN']);
@@ -241,7 +264,7 @@ export class TechniciansService {
     return this.technicianModel
       .findOneAndUpdate(query, cleanTechnicianData, { new: true })
       .populate('account', 'name id')
-      .populate('user', 'email firstName lastName')
+      .populate('user', 'email firstName lastName phoneNumber')
       .exec();
   }
 
@@ -276,7 +299,11 @@ export class TechniciansService {
   }
 
   async findByIdAndAccount(id: string, accountId: Types.ObjectId): Promise<TechnicianDocument | null> {
-    return this.technicianModel.findOne({ _id: id, account: accountId }).populate('account', 'name id').populate('user', 'email firstName lastName').exec();
+    return this.technicianModel
+      .findOne({ _id: id, account: accountId })
+      .populate('account', 'name id')
+      .populate('user', 'email firstName lastName phoneNumber')
+      .exec();
   }
 
   async findByUserId(userId: string): Promise<TechnicianDocument | null> {
