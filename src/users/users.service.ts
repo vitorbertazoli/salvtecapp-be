@@ -15,6 +15,7 @@ export class UsersService {
     email: string,
     password: string,
     roles: string[] = [],
+    status: 'active' | 'inactive' | 'suspended' = 'active',
     createdBy: Types.ObjectId,
     updatedBy: Types.ObjectId,
     phoneNumber?: string
@@ -32,6 +33,7 @@ export class UsersService {
       passwordHash: hashedPassword,
       roles: roles.map((role) => new Types.ObjectId(role)),
       phoneNumber,
+      status,
       createdBy,
       updatedBy
     });

@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
 import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { EmailService } from '../utils/email.service';
+import { AppGateway } from '../websocket/app.gateway';
 import { Quote, QuoteDocument } from './schemas/quote.schema';
 
 @Injectable()
@@ -13,7 +14,8 @@ export class QuotesService {
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
     private emailService: EmailService,
     private configService: ConfigService,
-    private quoteToServiceOrderService: QuoteToServiceOrderService
+    private quoteToServiceOrderService: QuoteToServiceOrderService,
+    private appGateway: AppGateway
   ) {}
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
@@ -218,6 +220,10 @@ export class QuotesService {
       );
     }
     const message = approvalData.approved ? 'Quote approved successfully' : 'Quote rejected';
+    this.appGateway.broadcastToAccount(quote.account._id.toString(), 'quoteStatusChanged', {
+      quoteId: quote._id,
+      status: approvalData.approved ? 'approved' : 'rejected'
+    });
 
     return {
       success: approvalData.approved,

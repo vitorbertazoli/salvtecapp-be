@@ -6,6 +6,7 @@ import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-
 import { QuotesService } from '../src/quotes/quotes.service';
 import { Quote } from '../src/quotes/schemas/quote.schema';
 import { EmailService } from '../src/utils/email.service';
+import { AppGateway } from '../src/websocket/app.gateway';
 
 describe('QuotesService', () => {
   let service: QuotesService;
@@ -104,6 +105,10 @@ describe('QuotesService', () => {
       })
     };
 
+    const mockAppGateway = {
+      broadcastToAccount: jest.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuotesService,
@@ -122,6 +127,10 @@ describe('QuotesService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService
+        },
+        {
+          provide: AppGateway,
+          useValue: mockAppGateway
         }
       ]
     }).compile();

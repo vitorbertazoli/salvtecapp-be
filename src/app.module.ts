@@ -10,6 +10,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { EventsModule } from './events/events.module';
 import { FollowUpsModule } from './follow-ups/follow-ups.module';
+import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { RolesModule } from './roles/roles.module';
@@ -17,10 +18,10 @@ import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
 import { UsersModule } from './users/users.module';
-import { PaymentsModule } from './payments/payments.module';
 import { EmailModule } from './utils/email.module';
 import { VehicleUsagesModule } from './vehicle-usages/vehicle-usages.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
+import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -52,7 +53,8 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     PaymentsModule,
     EmailModule,
     VehiclesModule,
-    VehicleUsagesModule
+    VehicleUsagesModule,
+    WebsocketModule
   ],
   controllers: [],
   providers: []

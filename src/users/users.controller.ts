@@ -51,6 +51,7 @@ export class UsersController {
       createUserDto.email,
       createUserDto.password,
       createUserDto.roles || [],
+      'active',
       new Types.ObjectId(userId),
       new Types.ObjectId(userId)
     );

@@ -118,7 +118,7 @@ describe('UsersController', () => {
 
       const result = await controller.create(createUserDto, mockAccountId, mockUserId.toString());
 
-      expect(usersService.create).toHaveBeenCalledWith(mockAccountId, 'João', 'Silva', 'joao.silva@example.com', 'password123', [], mockUserId, mockUserId);
+      expect(usersService.create).toHaveBeenCalledWith(mockAccountId, 'João', 'Silva', 'joao.silva@example.com', 'password123', [], 'active', mockUserId, mockUserId);
       expect(result).toEqual(mockUserWithoutSensitive);
     });
   });

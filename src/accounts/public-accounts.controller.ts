@@ -114,6 +114,7 @@ export class PublicAccountsController {
       createAccountDto.email,
       createAccountDto.password,
       [adminRole._id.toString()],
+      'active',
       new Types.ObjectId('000000000000000000000000'),
       new Types.ObjectId('000000000000000000000000')
     )) as unknown as UserDocument;

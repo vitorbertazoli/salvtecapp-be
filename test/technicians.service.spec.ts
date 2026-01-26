@@ -235,6 +235,7 @@ describe('TechniciansService', () => {
         'joao.silva@example.com',
         'password123',
         [mockRole._id.toString()],
+        'active',
         mockCreatedBy,
         mockUpdatedBy,
         userAccountData.phoneNumber

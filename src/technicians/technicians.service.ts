@@ -53,6 +53,7 @@ export class TechniciansService {
       userAccountData.email,
       userAccountData.password,
       roleIds,
+      'active',
       createdBy,
       updatedBy,
       userAccountData.phoneNumber

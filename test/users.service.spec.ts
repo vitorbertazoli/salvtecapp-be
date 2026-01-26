@@ -16,8 +16,8 @@ describe('UsersService', () => {
   const mockAccountId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
   const mockRoleId = new Types.ObjectId();
-  const mockCreatedBy = 'user123';
-  const mockUpdatedBy = 'user456';
+  const mockCreatedBy = new Types.ObjectId();
+  const mockUpdatedBy = new Types.ObjectId();
 
   const mockUser = {
     _id: mockUserId,
@@ -143,8 +143,9 @@ describe('UsersService', () => {
         'joao.silva@example.com',
         'password123',
         [mockRoleId.toString()], // Use valid ObjectId string
-        mockCreatedBy,
-        mockUpdatedBy
+        'active',
+        new Types.ObjectId(mockCreatedBy),
+        new Types.ObjectId(mockUpdatedBy)
       );
 
       expect(userModel.findOne).toHaveBeenCalledWith({ email: 'joao.silva@example.com' });
@@ -155,7 +156,8 @@ describe('UsersService', () => {
         lastName: 'Silva',
         email: 'joao.silva@example.com',
         passwordHash: 'hashedpassword',
-        roles: [mockRoleId], // Should be ObjectId
+        roles: [new Types.ObjectId(mockRoleId.toString())],
+        status: 'active',
         createdBy: mockCreatedBy,
         updatedBy: mockUpdatedBy
       });

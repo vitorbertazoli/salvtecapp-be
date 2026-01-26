@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import cookieParser from 'cookie-parser';
 import { mkdirSync } from 'fs';
 import { join } from 'path';
@@ -11,6 +12,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
+
+  // Enable WebSocket adapter
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Use cookie parser
   app.use(cookieParser());

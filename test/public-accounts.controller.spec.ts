@@ -169,6 +169,7 @@ describe('PublicAccountsController', () => {
         createAccountDto.email,
         createAccountDto.password,
         [mockRole._id.toString()],
+        'active',
         new Types.ObjectId('000000000000000000000000'),
         new Types.ObjectId('000000000000000000000000')
       );
