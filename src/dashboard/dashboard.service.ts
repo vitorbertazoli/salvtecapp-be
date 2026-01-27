@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { Event, EventDocument } from '../events/schemas/event.schema';
+import { PaymentOrder, PaymentOrderDocument } from '../payments/schemas/payment-order.schema';
 import { Quote, QuoteDocument } from '../quotes/schemas/quote.schema';
 import { ServiceOrder, ServiceOrderDocument } from '../service-orders/schemas/service-order.schema';
 import { Technician, TechnicianDocument } from '../technicians/schemas/technician.schema';
@@ -14,7 +15,8 @@ export class DashboardService {
     @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
-    @InjectModel(Event.name) private eventModel: Model<EventDocument>
+    @InjectModel(Event.name) private eventModel: Model<EventDocument>,
+    @InjectModel(PaymentOrder.name) private paymentOrderModel: Model<PaymentOrderDocument>
   ) {}
 
   async getStats(accountId: Types.ObjectId) {
@@ -25,7 +27,7 @@ export class DashboardService {
     const accountObjId = accountId;
 
     // Get all stats in parallel
-    const [customerCount, technicianCount, openQuotesCount, openServiceOrdersCount, todaysEventsCount, monthlySalesData] = await Promise.all([
+    const [customerCount, technicianCount, openQuotesCount, openServiceOrdersCount, todaysEventsCount, monthlySalesData, paymentStats, expectedRevenue] = await Promise.all([
       // Count customers
       this.customerModel.countDocuments({ account: accountObjId }),
 
@@ -51,8 +53,14 @@ export class DashboardService {
         status: 'scheduled'
       }),
 
-      // Get monthly sales data (accepted quotes from last 30 days)
-      this.getMonthlySalesData(accountId, thirtyDaysAgo)
+      // Get monthly sales data (payments received from last 30 days)
+      this.getMonthlyPaymentData(accountId, thirtyDaysAgo),
+
+      // Get payment statistics
+      this.getPaymentStats(accountId),
+
+      // Get expected revenue from open service orders
+      this.getExpectedRevenue(accountId)
     ]);
 
     return {
@@ -61,18 +69,26 @@ export class DashboardService {
       openQuotesCount,
       openServiceOrdersCount,
       todaysEventsCount,
-      monthlySalesData
+      monthlySalesData,
+      ...paymentStats,
+      expectedRevenue
     };
   }
 
-  private async getMonthlySalesData(accountId: Types.ObjectId, fromDate: Date) {
-    const salesData = await this.serviceOrderModel.aggregate([
+  private async getMonthlyPaymentData(accountId: Types.ObjectId, fromDate: Date) {
+    const paymentData = await this.paymentOrderModel.aggregate([
       {
         $match: {
           account: accountId,
-          status: 'completed',
-          paymentStatus: 'paid',
-          completedAt: { $gte: fromDate }
+          'payments.paymentDate': { $gte: fromDate }
+        }
+      },
+      {
+        $unwind: '$payments'
+      },
+      {
+        $match: {
+          'payments.paymentDate': { $gte: fromDate }
         }
       },
       {
@@ -80,10 +96,10 @@ export class DashboardService {
           _id: {
             $dateToString: {
               format: '%Y-%m-%d',
-              date: '$completedAt'
+              date: '$payments.paymentDate'
             }
           },
-          total: { $sum: '$totalValue' }
+          total: { $sum: '$payments.amount' }
         }
       },
       {
@@ -97,7 +113,7 @@ export class DashboardService {
 
     while (currentDate <= new Date()) {
       const dateString = currentDate.toISOString().split('T')[0];
-      const existingData = salesData.find((item) => item._id === dateString);
+      const existingData = paymentData.find((item) => item._id === dateString);
 
       result.push({
         date: dateString,
@@ -108,5 +124,77 @@ export class DashboardService {
     }
 
     return result;
+  }
+
+  private async getPaymentStats(accountId: Types.ObjectId) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [totalReceived, totalOwed] = await Promise.all([
+      // Total amount received in the last 30 days
+      this.paymentOrderModel.aggregate([
+        {
+          $match: {
+            account: accountId,
+            'payments.paymentDate': { $gte: thirtyDaysAgo }
+          }
+        },
+        {
+          $unwind: '$payments'
+        },
+        {
+          $match: {
+            'payments.paymentDate': { $gte: thirtyDaysAgo }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$payments.amount' }
+          }
+        }
+      ]),
+
+      // Total amount still owed (pending and partial payments)
+      this.paymentOrderModel.aggregate([
+        {
+          $match: {
+            account: accountId,
+            paymentStatus: { $in: ['pending', 'partial'] }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$totalAmount' },
+            paid: { $sum: { $sum: '$payments.amount' } }
+          }
+        }
+      ])
+    ]);
+
+    return {
+      totalReceived: totalReceived.length > 0 ? totalReceived[0].total : 0,
+      totalOwed: totalOwed.length > 0 ? totalOwed[0].total - totalOwed[0].paid : 0
+    };
+  }
+
+  private async getExpectedRevenue(accountId: Types.ObjectId) {
+    const result = await this.serviceOrderModel.aggregate([
+      {
+        $match: {
+          account: accountId,
+          status: { $nin: ['completed', 'cancelled'] }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$totalValue' }
+        }
+      }
+    ]);
+
+    return result.length > 0 ? result[0].total : 0;
   }
 }
