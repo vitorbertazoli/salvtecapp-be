@@ -4,6 +4,7 @@ import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CustomersService } from './customers.service';
+import { AddNoteDto } from './dto/add-note.dto';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
@@ -54,6 +55,11 @@ export class CustomersController {
     } as any;
 
     return this.customersService.updateByAccount(id, customerData, accountId);
+  }
+
+  @Post(':id/notes')
+  async addNote(@Param('id') id: string, @Body() dto: AddNoteDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    return this.customersService.addNote(id, dto, userId, accountId);
   }
 
   @Delete(':id')

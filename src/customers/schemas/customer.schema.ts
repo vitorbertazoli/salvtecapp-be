@@ -14,6 +14,17 @@ export class Equipment {
   model?: string;
 }
 
+export class Note {
+  @Prop({ required: true })
+  date: Date;
+
+  @Prop({ required: true })
+  content: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+}
+
 export class Address {
   street?: string;
   number?: string;
@@ -59,6 +70,18 @@ export class Customer {
 
   @Prop()
   notes?: string;
+
+  @Prop({
+    type: [
+      {
+        date: { type: Date, required: true },
+        content: { type: String, required: true },
+        createdBy: { type: Types.ObjectId, ref: 'User', required: true }
+      }
+    ],
+    default: []
+  })
+  noteHistory: Note[];
 
   @Prop({
     type: {
@@ -111,6 +134,7 @@ export interface ICustomer {
   status: 'active' | 'inactive' | 'suspended';
   phoneNumbers?: string[];
   notes?: string;
+  noteHistory?: Note[];
   address?: Address;
   account?: string | IAccount;
   createdBy: string | Types.ObjectId;

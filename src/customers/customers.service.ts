@@ -129,6 +129,22 @@ export class CustomersService {
     return this.customerModel.findOneAndDelete(query).exec();
   }
 
+  async addNote(id: string, noteData: { content: string }, userId: string, accountId: Types.ObjectId): Promise<Customer | null> {
+    const query = { _id: id, account: accountId };
+    const note = {
+      date: new Date(),
+      content: noteData.content,
+      createdBy: new Types.ObjectId(userId)
+    };
+
+    const updatedCustomer = await this.customerModel
+      .findOneAndUpdate(query, { $push: { noteHistory: note } }, { new: true })
+      .populate('account', 'name id')
+      .exec();
+
+    return updatedCustomer;
+  }
+
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.customerModel.deleteMany({ account: accountId }).exec();
   }
