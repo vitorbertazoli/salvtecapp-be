@@ -516,14 +516,7 @@ describe('EventsService', () => {
       expect(mockEventDoc.status).toBe('completed');
       expect(mockEventDoc.completedAt).toBeDefined();
       expect(mockEventDoc.completedBy.toString()).toBe(mockUserId.toString());
-      expect(serviceOrdersService.updateByAccount).toHaveBeenCalledWith(
-        mockServiceOrderId.toString(),
-        {
-          status: 'completed',
-          completedAt: expect.any(Date)
-        },
-        mockAccountId
-      );
+      expect(serviceOrdersService.updateByAccount).not.toHaveBeenCalled();
       expect(result).toEqual(mockEvent);
     });
 

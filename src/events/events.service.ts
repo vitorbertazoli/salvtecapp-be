@@ -256,7 +256,7 @@ export class EventsService {
     return this.eventModel.deleteMany({ account: accountId }).exec();
   }
 
-  async completeByAccount(id: string, userId: Types.ObjectId, accountId: Types.ObjectId) {
+  async completeByAccount(id: string, userId: Types.ObjectId, accountId: Types.ObjectId, notes?: string, completeServiceOrder?: boolean) {
     const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
     if (!event) {
@@ -266,10 +266,14 @@ export class EventsService {
     event.completedAt = new Date();
     event.completedBy = userId;
 
+    if (notes) {
+      event.completionNotes = notes;
+    }
+
     await event.save();
 
-    // Update linked service order if exists
-    if (event.serviceOrder) {
+    // Update linked service order if exists and completeServiceOrder is true
+    if (event.serviceOrder && completeServiceOrder) {
       await this.serviceOrdersService.updateByAccount(
         event.serviceOrder.toString(),
         {

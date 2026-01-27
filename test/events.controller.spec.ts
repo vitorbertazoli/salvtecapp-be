@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
-import { EventsController } from '../src/events/events.controller';
-import { EventsService } from '../src/events/events.service';
 import { CreateEventDto } from '../src/events/dto/create-event.dto';
 import { UpdateEventDto } from '../src/events/dto/update-event.dto';
+import { EventsController } from '../src/events/events.controller';
+import { EventsService } from '../src/events/events.service';
 
 describe('EventsController', () => {
   let controller: EventsController;
@@ -315,20 +315,10 @@ describe('EventsController', () => {
 
       service.completeByAccount.mockResolvedValue(completedEvent as any);
 
-      const result = await controller.complete(eventId, mockUserId, mockAccountId);
+      const result = await controller.complete(eventId, {}, mockUserId, mockAccountId);
 
-      expect(service.completeByAccount).toHaveBeenCalledWith(eventId, mockUserId, mockAccountId);
+      expect(service.completeByAccount).toHaveBeenCalledWith(eventId, mockUserId, mockAccountId, undefined, undefined);
       expect(result).toEqual(completedEvent);
-    });
-
-    it('should return not found message when event does not exist', async () => {
-      const eventId = 'nonexistent-id';
-
-      service.completeByAccount.mockResolvedValue(null);
-
-      const result = await controller.complete(eventId, mockUserId, mockAccountId);
-
-      expect(result).toEqual({ message: 'Event not found' });
     });
   });
 });

@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CompleteEventDto } from './dto/complete-event.dto';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventsService } from './events.service';
@@ -95,13 +96,8 @@ export class EventsController {
 
   @Patch(':id/complete')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
-  async complete(@Param('id') id: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    const result = await this.eventsService.completeByAccount(id, new Types.ObjectId(userId), accountId);
-
-    if (!result) {
-      return { message: 'Event not found' };
-    }
-
+  async complete(@Param('id') id: string, @Body() dto: CompleteEventDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    const result = await this.eventsService.completeByAccount(id, new Types.ObjectId(userId), accountId, dto.notes, dto.completeServiceOrder);
     return result;
   }
 }
