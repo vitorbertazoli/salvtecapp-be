@@ -131,6 +131,11 @@ export class PaymentsService {
     if (!result) {
       throw new NotFoundException('payments.errors.paymentOrderNotFound');
     }
+
+    // Update the associated service order status back to completed
+    if (result.serviceOrder) {
+      await this.serviceOrdersService.updateByAccount(result.serviceOrder.toString(), { status: 'completed' }, accountId);
+    }
   }
 
   async update(id: string, accountId: Types.ObjectId, updateData: UpdatePaymentOrderDto, userId: Types.ObjectId): Promise<PaymentOrder> {

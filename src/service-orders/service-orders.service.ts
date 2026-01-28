@@ -303,7 +303,8 @@ export class ServiceOrdersService {
     // Mark changeOrders as modified for Mongoose to detect the change
     serviceOrder.markModified('changeOrders');
 
-    return serviceOrder.save();
+    const savedServiceOrder = await serviceOrder.save();
+    return savedServiceOrder;
   }
 
   async rejectChangeOrder(serviceOrderId: string, changeOrderVersion: number, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
