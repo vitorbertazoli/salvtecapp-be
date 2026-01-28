@@ -129,8 +129,4 @@ export class CreateQuoteDto {
   @IsNotEmpty()
   @IsDateString()
   validUntil: string;
-
-  @IsNotEmpty()
-  @IsDateString()
-  issuedAt: string;
 }

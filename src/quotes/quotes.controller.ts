@@ -3,9 +3,9 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
-import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { QuotesService } from './quotes.service';
 
 @Controller('quotes')
@@ -35,6 +35,8 @@ export class QuotesController {
           product: new Types.ObjectId(product.product)
         }))
       }),
+      status: 'draft',
+      issuedAt: new Date(),
       createdBy: new Types.ObjectId(userId),
       updatedBy: new Types.ObjectId(userId)
     } as any;
