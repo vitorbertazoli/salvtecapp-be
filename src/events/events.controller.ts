@@ -36,12 +36,15 @@ export class EventsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('customerId') customerId?: string,
-    @Query('status') status?: string
+    @Query('status') status?: string,
+    @GetUser('roles') roles?: string[]
   ) {
+    // isAdmin
+    const isAdmin = roles?.includes('ADMIN') || roles?.includes('SUPERVISOR');
     return this.eventsService.findAll(accountId, {
       startDate,
       endDate,
-      technicianId,
+      technicianId: isAdmin ? undefined : technicianId,
       customerId,
       status
     });
