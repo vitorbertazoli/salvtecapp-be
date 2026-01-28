@@ -118,7 +118,8 @@ export class PaymentsService {
     const paymentOrder = await this.paymentOrderModel
       .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email')
-      .populate('serviceOrder', 'orderNumber description totalValue completedAt status')
+      .populate('serviceOrder', 'orderNumber description totalValue completedAt status items')
+      .populate('serviceOrder.items.itemId')
       .exec();
     if (!paymentOrder) {
       throw new NotFoundException('payments.errors.paymentOrderNotFound');
@@ -172,7 +173,8 @@ export class PaymentsService {
     const updatedPaymentOrder = await this.paymentOrderModel
       .findOneAndUpdate({ _id: id, account: accountId }, updateFields, { new: true })
       .populate('customer', 'name email')
-      .populate('serviceOrder', 'orderNumber description totalValue completedAt status')
+      .populate('serviceOrder', 'orderNumber description totalValue completedAt status items')
+      .populate('serviceOrder.items.itemId')
       .exec();
 
     if (!updatedPaymentOrder) {

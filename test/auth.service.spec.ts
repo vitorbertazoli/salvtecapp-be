@@ -198,9 +198,7 @@ describe('AuthService', () => {
       };
       usersService.findOneByEmail.mockResolvedValue(pendingAccountUser);
 
-      await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow(
-        'auth.errors.accountNotVerified'
-      );
+      await expect(service.validateUser('john.doe@example.com', 'password123')).rejects.toThrow('auth.errors.accountNotVerified');
     });
 
     it('should throw error when account is suspended', async () => {

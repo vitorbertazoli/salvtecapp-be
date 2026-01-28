@@ -27,41 +27,42 @@ export class DashboardService {
     const accountObjId = accountId;
 
     // Get all stats in parallel
-    const [customerCount, technicianCount, openQuotesCount, openServiceOrdersCount, todaysEventsCount, monthlySalesData, paymentStats, expectedRevenue] = await Promise.all([
-      // Count customers
-      this.customerModel.countDocuments({ account: accountObjId }),
+    const [customerCount, technicianCount, openQuotesCount, openServiceOrdersCount, todaysEventsCount, monthlySalesData, paymentStats, expectedRevenue] =
+      await Promise.all([
+        // Count customers
+        this.customerModel.countDocuments({ account: accountObjId }),
 
-      // Count active technicians
-      this.technicianModel.countDocuments({ account: accountObjId, status: 'active' }),
+        // Count active technicians
+        this.technicianModel.countDocuments({ account: accountObjId, status: 'active' }),
 
-      // Count open quotes (not accepted or rejected)
-      this.quoteModel.countDocuments({
-        account: accountObjId,
-        status: { $nin: ['accepted', 'rejected'] }
-      }),
+        // Count open quotes (not accepted or rejected)
+        this.quoteModel.countDocuments({
+          account: accountObjId,
+          status: { $nin: ['accepted', 'rejected'] }
+        }),
 
-      // Count open service orders (not completed or cancelled)
-      this.serviceOrderModel.countDocuments({
-        account: accountObjId,
-        status: { $nin: ['completed', 'cancelled'] }
-      }),
+        // Count open service orders (not completed or cancelled)
+        this.serviceOrderModel.countDocuments({
+          account: accountObjId,
+          status: { $nin: ['completed', 'cancelled'] }
+        }),
 
-      // Count today's scheduled events
-      this.eventModel.countDocuments({
-        account: accountObjId,
-        date: todayString,
-        status: 'scheduled'
-      }),
+        // Count today's scheduled events
+        this.eventModel.countDocuments({
+          account: accountObjId,
+          date: todayString,
+          status: 'scheduled'
+        }),
 
-      // Get monthly sales data (payments received from last 30 days)
-      this.getMonthlyPaymentData(accountId, thirtyDaysAgo),
+        // Get monthly sales data (payments received from last 30 days)
+        this.getMonthlyPaymentData(accountId, thirtyDaysAgo),
 
-      // Get payment statistics
-      this.getPaymentStats(accountId),
+        // Get payment statistics
+        this.getPaymentStats(accountId),
 
-      // Get expected revenue from open service orders
-      this.getExpectedRevenue(accountId)
-    ]);
+        // Get expected revenue from open service orders
+        this.getExpectedRevenue(accountId)
+      ]);
 
     return {
       customerCount,

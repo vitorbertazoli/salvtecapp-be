@@ -155,10 +155,7 @@ export class CustomersService {
       }
     };
 
-    const updatedCustomer = await this.customerModel
-      .findOneAndUpdate(query, update, { new: true })
-      .populate('account', 'name id')
-      .exec();
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, { new: true }).populate('account', 'name id').exec();
 
     return updatedCustomer;
   }
@@ -171,10 +168,7 @@ export class CustomersService {
       }
     };
 
-    const updatedCustomer = await this.customerModel
-      .findOneAndUpdate(query, update, { new: true })
-      .populate('account', 'name id')
-      .exec();
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, { new: true }).populate('account', 'name id').exec();
 
     return updatedCustomer;
   }

@@ -117,20 +117,13 @@ describe('TechniciansController', () => {
 
       const result = await controller.create(createTechnicianDto, mockAccountId, mockUserId);
 
-      expect(mockTechniciansService.create).toHaveBeenCalledWith(
-        mockAccountId,
-        '12345678901',
-        createTechnicianDto.address,
-        mockUserId,
-        mockUserId,
-        {
-          password: 'password123',
-          firstName: 'João',
-          lastName: 'Silva',
-          email: 'joao.silva@example.com',
-          roles: ['TECHNICIAN']
-        }
-      );
+      expect(mockTechniciansService.create).toHaveBeenCalledWith(mockAccountId, '12345678901', createTechnicianDto.address, mockUserId, mockUserId, {
+        password: 'password123',
+        firstName: 'João',
+        lastName: 'Silva',
+        email: 'joao.silva@example.com',
+        roles: ['TECHNICIAN']
+      });
       expect(result).toEqual(mockTechnician);
     });
   });

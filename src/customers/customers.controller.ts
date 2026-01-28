@@ -63,7 +63,13 @@ export class CustomersController {
   }
 
   @Put(':id/notes/:noteId')
-  async updateNote(@Param('id') id: string, @Param('noteId') noteId: string, @Body() dto: AddNoteDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+  async updateNote(
+    @Param('id') id: string,
+    @Param('noteId') noteId: string,
+    @Body() dto: AddNoteDto,
+    @GetUser('id') userId: string,
+    @GetAccountId() accountId: Types.ObjectId
+  ) {
     return this.customersService.updateNote(id, noteId, dto, userId, accountId);
   }
 
