@@ -40,7 +40,7 @@ export class VehicleUsagesController {
   }
 
   @Patch(':id')
-  @Roles('SUPERVISOR', 'ADMIN')
+  @Roles('SUPERVISOR', 'ADMIN', 'TECHNICIAN')
   async update(@Param('id') id: string, @Body() dto: UpdateVehicleUsageDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const vehicleUsageData = {
       ...dto,

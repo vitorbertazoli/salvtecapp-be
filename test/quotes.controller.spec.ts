@@ -2,11 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { CreateQuoteDto } from '../src/quotes/dto/create-quote.dto';
 import { UpdateQuoteDto } from '../src/quotes/dto/update-quote.dto';
 import { QuotesController } from '../src/quotes/quotes.controller';
 import { QuotesService } from '../src/quotes/quotes.service';
-import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 
 describe('QuotesController', () => {
   let controller: QuotesController;
@@ -129,8 +129,7 @@ describe('QuotesController', () => {
           }
         ],
         totalValue: 200.0,
-        validUntil: '2024-12-31',
-        issuedAt: '2024-01-01'
+        validUntil: '2024-12-31'
       };
 
       const expectedQuoteData = {
@@ -149,6 +148,8 @@ describe('QuotesController', () => {
             product: new Types.ObjectId(mockProductId.toString())
           }
         ],
+        status: 'draft',
+        issuedAt: expect.any(Date),
         createdBy: mockUserId,
         updatedBy: mockUserId
       };
@@ -165,14 +166,15 @@ describe('QuotesController', () => {
       const createQuoteDto: CreateQuoteDto = {
         customer: mockCustomerId.toString(),
         totalValue: 100.0,
-        validUntil: '2024-12-31',
-        issuedAt: '2024-01-01'
+        validUntil: '2024-12-31'
       };
 
       const expectedQuoteData = {
         ...createQuoteDto,
         account: mockAccountId,
         customer: new Types.ObjectId(mockCustomerId.toString()),
+        status: 'draft',
+        issuedAt: expect.any(Date),
         createdBy: mockUserId,
         updatedBy: mockUserId
       };
