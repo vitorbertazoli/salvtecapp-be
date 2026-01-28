@@ -118,7 +118,7 @@ export class PaymentsService {
     const paymentOrder = await this.paymentOrderModel
       .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email')
-      .populate('serviceOrder', 'orderNumber description totalValue completedAt status items')
+      .populate('serviceOrder', 'orderNumber description totalValue completedAt status items otherDiscounts')
       .populate('serviceOrder.items.itemId')
       .exec();
     if (!paymentOrder) {
