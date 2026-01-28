@@ -62,6 +62,16 @@ export class CustomersController {
     return this.customersService.addNote(id, dto, userId, accountId);
   }
 
+  @Put(':id/notes/:noteId')
+  async updateNote(@Param('id') id: string, @Param('noteId') noteId: string, @Body() dto: AddNoteDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    return this.customersService.updateNote(id, noteId, dto, userId, accountId);
+  }
+
+  @Delete(':id/notes/:noteId')
+  async deleteNote(@Param('id') id: string, @Param('noteId') noteId: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    return this.customersService.deleteNote(id, noteId, userId, accountId);
+  }
+
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete customers
   remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
