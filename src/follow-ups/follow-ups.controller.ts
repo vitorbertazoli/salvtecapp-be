@@ -13,7 +13,7 @@ export class FollowUpsController {
   constructor(private readonly followUpsService: FollowUpsService) {}
 
   @Post()
-  @Roles('ADMIN', 'SUPERVISOR')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
   async create(@Body() dto: CreateFollowUpDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const followUpData = {
       ...dto,
@@ -27,6 +27,7 @@ export class FollowUpsController {
   }
 
   @Get()
+  @Roles('ADMIN', 'SUPERVISOR')
   async findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '50',
@@ -47,6 +48,7 @@ export class FollowUpsController {
   }
 
   @Get(':id')
+  @Roles('ADMIN', 'SUPERVISOR')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.followUpsService.findByIdAndAccount(id, accountId);
   }
