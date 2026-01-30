@@ -213,6 +213,18 @@ export class EventsService {
           accountId
         );
       }
+    } else if (updateData.status === 'scheduled') {
+      // update the service order to scheduled if applicable
+      if (event.serviceOrder) {
+        await this.serviceOrdersService.updateByAccount(
+          event.serviceOrder.toString(),
+          {
+            status: 'scheduled',
+            scheduledDate: new Date(`${event.date}T${event.startTime}`)
+          },
+          accountId
+        );
+      }
     }
 
     // Update title if customer or technician changed

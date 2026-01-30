@@ -2,6 +2,7 @@
 
 ## Voucher system
  - [] implement a system that will create credits for the customer. for example, if the user leaves a 5 star review, e can add a 5% or R$ 50 discount to their next service.
+ - [] integrate with mercado pago
 
 
 ## General Back-End Improvements
