@@ -450,7 +450,8 @@ describe('EventsService', () => {
       const updateData = {
         status: 'completed',
         completionNotes: 'Service completed successfully',
-        updatedBy: mockUserId
+        updatedBy: mockUserId,
+        serviceOrder: mockServiceOrderId
       };
 
       const mockEventDoc = {

@@ -189,7 +189,7 @@ export class EventsService {
     if (updateData.endTime) event.endTime = updateData.endTime;
     if (updateData.customer) event.customer = updateData.customer;
     if (updateData.technician) event.technician = updateData.technician;
-    if (updateData.serviceOrder) event.serviceOrder = updateData.serviceOrder;
+    event.serviceOrder = updateData.serviceOrder;
     if (updateData.status) event.status = updateData.status;
     if (updateData.completionNotes) event.completionNotes = updateData.completionNotes;
     if (updateData.updatedBy) event.updatedBy = updateData.updatedBy;

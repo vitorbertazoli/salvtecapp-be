@@ -223,7 +223,15 @@ describe('CustomersService', () => {
           { name: { $regex: 'test', $options: 'i' } },
           { email: { $regex: 'test', $options: 'i' } },
           { cpf: { $regex: 'test', $options: 'i' } },
-          { phoneNumbers: { $elemMatch: { $regex: 'test', $options: 'i' } } }
+          { cnpj: { $regex: 'test', $options: 'i' } },
+          { phoneNumbers: { $elemMatch: { $regex: 'test', $options: 'i' } } },
+          { 'address.street': { $regex: 'test', $options: 'i' } },
+          { 'address.number': { $regex: 'test', $options: 'i' } },
+          { 'address.complement': { $regex: 'test', $options: 'i' } },
+          { 'address.neighborhood': { $regex: 'test', $options: 'i' } },
+          { 'address.city': { $regex: 'test', $options: 'i' } },
+          { 'address.state': { $regex: 'test', $options: 'i' } },
+          { 'address.zipCode': { $regex: 'test', $options: 'i' } }
         ],
         status: 'active'
       });
