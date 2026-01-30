@@ -73,7 +73,15 @@ export class CustomersService {
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
         { cpf: { $regex: search, $options: 'i' } },
+        { cnpj: { $regex: search, $options: 'i' } },
         { phoneNumbers: { $elemMatch: { $regex: search, $options: 'i' } } },
+        { 'address.street': { $regex: search, $options: 'i' } },
+        { 'address.number': { $regex: search, $options: 'i' } },
+        { 'address.complement': { $regex: search, $options: 'i' } },
+        { 'address.neighborhood': { $regex: search, $options: 'i' } },
+        { 'address.city': { $regex: search, $options: 'i' } },
+        { 'address.state': { $regex: search, $options: 'i' } },
+        { 'address.zipCode': { $regex: search, $options: 'i' } },
         ...(Types.ObjectId.isValid(search) ? [{ _id: search }] : [])
       ];
     }
