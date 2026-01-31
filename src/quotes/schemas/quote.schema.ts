@@ -101,6 +101,9 @@ export class Quote {
   @Prop({ required: true })
   validUntil: Date;
 
+  @Prop()
+  accountCustomizations?: string;
+
   @Prop({ required: true })
   issuedAt: Date;
 
@@ -137,6 +140,7 @@ export interface IQuote {
   approvalToken?: string;
   approvalTokenExpires?: Date;
   notes?: string;
+  accountCustomizations?: string;
   validUntil: Date;
   issuedAt: Date;
   createdBy: string | Types.ObjectId;

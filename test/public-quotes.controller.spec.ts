@@ -1,3 +1,7 @@
+jest.mock('marked', () => ({
+  marked: jest.fn((input) => `<p>${input}</p>`),
+}));
+
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PublicQuotesController } from '../src/quotes/public-quotes.controller';

@@ -1,3 +1,7 @@
+jest.mock('marked', () => ({
+  marked: jest.fn((input) => `<p>${input}</p>`),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';

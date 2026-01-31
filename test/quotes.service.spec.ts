@@ -1,7 +1,12 @@
+jest.mock('marked', () => ({
+  marked: jest.fn((input) => `<p>${input}</p>`),
+}));
+
 import { ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
+import { AccountsService } from '../src/accounts/accounts.service';
 import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { QuotesService } from '../src/quotes/quotes.service';
 import { Quote } from '../src/quotes/schemas/quote.schema';
@@ -105,6 +110,11 @@ describe('QuotesService', () => {
       })
     };
 
+    const mockAccountsService = {
+      findOne: jest.fn(),
+      getCustomizations: jest.fn()
+    };
+
     const mockAppGateway = {
       broadcastToAccount: jest.fn()
     };
@@ -131,6 +141,10 @@ describe('QuotesService', () => {
         {
           provide: AppGateway,
           useValue: mockAppGateway
+        },
+        {
+          provide: AccountsService,
+          useValue: mockAccountsService
         }
       ]
     }).compile();

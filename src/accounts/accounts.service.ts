@@ -41,4 +41,9 @@ export class AccountsService {
   async delete(id: Types.ObjectId): Promise<Account | null> {
     return this.accountModel.findByIdAndDelete(id).exec();
   }
+
+  async getCustomizations(accountId: Types.ObjectId): Promise<string | null> {
+    const account = await this.accountModel.findById(accountId).select('customizations').exec();
+    return account ? account.customizations || null : null;
+  }
 }

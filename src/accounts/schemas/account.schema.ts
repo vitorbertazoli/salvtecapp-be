@@ -46,6 +46,9 @@ export class Account {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   updatedBy: Types.ObjectId;
+
+  @Prop()
+  customizations?: string;
 }
 
 export interface IAccount {
@@ -62,6 +65,7 @@ export interface IAccount {
     expiryDate?: string;
     cvv?: string;
   };
+  customizations?: string;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

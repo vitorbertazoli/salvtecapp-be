@@ -34,6 +34,13 @@ export class AccountsController {
     private readonly emailService: EmailService
   ) {}
 
+  @Get('customizations')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
+  async getCustomizations(@GetAccountId() accountid: Types.ObjectId) {
+    const customizations = await this.accountsService.getCustomizations(accountid);
+    return { customizations: customizations || '' };
+  }
+
   @Get(':id')
   @Roles('ADMIN')
   async findById(@Param('id') id: string, @GetAccountId() accountid: Types.ObjectId) {

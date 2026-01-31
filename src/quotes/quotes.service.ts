@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
 import { Model, Types } from 'mongoose';
+import { marked } from 'marked';
+import { AccountsService } from '../accounts/accounts.service';
 import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { EmailService } from '../utils/email.service';
 import { AppGateway } from '../websocket/app.gateway';
@@ -15,10 +17,19 @@ export class QuotesService {
     private emailService: EmailService,
     private configService: ConfigService,
     private quoteToServiceOrderService: QuoteToServiceOrderService,
-    private appGateway: AppGateway
+    private appGateway: AppGateway,
+    private accountsService: AccountsService
   ) {}
 
   async create(quoteData: Partial<Quote>): Promise<Quote> {
+    // Fetch account customizations
+    if (quoteData.account) {
+      const account = await this.accountsService.findOne(quoteData.account);
+      if (account) {
+        quoteData.accountCustomizations = account.customizations;
+      }
+    }
+
     const createdQuote = new this.quoteModel(quoteData);
     const savedQuote = await createdQuote.save();
     return savedQuote.toObject() as any;
@@ -144,10 +155,12 @@ export class QuotesService {
 
     // Generate approval token and expiration date (use quote's validUntil date)
     const approvalToken = crypto.randomBytes(32).toString('hex');
-    const approvalTokenExpires = new Date(quote.validUntil);
+    const approvalTokenExpires = new Date((quote as any).validUntil);
+
+    const customizations = await this.accountsService.getCustomizations(accountId);
 
     // Generate HTML email content
-    const htmlContent = this.generateQuoteEmailHtml(quote, approvalToken);
+    const htmlContent = this.generateQuoteEmailHtml(quote, approvalToken, customizations || undefined);
 
     // Send email
     await this.emailService.sendEmail({
@@ -252,7 +265,7 @@ export class QuotesService {
     return quote;
   }
 
-  private generateQuoteEmailHtml(quote: any, approvalToken?: string): string {
+  private generateQuoteEmailHtml(quote: any, approvalToken?: string, customizations?: string): string {
     const formatCurrency = (value: number) => {
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -261,6 +274,7 @@ export class QuotesService {
     };
 
     const formatDate = (date: Date) => {
+      console.log(date);
       return new Intl.DateTimeFormat('pt-BR', {
         year: 'numeric',
         month: '2-digit',
@@ -426,6 +440,66 @@ export class QuotesService {
             padding: 15px;
             margin: 20px 0;
             font-style: italic;
+        }
+        /* Markdown styles */
+        .markdown-content h1, .markdown-content h2, .markdown-content h3,
+        .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+            color: #007bff;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .markdown-content h1 { font-size: 24px; }
+        .markdown-content h2 { font-size: 20px; }
+        .markdown-content h3 { font-size: 18px; }
+        .markdown-content h4 { font-size: 16px; }
+        .markdown-content h5 { font-size: 14px; }
+        .markdown-content h6 { font-size: 12px; }
+        .markdown-content p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .markdown-content strong, .markdown-content b {
+            font-weight: bold;
+            color: #333;
+        }
+        .markdown-content em, .markdown-content i {
+            font-style: italic;
+            color: #555;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        .markdown-content li {
+            margin: 5px 0;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #007bff;
+            padding-left: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #666;
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+        }
+        .markdown-content code {
+            background-color: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .markdown-content pre {
+            background-color: #f1f3f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
         }
         @media (max-width: 600px) {
             .table {
@@ -718,6 +792,19 @@ export class QuotesService {
                 </tr>
             </table>
         </div>
+
+        ${
+          customizations
+            ? `
+        <div class="section">
+            <h3 class="section-title">Condições:</h3>
+            <div class="markdown-content" style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 10px 0;">
+                ${marked(customizations)}
+            </div>
+        </div>
+        `
+            : ''
+        }
 
         ${
           createdBy

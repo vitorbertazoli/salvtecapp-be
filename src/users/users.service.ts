@@ -183,11 +183,11 @@ export class UsersService {
           as: 'userRoles'
         }
       },
-      {
-        $match: {
-          'userRoles.name': { $ne: 'TECHNICIAN' }
-        }
-      },
+      // {
+      //   $match: {
+      //     'userRoles.name': { $ne: 'TECHNICIAN' }
+      //   }
+      // },
       { $count: 'total' }
     ];
 

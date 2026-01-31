@@ -15,4 +15,8 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsString()
   logoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  customizations?: string;
 }
