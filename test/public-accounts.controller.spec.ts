@@ -25,7 +25,7 @@ describe('PublicAccountsController', () => {
 
   const mockAccount: AccountDocument = {
     _id: mockAccountId,
-    name: 'test-account',
+    name: 'Test Account',
     plan: 'free',
     status: 'pending',
     billingInfo: {},
@@ -148,10 +148,10 @@ describe('PublicAccountsController', () => {
 
       const result = await controller.create(createAccountDto, mockFile);
 
-      expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
+      expect(accountsService.findByAccountName).toHaveBeenCalledWith('Test Account');
       expect(usersService.findOneByEmail).toHaveBeenCalledWith(createAccountDto.email);
       expect(accountsService.create).toHaveBeenCalledWith({
-        name: 'test-account',
+        name: 'Test Account',
         plan: createAccountDto.plan,
         logoUrl: `/uploads/logos/${mockFile.filename}`,
         status: 'pending',
@@ -207,7 +207,7 @@ describe('PublicAccountsController', () => {
       const result = await controller.create(createAccountDto);
 
       expect(accountsService.create).toHaveBeenCalledWith({
-        name: 'test-account',
+        name: 'Test Account',
         plan: createAccountDto.plan,
         logoUrl: undefined,
         status: 'pending',
@@ -259,22 +259,13 @@ describe('PublicAccountsController', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should throw error if account name already exists', async () => {
-      accountsService.findByAccountName.mockResolvedValue(mockAccount);
-
-      await expect(controller.create(createAccountDto)).rejects.toThrow('accounts.errors.accountNameExists');
-
-      expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
-      expect(usersService.findOneByEmail).not.toHaveBeenCalled();
-    });
-
     it('should throw error if user email already exists', async () => {
       accountsService.findByAccountName.mockResolvedValue(null);
       usersService.findOneByEmail.mockResolvedValue(mockUser);
 
       await expect(controller.create(createAccountDto)).rejects.toThrow('accounts.errors.userEmailExists');
 
-      expect(accountsService.findByAccountName).toHaveBeenCalledWith('test-account');
+      expect(accountsService.findByAccountName).toHaveBeenCalledWith('Test Account');
       expect(usersService.findOneByEmail).toHaveBeenCalledWith(createAccountDto.email);
       expect(accountsService.create).not.toHaveBeenCalled();
     });

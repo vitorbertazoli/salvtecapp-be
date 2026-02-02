@@ -64,9 +64,9 @@ export class PublicAccountsController {
     @UploadedFile() logo?: UploadedFile
   ) {
     // Convert account name to lowercase and replace spaces/special chars with dashes
-    const accountName = createAccountDto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const accountName = createAccountDto.name.trim();
 
-    // Check if account already exists
+    // Check if account name already exists
     const existingAccount = await this.accountsService.findByAccountName(accountName);
     if (existingAccount) {
       throw new BadRequestException('accounts.errors.accountNameExists');
