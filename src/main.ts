@@ -9,7 +9,9 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug', 'verbose']
+  });
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
 
@@ -18,6 +20,12 @@ async function bootstrap() {
 
   // Use cookie parser
   app.use(cookieParser());
+
+  // Enable verbose request logging
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
 
   // Ensure uploads directory exists
   const uploadsPath = process.env.NODE_ENV === 'production' ? join(__dirname, '..', 'uploads') : join(process.cwd(), 'uploads');
@@ -45,6 +53,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}/api`);
 }
 bootstrap().catch((error) => {
   console.error('Error during application bootstrap:', error);

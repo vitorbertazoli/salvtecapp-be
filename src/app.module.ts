@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AppController } from './app.controller';
 import { AccountsModule } from './accounts/accounts.module';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
@@ -56,7 +57,7 @@ import { WebsocketModule } from './websocket/websocket.module';
     VehicleUsagesModule,
     WebsocketModule
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: []
 })
 export class AppModule {}
