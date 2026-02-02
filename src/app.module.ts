@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from './app.controller';
 import { AccountsModule } from './accounts/accounts.module';
 import { AdminModule } from './admin/admin.module';
+import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { CustomersModule } from './customers/customers.module';
