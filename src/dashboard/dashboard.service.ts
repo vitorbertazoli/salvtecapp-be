@@ -19,11 +19,18 @@ export class DashboardService {
     @InjectModel(PaymentOrder.name) private paymentOrderModel: Model<PaymentOrderDocument>
   ) {}
 
-  async getStats(accountId: Types.ObjectId) {
+  async getStats(accountId: Types.ObjectId, startDate?: string, endDate?: string) {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    // Default to last 30 days if no dates provided
+    const defaultEndDate = today;
+    const defaultStartDate = new Date();
+    defaultStartDate.setDate(today.getDate() - 30);
+
+    const start = startDate ? new Date(startDate) : defaultStartDate;
+    const end = endDate ? new Date(endDate) : defaultEndDate;
+
     const accountObjId = accountId;
 
     // Get all stats in parallel
@@ -54,14 +61,14 @@ export class DashboardService {
           status: 'scheduled'
         }),
 
-        // Get monthly sales data (payments received from last 30 days)
-        this.getMonthlyPaymentData(accountId, thirtyDaysAgo),
+        // Get monthly sales data (payments received in the date range)
+        this.getMonthlyPaymentData(accountId, start, end),
 
         // Get payment statistics
-        this.getPaymentStats(accountId),
+        this.getPaymentStats(accountId, start, end),
 
         // Get expected revenue from open service orders
-        this.getExpectedRevenue(accountId)
+        this.getExpectedRevenue(accountId, start, end)
       ]);
 
     return {
@@ -76,12 +83,12 @@ export class DashboardService {
     };
   }
 
-  private async getMonthlyPaymentData(accountId: Types.ObjectId, fromDate: Date) {
+  private async getMonthlyPaymentData(accountId: Types.ObjectId, fromDate: Date, toDate: Date) {
     const paymentData = await this.paymentOrderModel.aggregate([
       {
         $match: {
           account: accountId,
-          'payments.paymentDate': { $gte: fromDate }
+          'payments.paymentDate': { $gte: fromDate, $lte: toDate }
         }
       },
       {
@@ -89,7 +96,7 @@ export class DashboardService {
       },
       {
         $match: {
-          'payments.paymentDate': { $gte: fromDate }
+          'payments.paymentDate': { $gte: fromDate, $lte: toDate }
         }
       },
       {
@@ -112,7 +119,7 @@ export class DashboardService {
     const result: { date: string; sales: number }[] = [];
     const currentDate = new Date(fromDate);
 
-    while (currentDate <= new Date()) {
+    while (currentDate <= toDate) {
       const dateString = currentDate.toISOString().split('T')[0];
       const existingData = paymentData.find((item) => item._id === dateString);
 
@@ -127,17 +134,14 @@ export class DashboardService {
     return result;
   }
 
-  private async getPaymentStats(accountId: Types.ObjectId) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+  private async getPaymentStats(accountId: Types.ObjectId, fromDate: Date, toDate: Date) {
     const [totalReceived, totalOwed] = await Promise.all([
-      // Total amount received in the last 30 days
+      // Total amount received in the date range
       this.paymentOrderModel.aggregate([
         {
           $match: {
             account: accountId,
-            'payments.paymentDate': { $gte: thirtyDaysAgo }
+            'payments.paymentDate': { $gte: fromDate, $lte: toDate }
           }
         },
         {
@@ -145,7 +149,7 @@ export class DashboardService {
         },
         {
           $match: {
-            'payments.paymentDate': { $gte: thirtyDaysAgo }
+            'payments.paymentDate': { $gte: fromDate, $lte: toDate }
           }
         },
         {
@@ -156,12 +160,13 @@ export class DashboardService {
         }
       ]),
 
-      // Total amount still owed (pending and partial payments)
+      // Total amount still owed (pending and partial payments due in the date range)
       this.paymentOrderModel.aggregate([
         {
           $match: {
             account: accountId,
-            paymentStatus: { $in: ['pending', 'partial'] }
+            paymentStatus: { $in: ['pending', 'partial'] },
+            $or: [{ dueDate: { $gte: fromDate, $lte: toDate } }, { dueDate: { $exists: false }, createdAt: { $gte: fromDate, $lte: toDate } }]
           }
         },
         {
@@ -180,12 +185,13 @@ export class DashboardService {
     };
   }
 
-  private async getExpectedRevenue(accountId: Types.ObjectId) {
+  private async getExpectedRevenue(accountId: Types.ObjectId, fromDate: Date, toDate: Date) {
     const result = await this.serviceOrderModel.aggregate([
       {
         $match: {
           account: accountId,
-          status: { $nin: ['completed', 'cancelled'] }
+          status: { $nin: ['completed', 'cancelled'] },
+          issuedAt: { $gte: fromDate, $lte: toDate }
         }
       },
       {
