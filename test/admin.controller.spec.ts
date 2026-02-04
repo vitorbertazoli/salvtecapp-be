@@ -1,5 +1,5 @@
 jest.mock('marked', () => ({
-  marked: jest.fn((input) => `<p>${input}</p>`),
+  marked: jest.fn((input) => `<p>${input}</p>`)
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';

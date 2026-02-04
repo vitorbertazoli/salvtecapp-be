@@ -38,14 +38,11 @@ export class QuoteToServiceOrderService {
       throw new BadRequestException('quotes.errors.quoteAlreadyAccepted');
     }
 
-    // If quote has been sent, reset status to draft when updating
-    // But allow status changes from 'sent' to 'accepted' (for service order creation)
     const updateData = { ...quoteData };
-    if (currentQuote.status === 'sent') {
-      // Allow status change from 'sent' to 'accepted', but reset to 'draft' for other updates
-      if (!(quoteData.status === 'accepted' && currentQuote.status === 'sent')) {
-        updateData.status = 'draft';
-      }
+    if ((currentQuote.status === 'sent' || currentQuote.status === 'draft') && quoteData.status === 'rejected') {
+      updateData.status = 'rejected';
+    } else {
+      updateData.status = 'draft';
     }
 
     const updatedQuote = await this.quoteModel

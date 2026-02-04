@@ -163,6 +163,11 @@ describe('QuoteToServiceOrderService', () => {
         updatedBy: mockUserId
       };
 
+      const expectedUpdateData = {
+        ...updateData,
+        status: 'draft'
+      };
+
       quoteModel.findOne.mockReturnValue({
         exec: jest.fn().mockResolvedValue({ ...mockQuote, status: 'draft' })
       });
@@ -171,16 +176,16 @@ describe('QuoteToServiceOrderService', () => {
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue({
           ...mockQuote,
-          ...updateData
+          ...expectedUpdateData
         })
       });
 
       const result = await service.updateByAccount(mockQuote._id.toString(), updateData, mockAccountId, mockUserId);
 
-      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockQuote._id.toString(), account: mockAccountId }, updateData, { new: true });
+      expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockQuote._id.toString(), account: mockAccountId }, expectedUpdateData, { new: true });
       expect(result).toMatchObject({
         ...mockQuote,
-        ...updateData
+        ...expectedUpdateData
       });
     });
 

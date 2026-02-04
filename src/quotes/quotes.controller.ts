@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -93,6 +93,13 @@ export class QuotesController {
   @Roles('ADMIN', 'SUPERVISOR')
   async send(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     return this.quotesService.sendQuote(id, accountId, new Types.ObjectId(userId));
+  }
+
+  @Patch(':id')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async updatePartial(@Param('id') id: string, @Body() dto: UpdateQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const quoteData = { ...dto, updatedBy: new Types.ObjectId(userId) } as any;
+    return this.quoteToServiceOrderService.updateByAccount(id, quoteData, accountId, new Types.ObjectId(userId));
   }
 
   @Delete(':id')

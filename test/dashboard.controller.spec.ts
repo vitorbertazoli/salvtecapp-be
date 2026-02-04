@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DashboardController } from '../src/dashboard/dashboard.controller';
-import { DashboardService } from '../src/dashboard/dashboard.service';
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
+import { DashboardController } from '../src/dashboard/dashboard.controller';
+import { DashboardService } from '../src/dashboard/dashboard.service';
 
 describe('DashboardController', () => {
   let controller: DashboardController;
@@ -57,7 +57,7 @@ describe('DashboardController', () => {
 
       const result = await controller.getStats(mockAccountId);
 
-      expect(dashboardService.getStats).toHaveBeenCalledWith(mockAccountId);
+      expect(dashboardService.getStats).toHaveBeenCalledWith(mockAccountId, undefined, undefined);
       expect(result).toEqual(mockStats);
     });
 
@@ -75,7 +75,7 @@ describe('DashboardController', () => {
 
       const result = await controller.getStats(mockAccountId);
 
-      expect(dashboardService.getStats).toHaveBeenCalledWith(mockAccountId);
+      expect(dashboardService.getStats).toHaveBeenCalledWith(mockAccountId, undefined, undefined);
       expect(result).toEqual(emptyStats);
     });
 

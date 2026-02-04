@@ -247,6 +247,7 @@ describe('DashboardService', () => {
   describe('getMonthlyPaymentData', () => {
     it('should aggregate monthly payment data correctly', async () => {
       const fromDate = new Date('2024-01-01');
+      const toDate = new Date('2024-01-05');
       const paymentData = [
         { _id: '2024-01-01', total: 1500 },
         { _id: '2024-01-02', total: 2200 }
@@ -254,13 +255,13 @@ describe('DashboardService', () => {
 
       paymentOrderModel.aggregate.mockResolvedValue(paymentData);
 
-      const result = await (service as any).getMonthlyPaymentData(mockAccountId, fromDate);
+      const result = await (service as any).getMonthlyPaymentData(mockAccountId, fromDate, toDate);
 
       expect(paymentOrderModel.aggregate).toHaveBeenCalledWith([
         {
           $match: {
             account: mockAccountId,
-            'payments.paymentDate': { $gte: fromDate }
+            'payments.paymentDate': { $gte: fromDate, $lte: toDate }
           }
         },
         {
@@ -268,7 +269,7 @@ describe('DashboardService', () => {
         },
         {
           $match: {
-            'payments.paymentDate': { $gte: fromDate }
+            'payments.paymentDate': { $gte: fromDate, $lte: toDate }
           }
         },
         {
@@ -299,10 +300,10 @@ describe('DashboardService', () => {
       // Mock only one day with sales
       paymentOrderModel.aggregate.mockResolvedValue([{ _id: '2024-01-02', total: 1000 }]);
 
-      const result = await (service as any).getMonthlyPaymentData(mockAccountId, fromDate);
+      const result = await (service as any).getMonthlyPaymentData(mockAccountId, fromDate, toDate);
 
-      // Should include all dates from fromDate to today
-      expect(result.length).toBeGreaterThanOrEqual(3); // At least 3 days
+      // Should include all dates from fromDate to toDate
+      expect(result.length).toBe(3); // Exactly 3 days
 
       // Find the specific dates
       const day1 = result.find((item) => item.date === '2024-01-01');
