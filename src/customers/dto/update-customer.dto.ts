@@ -1,7 +1,10 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEmail, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsMongoId, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class EquipmentDto {
+  @IsMongoId()
+  _id?: string;
+
   @IsOptional()
   @IsString()
   name?: string;

@@ -30,8 +30,6 @@ export class Equipment {
   name: string;
   room?: string;
   btus?: number;
-  type: string;
-  subType?: string;
   maker?: string;
   model?: string;
 }
@@ -112,8 +110,6 @@ export class ServiceOrder {
         name: { type: String, required: true },
         room: String,
         btus: Number,
-        type: { type: String, required: true },
-        subType: String,
         maker: String,
         model: String
       }

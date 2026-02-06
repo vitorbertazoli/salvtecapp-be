@@ -34,8 +34,6 @@ export class CreateChangeOrderDto {
     name: string;
     room?: string;
     btus?: number;
-    type: string;
-    subType?: string;
     maker?: string;
     model?: string;
     _id?: string;

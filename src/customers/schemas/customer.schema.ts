@@ -5,13 +5,13 @@ import { IAccount } from 'src/accounts/schemas/account.schema';
 export type CustomerDocument = Customer & Document;
 
 export class Equipment {
+  _id: string;
   name: string;
   room?: string;
   btus?: number;
-  type: string;
-  subType?: string;
   maker?: string;
   model?: string;
+  pictures?: string[];
 }
 
 export class Note {
@@ -106,10 +106,9 @@ export class Customer {
         name: { type: String, required: true },
         room: String,
         btus: Number,
-        type: { type: String, required: true },
-        subType: String,
         maker: String,
-        model: String
+        model: String,
+        pictures: { type: [String], default: [] }
       }
     ],
     default: []

@@ -19,8 +19,6 @@ export class Quote {
         name: { type: String, required: true },
         room: String,
         btus: Number,
-        type: { type: String, required: true },
-        subType: String,
         maker: String,
         model: String
       }

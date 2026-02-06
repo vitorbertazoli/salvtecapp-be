@@ -41,8 +41,14 @@ export class QuoteToServiceOrderService {
     const updateData = { ...quoteData };
     if ((currentQuote.status === 'sent' || currentQuote.status === 'draft') && quoteData.status === 'rejected') {
       updateData.status = 'rejected';
+    } else if (quoteData.status === 'accepted' && (currentQuote.status === 'sent' || currentQuote.status === 'draft')) {
+      updateData.status = 'accepted';
     } else {
       updateData.status = 'draft';
+    }
+
+    if (userId) {
+      updateData.updatedBy = userId;
     }
 
     const updatedQuote = await this.quoteModel

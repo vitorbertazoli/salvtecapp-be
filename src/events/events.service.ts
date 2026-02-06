@@ -79,9 +79,6 @@ export class EventsService {
 
     if (filters?.status) {
       query.status = filters.status;
-    } else {
-      // By default, exclude completed events from calendar view
-      query.status = { $ne: 'completed' };
     }
 
     return this.eventModel

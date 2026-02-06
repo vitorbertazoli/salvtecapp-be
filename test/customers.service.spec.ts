@@ -352,6 +352,25 @@ describe('CustomersService', () => {
 
       const updatedCustomer = { ...mockCustomer, ...updateData };
 
+      // Mock findOne to return existing customer with pictures
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          ...mockCustomer,
+          equipments: [
+            {
+              _id: 'equipment1',
+              name: 'AC Unit',
+              room: 'Living Room',
+              btus: 12000,
+              type: 'Air Conditioner',
+              maker: 'Test Maker',
+              model: 'Test Model',
+              pictures: ['/uploads/equipment-pictures/pic1.jpg', '/uploads/equipment-pictures/pic2.jpg']
+            }
+          ]
+        })
+      } as any);
+
       customerModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(updatedCustomer)
@@ -359,6 +378,7 @@ describe('CustomersService', () => {
 
       const result = await service.updateByAccount(mockCustomerId, updateData, mockAccountId);
 
+      expect(customerModel.findOne).toHaveBeenCalledWith({ _id: mockCustomerId, account: mockAccountId });
       expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: mockCustomerId, account: mockAccountId },
         {
@@ -366,7 +386,14 @@ describe('CustomersService', () => {
           address: {
             ...updateData.address,
             country: 'Brazil'
-          }
+          },
+          equipments: [
+            {
+              name: 'Updated Equipment',
+              type: 'Updated Type',
+              pictures: ['/uploads/equipment-pictures/pic1.jpg', '/uploads/equipment-pictures/pic2.jpg'] // Pictures preserved
+            }
+          ]
         },
         { new: true }
       );
@@ -427,6 +454,345 @@ describe('CustomersService', () => {
 
       expect(customerModel.deleteMany).toHaveBeenCalledWith({ account: mockAccountId });
       expect(result).toEqual(mockDeleteResult);
+    });
+  });
+
+  describe('addNote', () => {
+    it('should add a note to customer successfully', async () => {
+      const noteData = { content: 'Test note content' };
+      const updatedCustomer = {
+        ...mockCustomer,
+        noteHistory: [
+          {
+            date: expect.any(Date),
+            content: noteData.content,
+            createdBy: new Types.ObjectId(mockUserId)
+          }
+        ]
+      };
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.addNote(mockCustomerId, noteData, mockUserId, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $push: {
+            noteHistory: {
+              date: expect.any(Date),
+              content: noteData.content,
+              createdBy: new Types.ObjectId(mockUserId)
+            }
+          }
+        },
+        { new: true }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer not found', async () => {
+      const noteData = { content: 'Test note content' };
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(null)
+      } as any);
+
+      const result = await service.addNote(mockCustomerId, noteData, mockUserId, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('updateNote', () => {
+    it('should update a note successfully', async () => {
+      const noteId = '507f1f77bcf86cd799439015'; // Valid ObjectId string
+      const noteData = { content: 'Updated note content' };
+      const updatedCustomer = {
+        ...mockCustomer,
+        noteHistory: [
+          {
+            _id: new Types.ObjectId(noteId),
+            date: expect.any(Date),
+            content: noteData.content,
+            createdBy: new Types.ObjectId(mockUserId)
+          }
+        ]
+      };
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.updateNote(mockCustomerId, noteId, noteData, mockUserId, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId, 'noteHistory._id': new Types.ObjectId(noteId) },
+        {
+          $set: {
+            'noteHistory.$.content': noteData.content,
+            'noteHistory.$.date': expect.any(Date),
+            'noteHistory.$.createdBy': new Types.ObjectId(mockUserId)
+          }
+        },
+        { new: true }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer or note not found', async () => {
+      const noteId = '507f1f77bcf86cd799439015'; // Valid ObjectId string
+      const noteData = { content: 'Updated note content' };
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(null)
+      } as any);
+
+      const result = await service.updateNote(mockCustomerId, noteId, noteData, mockUserId, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('deleteNote', () => {
+    it('should delete a note successfully', async () => {
+      const noteId = '507f1f77bcf86cd799439015'; // Valid ObjectId string
+      const updatedCustomer = {
+        ...mockCustomer,
+        noteHistory: [] // Note removed
+      };
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.deleteNote(mockCustomerId, noteId, mockUserId, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $pull: {
+            noteHistory: { _id: new Types.ObjectId(noteId) }
+          }
+        },
+        { new: true }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer not found', async () => {
+      const noteId = '507f1f77bcf86cd799439015'; // Valid ObjectId string
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(null)
+      } as any);
+
+      const result = await service.deleteNote(mockCustomerId, noteId, mockUserId, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('addEquipmentPicture', () => {
+    it('should add picture to equipment successfully', async () => {
+      const equipmentId = '507f1f77bcf86cd799439016'; // Valid ObjectId string
+      const pictureUrls = ['/uploads/equipment-pictures/pic1.jpg'];
+      const mockCustomerWithEquipment = {
+        ...mockCustomer,
+        equipments: [
+          {
+            _id: new Types.ObjectId(equipmentId),
+            name: 'AC Unit',
+            room: 'Living Room',
+            btus: 12000,
+            type: 'Air Conditioner',
+            maker: 'Test Maker',
+            model: 'Test Model'
+          }
+        ]
+      };
+
+      const updatedCustomer = {
+        ...mockCustomerWithEquipment,
+        equipments: [
+          {
+            ...mockCustomerWithEquipment.equipments[0],
+            pictures: pictureUrls
+          }
+        ]
+      };
+
+      // Mock findOne to return customer with equipment
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCustomerWithEquipment)
+      } as any);
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.addEquipmentPicture(mockCustomerId, equipmentId, pictureUrls, mockAccountId);
+
+      expect(customerModel.findOne).toHaveBeenCalledWith({ _id: mockCustomerId, account: mockAccountId });
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $push: {
+            [`equipments.$[elem].pictures`]: { $each: pictureUrls }
+          }
+        },
+        {
+          new: true,
+          arrayFilters: [{ 'elem._id': new Types.ObjectId(equipmentId) }]
+        }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should add multiple pictures to equipment', async () => {
+      const equipmentId = '507f1f77bcf86cd799439016'; // Valid ObjectId string
+      const pictureUrls = ['/uploads/equipment-pictures/pic1.jpg', '/uploads/equipment-pictures/pic2.jpg'];
+      const mockCustomerWithEquipment = {
+        ...mockCustomer,
+        equipments: [
+          {
+            _id: new Types.ObjectId(equipmentId),
+            name: 'AC Unit',
+            room: 'Living Room',
+            btus: 12000,
+            type: 'Air Conditioner',
+            maker: 'Test Maker',
+            model: 'Test Model'
+          }
+        ]
+      };
+
+      const updatedCustomer = {
+        ...mockCustomerWithEquipment,
+        equipments: [
+          {
+            ...mockCustomerWithEquipment.equipments[0],
+            pictures: pictureUrls
+          }
+        ]
+      };
+
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCustomerWithEquipment)
+      } as any);
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.addEquipmentPicture(mockCustomerId, equipmentId, pictureUrls, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $push: {
+            [`equipments.$[elem].pictures`]: { $each: pictureUrls }
+          }
+        },
+        {
+          new: true,
+          arrayFilters: [{ 'elem._id': new Types.ObjectId(equipmentId) }]
+        }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should handle single picture URL as string', async () => {
+      const equipmentId = '507f1f77bcf86cd799439016'; // Valid ObjectId string
+      const pictureUrl = '/uploads/equipment-pictures/pic1.jpg';
+      const mockCustomerWithEquipment = {
+        ...mockCustomer,
+        equipments: [
+          {
+            _id: new Types.ObjectId(equipmentId),
+            name: 'AC Unit',
+            room: 'Living Room',
+            btus: 12000,
+            type: 'Air Conditioner',
+            maker: 'Test Maker',
+            model: 'Test Model'
+          }
+        ]
+      };
+
+      const updatedCustomer = {
+        ...mockCustomerWithEquipment,
+        equipments: [
+          {
+            ...mockCustomerWithEquipment.equipments[0],
+            pictures: [pictureUrl]
+          }
+        ]
+      };
+
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCustomerWithEquipment)
+      } as any);
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.addEquipmentPicture(mockCustomerId, equipmentId, pictureUrl, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $push: {
+            [`equipments.$[elem].pictures`]: { $each: [pictureUrl] }
+          }
+        },
+        {
+          new: true,
+          arrayFilters: [{ 'elem._id': new Types.ObjectId(equipmentId) }]
+        }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer not found', async () => {
+      const equipmentId = '507f1f77bcf86cd799439016'; // Valid ObjectId string
+      const pictureUrls = ['/uploads/equipment-pictures/pic1.jpg'];
+
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null)
+      } as any);
+
+      const result = await service.addEquipmentPicture(mockCustomerId, equipmentId, pictureUrls, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when equipment not found', async () => {
+      const equipmentId = '507f1f77bcf86cd799439016'; // Valid ObjectId string
+      const pictureUrls = ['/uploads/equipment-pictures/pic1.jpg'];
+
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({
+          ...mockCustomer,
+          equipments: [] // Customer exists but has no equipments
+        })
+      } as any);
+
+      const result = await service.addEquipmentPicture(mockCustomerId, equipmentId, pictureUrls, mockAccountId);
+
+      expect(result).toBeNull();
     });
   });
 });

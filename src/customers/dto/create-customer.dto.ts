@@ -14,14 +14,6 @@ class EquipmentDto {
   @IsNumber()
   btus?: number;
 
-  @IsNotEmpty()
-  @IsString()
-  type: string;
-
-  @IsOptional()
-  @IsString()
-  subType?: string;
-
   @IsOptional()
   @IsString()
   maker?: string;

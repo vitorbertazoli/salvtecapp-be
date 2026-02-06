@@ -33,8 +33,6 @@ describe('QuotesService', () => {
         name: 'AC Unit',
         room: 'Living Room',
         btus: 12000,
-        type: 'Split',
-        subType: 'Wall',
         maker: 'Test Maker',
         model: 'Test Model'
       }

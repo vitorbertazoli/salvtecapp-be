@@ -126,6 +126,27 @@ export class CustomersService {
       };
     }
 
+    // If equipments are being updated, preserve existing pictures
+    if (customerData.equipments && Array.isArray(customerData.equipments)) {
+      // Get the existing customer to preserve pictures
+      const existingCustomer = await this.customerModel.findOne(query).exec();
+
+      if (existingCustomer && existingCustomer.equipments) {
+        // Preserve pictures for equipments that don't have them specified
+        customerData.equipments = customerData.equipments.map((incomingEq, index) => {
+          const existingEq = existingCustomer.equipments[index];
+          if (existingEq && existingEq.pictures && incomingEq.pictures === undefined) {
+            // Preserve existing pictures if not explicitly provided in the update
+            return {
+              ...incomingEq,
+              pictures: existingEq.pictures
+            };
+          }
+          return incomingEq;
+        });
+      }
+    }
+
     // Equipments are now embedded, so just update the customer with the new equipments array
     const updatedCustomer = await this.customerModel.findOneAndUpdate(query, customerData, { new: true }).populate('account', 'name id').exec();
 
@@ -178,6 +199,33 @@ export class CustomersService {
 
     const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, { new: true }).populate('account', 'name id').exec();
 
+    return updatedCustomer;
+  }
+
+  async addEquipmentPicture(id: string, equipmentId: string, pictureUrls: string | string[], accountId: Types.ObjectId): Promise<Customer | null> {
+    const query = { _id: id, account: accountId };
+
+    // First, get the customer to check if the equipment exists
+    const customer = await this.customerModel.findOne(query).exec();
+    if (!customer || !customer.equipments || !customer.equipments.find((e) => e._id.toString() === equipmentId)) {
+      return null;
+    }
+
+    // Handle both single URL and array of URLs
+    const urls = Array.isArray(pictureUrls) ? pictureUrls : [pictureUrls];
+
+    // Use positional operator to update the specific equipment
+    const update = {
+      $push: {
+        [`equipments.$[elem].pictures`]: { $each: urls }
+      }
+    };
+    const options = {
+      new: true,
+      arrayFilters: [{ 'elem._id': new Types.ObjectId(equipmentId) }]
+    };
+
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, options).populate('account', 'name id').exec();
     return updatedCustomer;
   }
 

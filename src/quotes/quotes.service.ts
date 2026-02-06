@@ -647,8 +647,6 @@ export class QuotesService {
                             <td>${equipment.name}</td>
                             <td>${equipment.room || '-'}</td>
                             <td>${equipment.btus || '-'}</td>
-                            <td>${equipment.type}</td>
-                            <td>${equipment.subType || '-'}</td>
                             <td>${equipment.maker || '-'}</td>
                             <td>${equipment.model || '-'}</td>
                         </tr>

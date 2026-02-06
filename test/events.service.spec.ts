@@ -212,8 +212,7 @@ describe('EventsService', () => {
       const result = await service.findAll(mockAccountId);
 
       expect(eventModel.find).toHaveBeenCalledWith({
-        account: mockAccountId,
-        status: { $ne: 'completed' }
+        account: mockAccountId
       });
       expect(result).toEqual(mockEventArray);
     });
@@ -240,8 +239,7 @@ describe('EventsService', () => {
         date: {
           $gte: '2024-01-01',
           $lte: '2024-01-31'
-        },
-        status: { $ne: 'completed' }
+        }
       });
       expect(result).toEqual(mockEventArray);
     });
@@ -264,8 +262,7 @@ describe('EventsService', () => {
 
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        technician: mockTechnicianId,
-        status: { $ne: 'completed' }
+        technician: mockTechnicianId
       });
       expect(result).toEqual(mockEventArray);
     });
@@ -288,8 +285,7 @@ describe('EventsService', () => {
 
       expect(eventModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        customer: mockCustomerId,
-        status: { $ne: 'completed' }
+        customer: mockCustomerId
       });
       expect(result).toEqual(mockEventArray);
     });

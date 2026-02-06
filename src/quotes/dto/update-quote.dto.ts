@@ -16,14 +16,6 @@ class EquipmentDto {
 
   @IsOptional()
   @IsString()
-  type?: string;
-
-  @IsOptional()
-  @IsString()
-  subType?: string;
-
-  @IsOptional()
-  @IsString()
   maker?: string;
 
   @IsOptional()
