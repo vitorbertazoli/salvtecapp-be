@@ -10,6 +10,7 @@ import { CustomersModule } from './customers/customers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
 import { EventsModule } from './events/events.module';
+import { ExpensesModule } from './expenses/expenses.module';
 import { FollowUpsModule } from './follow-ups/follow-ups.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
@@ -49,6 +50,7 @@ import { WebsocketModule } from './websocket/websocket.module';
     EquipmentTypeModule,
     ServiceOrdersModule,
     EventsModule,
+    ExpensesModule,
     FollowUpsModule,
     DashboardModule,
     PaymentsModule,
