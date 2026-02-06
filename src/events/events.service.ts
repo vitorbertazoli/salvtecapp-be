@@ -15,30 +15,34 @@ export class EventsService {
     private serviceOrdersService: ServiceOrdersService
   ) {}
 
-  async create(eventData: Partial<Event> & { customer: string; technician: string; serviceOrder?: string }, accountId: Types.ObjectId): Promise<Event> {
-    // Fetch customer and technician to build title
+  async create(
+    eventData: Partial<Event> & { customer: Types.ObjectId; technician: Types.ObjectId[]; serviceOrder?: Types.ObjectId },
+    accountId: Types.ObjectId
+  ): Promise<Event> {
+    // Fetch customer and technicians to build title
     const customer = await this.customerModel.findById(eventData.customer);
-    const technician = await this.technicianModel.findById(eventData.technician);
+    const technicians = await this.technicianModel.find({ _id: { $in: eventData.technician } });
 
-    if (!customer || !technician) {
+    if (!customer || technicians.length !== eventData.technician.length) {
       throw new BadRequestException('events.errors.invalidCustomerOrTechnician');
     }
 
-    // Build title
-    const technicianUser = (technician as any).user;
+    // Build title using the first technician
+    const firstTechnician = technicians[0];
+    const technicianUser = (firstTechnician as any).user;
     eventData.title = `${customer.name} - ${technicianUser?.firstName || ''} ${technicianUser?.lastName || ''}`.trim();
 
     const createdEvent = new this.eventModel({
       ...eventData,
       customer,
-      technician
+      technician: eventData.technician
     });
     const savedEvent = await createdEvent.save();
 
     // Update service order status to 'scheduled' if a service order is linked
     if (eventData.serviceOrder) {
       await this.serviceOrdersService.updateByAccount(
-        eventData.serviceOrder,
+        eventData.serviceOrder.toString(),
         {
           status: 'scheduled',
           scheduledDate: new Date(`${eventData.date}T${eventData.startTime}`)
@@ -166,7 +170,7 @@ export class EventsService {
 
   async updateByAccount(
     id: string,
-    updateData: Partial<Event> & { customerId?: string; technicianId?: string; serviceOrderId?: string },
+    updateData: Partial<Event> & { customerId?: string; serviceOrderId?: string },
     accountId: Types.ObjectId
   ): Promise<Event | null> {
     const event = await this.eventModel.findOne({ _id: id, account: accountId });
@@ -177,7 +181,6 @@ export class EventsService {
 
     // Convert IDs to ObjectIds
     if (updateData.customerId) updateData.customer = new Types.ObjectId(updateData.customerId);
-    if (updateData.technicianId) updateData.technician = new Types.ObjectId(updateData.technicianId);
     if (updateData.serviceOrderId) updateData.serviceOrder = new Types.ObjectId(updateData.serviceOrderId);
 
     // Update fields

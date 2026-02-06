@@ -1,4 +1,4 @@
-import { IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateEventDto {
   @IsNotEmpty()
@@ -18,8 +18,9 @@ export class CreateEventDto {
   customer: string;
 
   @IsNotEmpty()
-  @IsMongoId()
-  technician: string;
+  @IsArray()
+  @IsMongoId({ each: true })
+  technician: string[];
 
   @IsOptional()
   @IsString()

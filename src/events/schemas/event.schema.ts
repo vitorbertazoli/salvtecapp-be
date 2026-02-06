@@ -17,8 +17,8 @@ export class Event {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
   customer: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Technician', required: true, index: true })
-  technician: Types.ObjectId;
+  @Prop({ type: [Types.ObjectId], ref: 'Technician', required: true, index: true })
+  technician: Types.ObjectId[];
 
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true, index: true })
   account: Types.ObjectId;

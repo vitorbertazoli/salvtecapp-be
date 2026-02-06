@@ -42,7 +42,7 @@ describe('EventsService', () => {
     startTime: '09:00',
     endTime: '10:00',
     customer: mockCustomerId,
-    technician: mockTechnicianId,
+    technician: [mockTechnicianId],
     account: mockAccountId,
     title: 'John Doe - Jane Smith',
     description: 'Service call',
@@ -77,7 +77,8 @@ describe('EventsService', () => {
     };
 
     const mockTechnicianModel = {
-      findById: jest.fn()
+      findById: jest.fn(),
+      find: jest.fn()
     };
 
     const mockServiceOrdersService = {
@@ -123,20 +124,20 @@ describe('EventsService', () => {
         date: '2024-01-15',
         startTime: '09:00',
         endTime: '10:00',
-        customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString(),
+        customer: mockCustomerId,
+        technician: [mockTechnicianId],
         description: 'Service call',
-        serviceOrder: mockServiceOrderId.toString()
+        serviceOrder: mockServiceOrderId
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
-      technicianModel.findById.mockResolvedValue(mockTechnician as any);
+      technicianModel.find.mockResolvedValue([mockTechnician] as any);
       serviceOrdersService.updateByAccount.mockResolvedValue({} as any);
 
       const result = await service.create(eventData, mockAccountId);
 
-      expect(customerModel.findById).toHaveBeenCalledWith(mockCustomerId.toString());
-      expect(technicianModel.findById).toHaveBeenCalledWith(mockTechnicianId.toString());
+      expect(customerModel.findById).toHaveBeenCalledWith(mockCustomerId);
+      expect(technicianModel.find).toHaveBeenCalledWith({ _id: { $in: [mockTechnicianId] } });
       expect(serviceOrdersService.updateByAccount).toHaveBeenCalledWith(
         mockServiceOrderId.toString(),
         {
@@ -153,12 +154,12 @@ describe('EventsService', () => {
         date: '2024-01-15',
         startTime: '09:00',
         endTime: '10:00',
-        customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString()
+        customer: mockCustomerId,
+        technician: [mockTechnicianId]
       };
 
       customerModel.findById.mockResolvedValue(null);
-      technicianModel.findById.mockResolvedValue(mockTechnician as any);
+      technicianModel.find.mockResolvedValue([mockTechnician] as any);
 
       await expect(service.create(eventData, mockAccountId)).rejects.toThrow('events.errors.invalidCustomerOrTechnician');
     });
@@ -168,12 +169,12 @@ describe('EventsService', () => {
         date: '2024-01-15',
         startTime: '09:00',
         endTime: '10:00',
-        customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString()
+        customer: mockCustomerId,
+        technician: [mockTechnicianId]
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
-      technicianModel.findById.mockResolvedValue(null);
+      technicianModel.find.mockResolvedValue([]);
 
       await expect(service.create(eventData, mockAccountId)).rejects.toThrow('events.errors.invalidCustomerOrTechnician');
     });
@@ -183,13 +184,13 @@ describe('EventsService', () => {
         date: '2024-01-15',
         startTime: '09:00',
         endTime: '10:00',
-        customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString(),
+        customer: mockCustomerId,
+        technician: [mockTechnicianId],
         description: 'Service call'
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
-      technicianModel.findById.mockResolvedValue(mockTechnician as any);
+      technicianModel.find.mockResolvedValue([mockTechnician] as any);
 
       const result = await service.create(eventData, mockAccountId);
 

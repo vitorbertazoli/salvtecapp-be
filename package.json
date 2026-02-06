@@ -21,7 +21,8 @@
     "initDB": "ts-node ./scripts/initDB.ts",
     "addMasterAdmin": "ts-node ./scripts/addMasterAdmin.ts",
     "resetPassword": "ts-node ./scripts/resetPassword.ts",
-    "seed": "ts-node ./scripts/dummyData.ts"
+    "seed": "ts-node ./scripts/dummyData.ts",
+    "migrateEventTechnicians": "ts-node ./scripts/migrateEventTechnicians.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.665.0",

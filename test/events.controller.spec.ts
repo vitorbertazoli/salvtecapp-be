@@ -19,7 +19,7 @@ describe('EventsController', () => {
     startTime: '09:00',
     endTime: '10:00',
     customer: new Types.ObjectId(),
-    technician: new Types.ObjectId(),
+    technician: [new Types.ObjectId()],
     title: 'Test Event',
     description: 'Test description',
     status: 'scheduled' as const,
@@ -64,7 +64,7 @@ describe('EventsController', () => {
         startTime: '09:00',
         endTime: '10:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString(),
+        technician: [new Types.ObjectId().toString()],
         title: 'Test Event',
         description: 'Test description',
         status: 'scheduled',
@@ -75,7 +75,7 @@ describe('EventsController', () => {
         ...createEventDto,
         account: mockAccountId,
         customer: new Types.ObjectId(createEventDto.customer),
-        technician: new Types.ObjectId(createEventDto.technician),
+        technician: createEventDto.technician.map(id => new Types.ObjectId(id)),
         serviceOrder: new Types.ObjectId(createEventDto.serviceOrder),
         createdBy: mockUserId,
         updatedBy: mockUserId
@@ -95,14 +95,14 @@ describe('EventsController', () => {
         startTime: '09:00',
         endTime: '10:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString()
+        technician: [new Types.ObjectId().toString()]
       };
 
       const expectedEventData = {
         ...createEventDto,
         account: mockAccountId,
         customer: new Types.ObjectId(createEventDto.customer),
-        technician: new Types.ObjectId(createEventDto.technician),
+        technician: createEventDto.technician.map(id => new Types.ObjectId(id)),
         createdBy: mockUserId,
         updatedBy: mockUserId
       };
@@ -216,7 +216,7 @@ describe('EventsController', () => {
         startTime: '10:00',
         endTime: '11:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString(),
+        technician: [new Types.ObjectId().toString()],
         title: 'Updated Event',
         description: 'Updated description',
         status: 'completed',
@@ -227,7 +227,7 @@ describe('EventsController', () => {
       const expectedUpdateData = {
         ...updateEventDto,
         customer: new Types.ObjectId(updateEventDto.customer),
-        technician: new Types.ObjectId(updateEventDto.technician),
+        technician: updateEventDto.technician.map(id => new Types.ObjectId(id)),
         serviceOrder: new Types.ObjectId(updateEventDto.serviceOrder),
         updatedBy: mockUserId
       };
@@ -248,13 +248,13 @@ describe('EventsController', () => {
         startTime: '10:00',
         endTime: '11:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString()
+        technician: [new Types.ObjectId().toString()]
       };
 
       const expectedUpdateData = {
         ...updateEventDto,
         customer: new Types.ObjectId(updateEventDto.customer),
-        technician: new Types.ObjectId(updateEventDto.technician),
+        technician: updateEventDto.technician.map(id => new Types.ObjectId(id)),
         updatedBy: mockUserId
       };
 
@@ -274,7 +274,7 @@ describe('EventsController', () => {
         startTime: '10:00',
         endTime: '11:00',
         customer: new Types.ObjectId().toString(),
-        technician: new Types.ObjectId().toString()
+        technician: [new Types.ObjectId().toString()]
       };
 
       service.updateByAccount.mockResolvedValue(null);

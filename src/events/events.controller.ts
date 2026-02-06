@@ -20,7 +20,7 @@ export class EventsController {
       ...dto,
       account: accountId,
       customer: new Types.ObjectId(dto.customer),
-      technician: new Types.ObjectId(dto.technician),
+      technician: dto.technician.map((id) => new Types.ObjectId(id)),
       ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
       createdBy: new Types.ObjectId(userId),
       updatedBy: new Types.ObjectId(userId)
@@ -71,7 +71,7 @@ export class EventsController {
     const eventData = {
       ...dto,
       ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
-      ...(dto.technician && { technician: new Types.ObjectId(dto.technician) }),
+      ...(dto.technician && { technician: dto.technician.map((id) => new Types.ObjectId(id)) }),
       ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
       updatedBy: new Types.ObjectId(userId)
     } as any;
