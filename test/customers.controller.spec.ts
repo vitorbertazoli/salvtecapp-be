@@ -113,7 +113,8 @@ describe('CustomersController', () => {
       addNote: jest.fn(),
       updateNote: jest.fn(),
       deleteNote: jest.fn(),
-      addEquipmentPicture: jest.fn()
+      addEquipmentPicture: jest.fn(),
+      addCustomerPicture: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -475,4 +476,43 @@ describe('CustomersController', () => {
       );
     });
   });
-});
+
+  describe('uploadCustomerPicture', () => {
+    it('should upload customer picture successfully', async () => {
+      const mockFile = {
+        filename: 'customer-test-123456789.jpg',
+        mimetype: 'image/jpeg',
+        originalname: 'test.jpg'
+      } as Express.Multer.File;
+
+      const expectedPictureUrl = `/uploads/customer-pictures/${mockFile.filename}`;
+      const updatedCustomer = {
+        ...mockCustomer,
+        pictures: [
+          {
+            url: expectedPictureUrl,
+            createdDate: expect.any(Date),
+            createdBy: new Types.ObjectId(mockUserId)
+          }
+        ]
+      };
+
+      customersService.addCustomerPicture.mockResolvedValue(updatedCustomer);
+
+      const result = await controller.uploadCustomerPicture(mockCustomerId, mockFile, mockAccountId, mockUserId);
+
+      expect(customersService.addCustomerPicture).toHaveBeenCalledWith(
+        mockCustomerId,
+        expectedPictureUrl,
+        mockUserId,
+        mockAccountId
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should throw BadRequestException when no file uploaded', async () => {
+      await expect(controller.uploadCustomerPicture(mockCustomerId, null as any, mockAccountId, mockUserId)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+  });});

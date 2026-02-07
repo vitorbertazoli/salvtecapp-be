@@ -408,6 +408,11 @@ describe('CustomersService', () => {
 
       const updatedCustomer = { ...mockCustomer, ...updateData };
 
+      // Mock findOne to return existing customer
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCustomer)
+      } as any);
+
       customerModel.findOneAndUpdate.mockReturnValue({
         populate: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(updatedCustomer)
@@ -415,6 +420,7 @@ describe('CustomersService', () => {
 
       const result = await service.updateByAccount(mockCustomerId, updateData, mockAccountId);
 
+      expect(customerModel.findOne).toHaveBeenCalledWith({ _id: mockCustomerId, account: mockAccountId });
       expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockCustomerId, account: mockAccountId }, updateData, { new: true });
       expect(result).toEqual(updatedCustomer);
     });
@@ -791,6 +797,57 @@ describe('CustomersService', () => {
       } as any);
 
       const result = await service.addEquipmentPicture(mockCustomerId, equipmentId, pictureUrls, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('addCustomerPicture', () => {
+    it('should add picture to customer successfully', async () => {
+      const pictureUrl = '/uploads/customer-pictures/pic1.jpg';
+      const updatedCustomer = {
+        ...mockCustomer,
+        pictures: [
+          {
+            url: pictureUrl,
+            createdDate: expect.any(Date),
+            createdBy: new Types.ObjectId(mockUserId)
+          }
+        ]
+      };
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.addCustomerPicture(mockCustomerId, pictureUrl, mockUserId, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $push: {
+            pictures: {
+              url: pictureUrl,
+              createdDate: expect.any(Date),
+              createdBy: new Types.ObjectId(mockUserId)
+            }
+          }
+        },
+        { new: true }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer not found', async () => {
+      const pictureUrl = '/uploads/customer-pictures/pic1.jpg';
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(null)
+      } as any);
+
+      const result = await service.addCustomerPicture(mockCustomerId, pictureUrl, mockUserId, mockAccountId);
 
       expect(result).toBeNull();
     });
