@@ -852,4 +852,60 @@ describe('CustomersService', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('deleteCustomerPicture', () => {
+    it('should delete customer picture successfully', async () => {
+      const pictureId = '507f1f77bcf86cd799439017'; // Valid ObjectId string
+      const pictureUrl = '/uploads/customer-pictures/test.jpg';
+      const customerWithPicture = {
+        ...mockCustomer,
+        pictures: [
+          {
+            _id: new Types.ObjectId(pictureId),
+            url: pictureUrl,
+            createdDate: new Date(),
+            createdBy: new Types.ObjectId(mockUserId)
+          }
+        ]
+      };
+      const updatedCustomer = {
+        ...mockCustomer,
+        pictures: [] // Picture removed
+      };
+
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(customerWithPicture)
+      } as any);
+
+      customerModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedCustomer)
+      } as any);
+
+      const result = await service.deleteCustomerPicture(mockCustomerId, pictureId, mockAccountId);
+
+      expect(customerModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockCustomerId, account: mockAccountId },
+        {
+          $pull: {
+            pictures: { _id: new Types.ObjectId(pictureId) }
+          }
+        },
+        { new: true }
+      );
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer not found', async () => {
+      const pictureId = '507f1f77bcf86cd799439017'; // Valid ObjectId string
+
+      customerModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null)
+      } as any);
+
+      const result = await service.deleteCustomerPicture(mockCustomerId, pictureId, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+  });
 });

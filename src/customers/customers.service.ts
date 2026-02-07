@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { promises as fs } from 'fs';
 import { Model, Types } from 'mongoose';
+import { join } from 'path';
 import { Customer, CustomerDocument } from './schemas/customer.schema';
 
 @Injectable()
@@ -237,6 +239,52 @@ export class CustomersService {
     return updatedCustomer;
   }
 
+  async deleteEquipmentPicture(id: string, equipmentId: string, pictureIndex: number, accountId: Types.ObjectId): Promise<Customer | null> {
+    const query = { _id: id, account: accountId };
+
+    // First, get the customer to check if the equipment exists and has the picture
+    const customer = await this.customerModel.findOne(query).exec();
+    if (!customer || !customer.equipments) {
+      return null;
+    }
+
+    const equipment = customer.equipments.find((e) => e._id.toString() === equipmentId);
+    if (!equipment || !equipment.pictures || pictureIndex < 0 || pictureIndex >= equipment.pictures.length) {
+      return null;
+    }
+
+    // Extract the picture URL from the equipment's pictures array
+    const pictureUrl = equipment.pictures[pictureIndex];
+
+    // Use positional operator to remove the specific picture from the equipment
+    const update = {
+      $pull: {
+        [`equipments.$[elem].pictures`]: pictureUrl
+      }
+    };
+    const options = {
+      new: true,
+      arrayFilters: [{ 'elem._id': new Types.ObjectId(equipmentId) }]
+    };
+
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, options).populate('account', 'name id').exec();
+
+    // Delete the file from filesystem if it exists
+    if (pictureUrl) {
+      try {
+        // Convert URL path to filesystem path
+        const filePath = join(process.cwd(), pictureUrl);
+        await fs.unlink(filePath);
+        console.log(`Deleted equipment picture file: ${filePath}`);
+      } catch (error) {
+        // Log error but don't fail the operation if file deletion fails
+        console.error(`Failed to delete equipment picture file ${pictureUrl}:`, error);
+      }
+    }
+
+    return updatedCustomer;
+  }
+
   async addCustomerPicture(id: string, pictureUrl: string, userId: string, accountId: Types.ObjectId): Promise<Customer | null> {
     const query = { _id: id, account: accountId };
 
@@ -255,6 +303,47 @@ export class CustomersService {
     };
 
     const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, { new: true }).populate('account', 'name id').exec();
+    return updatedCustomer;
+  }
+
+  async deleteCustomerPicture(id: string, pictureId: string, accountId: Types.ObjectId): Promise<Customer | null> {
+    const query = { _id: id, account: accountId };
+
+    // First, find the customer and get the picture URL before deleting
+    const customer = await this.customerModel.findOne(query).exec();
+    if (!customer) {
+      return null;
+    }
+
+    // Find the picture to get its URL
+    const picture = customer.pictures?.find((p) => p._id.toString() === pictureId);
+    if (!picture) {
+      return null;
+    }
+
+    // Remove the picture from the customer's pictures array
+    const update = {
+      $pull: {
+        pictures: { _id: new Types.ObjectId(pictureId) }
+      }
+    };
+
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, { new: true }).populate('account', 'name id').exec();
+
+    // Delete the file from filesystem if it exists
+    if (picture.url) {
+      try {
+        // Convert URL path to filesystem path
+        // URL: /uploads/customer-pictures/filename.jpg -> filesystem: ./uploads/customer-pictures/filename.jpg
+        const filePath = join(process.cwd(), picture.url);
+        await fs.unlink(filePath);
+        console.log(`Deleted file: ${filePath}`);
+      } catch (error) {
+        // Log error but don't fail the operation if file deletion fails
+        console.error(`Failed to delete file ${picture.url}:`, error);
+      }
+    }
+
     return updatedCustomer;
   }
 

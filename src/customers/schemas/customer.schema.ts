@@ -26,6 +26,7 @@ export class Note {
 }
 
 export class Picture {
+  _id: string;
   @Prop({ required: true })
   url: string;
 

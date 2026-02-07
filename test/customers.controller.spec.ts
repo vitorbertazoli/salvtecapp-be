@@ -114,7 +114,8 @@ describe('CustomersController', () => {
       updateNote: jest.fn(),
       deleteNote: jest.fn(),
       addEquipmentPicture: jest.fn(),
-      addCustomerPicture: jest.fn()
+      addCustomerPicture: jest.fn(),
+      deleteCustomerPicture: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -515,4 +516,32 @@ describe('CustomersController', () => {
         BadRequestException
       );
     });
-  });});
+  });
+
+  describe('deleteCustomerPicture', () => {
+    it('should delete customer picture successfully', async () => {
+      const pictureId = '507f1f77bcf86cd799439017'; // Valid ObjectId string
+      const updatedCustomer = {
+        ...mockCustomer,
+        pictures: [] // Picture removed
+      };
+
+      customersService.deleteCustomerPicture.mockResolvedValue(updatedCustomer as any);
+
+      const result = await controller.deleteCustomerPicture(mockCustomerId, pictureId, mockAccountId);
+
+      expect(customersService.deleteCustomerPicture).toHaveBeenCalledWith(mockCustomerId, pictureId, mockAccountId);
+      expect(result).toEqual(updatedCustomer);
+    });
+
+    it('should return null when customer not found', async () => {
+      const pictureId = '507f1f77bcf86cd799439017'; // Valid ObjectId string
+
+      customersService.deleteCustomerPicture.mockResolvedValue(null);
+
+      const result = await controller.deleteCustomerPicture(mockCustomerId, pictureId, mockAccountId);
+
+      expect(result).toBeNull();
+    });
+  });
+});

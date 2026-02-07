@@ -168,6 +168,18 @@ export class CustomersController {
     return await this.customersService.addEquipmentPicture(id, equipmentId, [pictureUrl], accountId);
   }
 
+  @Delete(':id/equipments/:equipmentId/pictures/:index')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async deleteEquipmentPicture(
+    @Param('id') id: string,
+    @Param('equipmentId') equipmentId: string,
+    @Param('index') pictureIndex: string,
+    @GetAccountId() accountId: Types.ObjectId
+  ) {
+    const index = parseInt(pictureIndex, 10);
+    return await this.customersService.deleteEquipmentPicture(id, equipmentId, index, accountId);
+  }
+
   @Post(':id/pictures')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // All roles can upload customer pictures
   @UseInterceptors(
@@ -245,4 +257,12 @@ export class CustomersController {
 
     return await this.customersService.addCustomerPicture(id, pictureUrl, userId, accountId);
   }
+
+  @Delete(':id/pictures/:pictureId')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async deleteCustomerPicture(@Param('id') id: string, @Param('pictureId') pictureId: string, @GetAccountId() accountId: Types.ObjectId) {
+    return await this.customersService.deleteCustomerPicture(id, pictureId, accountId);
+  }
+
+  // add delete endpoints for pictures if needed
 }
