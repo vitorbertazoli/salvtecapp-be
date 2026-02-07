@@ -167,4 +167,82 @@ export class CustomersController {
 
     return await this.customersService.addEquipmentPicture(id, equipmentId, [pictureUrl], accountId);
   }
+
+  @Post(':id/pictures')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // All roles can upload customer pictures
+  @UseInterceptors(
+    FileInterceptor('picture', {
+      storage: diskStorage({
+        destination: './uploads/customer-pictures',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `customer-${req.params.id}-${uniqueSuffix}${ext}`);
+        }
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+          return callback(new Error('Only image files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+      limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+      }
+    })
+  )
+  async uploadCustomerPicture(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Process the file (resize and compress)
+    const inputPath = `./uploads/customer-pictures/${file.filename}`;
+
+    try {
+      // Get image metadata
+      const metadata = await sharp(inputPath).metadata();
+
+      // Only resize if image is larger than 720p
+      if (metadata.width > 1280 || metadata.height > 720) {
+        // Resize to fit within 720p while maintaining aspect ratio
+        await sharp(inputPath)
+          .resize(1280, 720, {
+            fit: 'inside',
+            withoutEnlargement: true // Do not enlarge smaller images
+          })
+          .jpeg({ quality: 85 })
+          .png({ compressionLevel: 6 })
+          .toFile(`${inputPath}.resized`);
+
+        // Replace original with resized version
+        await fs.rename(`${inputPath}.resized`, inputPath);
+      } else {
+        // For smaller images, just compress
+        const isJpeg = file.mimetype === 'image/jpeg';
+        const isPng = file.mimetype === 'image/png';
+
+        if (isJpeg) {
+          await sharp(inputPath).jpeg({ quality: 85 }).toFile(`${inputPath}.compressed`);
+          await fs.rename(`${inputPath}.compressed`, inputPath);
+        } else if (isPng) {
+          await sharp(inputPath).png({ compressionLevel: 6 }).toFile(`${inputPath}.compressed`);
+          await fs.rename(`${inputPath}.compressed`, inputPath);
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing image ${file.filename}:`, error);
+      // Continue with original file if processing fails
+    }
+
+    // Create picture URL
+    const pictureUrl = `/uploads/customer-pictures/${file.filename}`;
+
+    return await this.customersService.addCustomerPicture(id, pictureUrl, userId, accountId);
+  }
 }

@@ -126,11 +126,11 @@ export class CustomersService {
       };
     }
 
+    // Get the existing customer to preserve pictures if needed
+    const existingCustomer = await this.customerModel.findOne(query).exec();
+
     // If equipments are being updated, preserve existing pictures
     if (customerData.equipments && Array.isArray(customerData.equipments)) {
-      // Get the existing customer to preserve pictures
-      const existingCustomer = await this.customerModel.findOne(query).exec();
-
       if (existingCustomer && existingCustomer.equipments) {
         // Preserve pictures for equipments that don't have them specified
         customerData.equipments = customerData.equipments.map((incomingEq, index) => {
@@ -144,6 +144,14 @@ export class CustomersService {
           }
           return incomingEq;
         });
+      }
+    }
+
+    // If customer pictures are not being updated, preserve existing pictures
+    if (customerData.pictures === undefined) {
+      if (existingCustomer && existingCustomer.pictures) {
+        // Preserve existing customer pictures if not explicitly provided in the update
+        customerData.pictures = existingCustomer.pictures;
       }
     }
 
@@ -226,6 +234,27 @@ export class CustomersService {
     };
 
     const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, options).populate('account', 'name id').exec();
+    return updatedCustomer;
+  }
+
+  async addCustomerPicture(id: string, pictureUrl: string, userId: string, accountId: Types.ObjectId): Promise<Customer | null> {
+    const query = { _id: id, account: accountId };
+
+    // Create the picture object
+    const picture = {
+      url: pictureUrl,
+      createdDate: new Date(),
+      createdBy: new Types.ObjectId(userId)
+    };
+
+    // Push the picture to the customer's pictures array
+    const update = {
+      $push: {
+        pictures: picture
+      }
+    };
+
+    const updatedCustomer = await this.customerModel.findOneAndUpdate(query, update, { new: true }).populate('account', 'name id').exec();
     return updatedCustomer;
   }
 

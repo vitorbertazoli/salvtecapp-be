@@ -25,6 +25,17 @@ export class Note {
   createdBy: Types.ObjectId;
 }
 
+export class Picture {
+  @Prop({ required: true })
+  url: string;
+
+  @Prop({ required: true })
+  createdDate: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+}
+
 export class Address {
   street?: string;
   number?: string;
@@ -115,6 +126,18 @@ export class Customer {
   })
   equipments: Equipment[];
 
+  @Prop({
+    type: [
+      {
+        url: { type: String, required: true },
+        createdDate: { type: Date, required: true },
+        createdBy: { type: Types.ObjectId, ref: 'User', required: true }
+      }
+    ],
+    default: []
+  })
+  pictures: Picture[];
+
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;
 
@@ -141,6 +164,7 @@ export interface ICustomer {
   createdAt?: Date;
   updatedAt?: Date;
   equipments?: Equipment[]; // Array of equipment for this customer
+  pictures?: Picture[]; // Array of pictures for this customer
 }
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
