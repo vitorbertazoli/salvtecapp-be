@@ -66,7 +66,8 @@ export class ExpensesController {
 
   @Delete(':id')
   @Roles('ADMIN')
-  async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<void> {
-    return this.expensesService.remove(id, accountId);
+  async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<{ message: string }> {
+    await this.expensesService.remove(id, accountId);
+    return { message: 'Expense deleted successfully' };
   }
 }

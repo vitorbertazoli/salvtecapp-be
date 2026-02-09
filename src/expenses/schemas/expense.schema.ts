@@ -58,7 +58,8 @@ export const ExpenseCategory = {
   MISCELLANEOUS: 'miscellaneous',
   TAXES: 'taxes',
   DONATIONS: 'donations',
-  ENTERTAINMENT: 'entertainment'
+  ENTERTAINMENT: 'entertainment',
+  MEALS: 'meals'
 } as const;
 
 export type ExpenseCategoryType = (typeof ExpenseCategory)[keyof typeof ExpenseCategory];
