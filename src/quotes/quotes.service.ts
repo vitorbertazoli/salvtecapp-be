@@ -632,8 +632,6 @@ export class QuotesService {
                         <th>Nome</th>
                         <th>Sala</th>
                         <th>BTUs</th>
-                        <th>Tipo</th>
-                        <th>Subtipo</th>
                         <th>Fabricante</th>
                         <th>Modelo</th>
                     </tr>
