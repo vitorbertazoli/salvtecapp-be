@@ -163,7 +163,7 @@ export class QuotesService {
     // Send email
     await this.emailService.sendEmail({
       to: (quote.customer as any).email,
-      replyToEmail: (quote.account as any).replyToEmail,
+      replyToEmail: (quote.account as any).replyToEmail ? (quote.account as any).replyToEmail : undefined,
       subject: `Orçamento - ${(quote.account as any).name}`,
       html: htmlContent
     });
