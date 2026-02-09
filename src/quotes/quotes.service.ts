@@ -138,7 +138,7 @@ export class QuotesService {
     // Find the quote with all populated data
     const quote = await this.quoteModel
       .findOne(query)
-      .populate('account', 'name logoUrl')
+      .populate('account', 'name logoUrl customizations replyToEmail')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
       .populate('services.service', 'name description')
       .populate('products.product', 'name description maker model sku')
@@ -157,14 +157,13 @@ export class QuotesService {
     const approvalToken = crypto.randomBytes(32).toString('hex');
     const approvalTokenExpires = new Date((quote as any).validUntil);
 
-    const customizations = await this.accountsService.getCustomizations(accountId);
-
     // Generate HTML email content
-    const htmlContent = this.generateQuoteEmailHtml(quote, approvalToken, customizations || undefined);
+    const htmlContent = await this.generateQuoteEmailHtml(quote, approvalToken);
 
     // Send email
     await this.emailService.sendEmail({
       to: (quote.customer as any).email,
+      replyToEmail: (quote.account as any).replyToEmail,
       subject: `Orçamento - ${(quote.account as any).name}`,
       html: htmlContent
     });
@@ -265,7 +264,7 @@ export class QuotesService {
     return quote;
   }
 
-  private generateQuoteEmailHtml(quote: any, approvalToken?: string, customizations?: string): string {
+  private async generateQuoteEmailHtml(quote: any, approvalToken?: string): Promise<string> {
     const formatCurrency = (value: number) => {
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -792,12 +791,12 @@ export class QuotesService {
         </div>
 
         ${
-          customizations
+          quote.account?.customizations
             ? `
         <div class="section">
             <h3 class="section-title">Condições:</h3>
             <div class="markdown-content" style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 10px 0;">
-                ${marked(customizations)}
+                ${await marked(quote.account.customizations)}
             </div>
         </div>
         `

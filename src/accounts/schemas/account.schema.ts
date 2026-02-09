@@ -11,6 +11,9 @@ export class Account {
   @Prop()
   logoUrl?: string;
 
+  @Prop({ type: String, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })
+  replyToEmail?: string;
+
   @Prop({
     required: true,
     enum: ['free', 'pro', 'enterprise'],
@@ -55,6 +58,7 @@ export interface IAccount {
   id: string;
   name: string;
   logoUrl?: string;
+  replyToEmail?: string;
   plan: 'free' | 'pro' | 'enterprise';
   status: 'pending' | 'active' | 'suspended';
   verificationToken?: string;

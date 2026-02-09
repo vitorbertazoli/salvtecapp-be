@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 
 export interface EmailOptions {
   to: string | string[];
+  replyToEmail?: string;
   subject: string;
   html?: string;
   text?: string;
@@ -34,7 +35,7 @@ export class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
-    const { to, subject, html, text, from, bcc } = options;
+    const { to, subject, html, text, from, bcc, replyToEmail } = options;
 
     const fromEmail = from || this.configService.get<string>('AWS_SES_FROM_EMAIL');
     if (!fromEmail) {
@@ -46,6 +47,7 @@ export class EmailService {
 
     const emailParams: SendEmailCommandInput = {
       Source: fromEmail,
+      ReplyToAddresses: replyToEmail ? [replyToEmail] : undefined,
       Destination: {
         ToAddresses: toAddresses,
         BccAddresses: bccAddresses
