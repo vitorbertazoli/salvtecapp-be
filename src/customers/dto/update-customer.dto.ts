@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsEmail, IsEnum, IsMongoId, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class EquipmentDto {
+  @IsOptional()
   @IsMongoId()
   _id?: string;
 
