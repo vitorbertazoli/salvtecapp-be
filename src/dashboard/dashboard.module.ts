@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Customer, CustomerSchema } from '../customers/schemas/customer.schema';
 import { Event, EventSchema } from '../events/schemas/event.schema';
+import { Expense, ExpenseSchema } from '../expenses/schemas/expense.schema';
 import { PaymentOrder, PaymentOrderSchema } from '../payments/schemas/payment-order.schema';
 import { Quote, QuoteSchema } from '../quotes/schemas/quote.schema';
 import { ServiceOrder, ServiceOrderSchema } from '../service-orders/schemas/service-order.schema';
@@ -17,7 +18,8 @@ import { DashboardService } from './dashboard.service';
       { name: Quote.name, schema: QuoteSchema },
       { name: ServiceOrder.name, schema: ServiceOrderSchema },
       { name: Event.name, schema: EventSchema },
-      { name: PaymentOrder.name, schema: PaymentOrderSchema }
+      { name: PaymentOrder.name, schema: PaymentOrderSchema },
+      { name: Expense.name, schema: ExpenseSchema }
     ])
   ],
   controllers: [DashboardController],

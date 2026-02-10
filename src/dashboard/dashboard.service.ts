@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Customer, CustomerDocument } from '../customers/schemas/customer.schema';
 import { Event, EventDocument } from '../events/schemas/event.schema';
+import { Expense, ExpenseDocument } from '../expenses/schemas/expense.schema';
 import { PaymentOrder, PaymentOrderDocument } from '../payments/schemas/payment-order.schema';
 import { Quote, QuoteDocument } from '../quotes/schemas/quote.schema';
 import { ServiceOrder, ServiceOrderDocument } from '../service-orders/schemas/service-order.schema';
@@ -16,7 +17,8 @@ export class DashboardService {
     @InjectModel(Quote.name) private quoteModel: Model<QuoteDocument>,
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
-    @InjectModel(PaymentOrder.name) private paymentOrderModel: Model<PaymentOrderDocument>
+    @InjectModel(PaymentOrder.name) private paymentOrderModel: Model<PaymentOrderDocument>,
+    @InjectModel(Expense.name) private expenseModel: Model<ExpenseDocument>
   ) {}
 
   async getStats(accountId: Types.ObjectId, startDate?: string, endDate?: string) {
@@ -34,42 +36,56 @@ export class DashboardService {
     const accountObjId = accountId;
 
     // Get all stats in parallel
-    const [customerCount, technicianCount, openQuotesCount, openServiceOrdersCount, todaysEventsCount, monthlySalesData, paymentStats, expectedRevenue] =
-      await Promise.all([
-        // Count customers
-        this.customerModel.countDocuments({ account: accountObjId }),
+    const [
+      customerCount,
+      technicianCount,
+      openQuotesCount,
+      openServiceOrdersCount,
+      todaysEventsCount,
+      monthlySalesData,
+      paymentStats,
+      expectedRevenue,
+      totalExpenses
+    ] = await Promise.all([
+      // Count customers
+      this.customerModel.countDocuments({ account: accountObjId }),
 
-        // Count active technicians
-        this.technicianModel.countDocuments({ account: accountObjId, status: 'active' }),
+      // Count active technicians
+      this.technicianModel.countDocuments({ account: accountObjId, status: 'active' }),
 
-        // Count open quotes (not accepted or rejected)
-        this.quoteModel.countDocuments({
-          account: accountObjId,
-          status: { $nin: ['accepted', 'rejected'] }
-        }),
+      // Count open quotes (not accepted or rejected)
+      this.quoteModel.countDocuments({
+        account: accountObjId,
+        status: { $nin: ['accepted', 'rejected'] }
+      }),
 
-        // Count open service orders (not completed or cancelled)
-        this.serviceOrderModel.countDocuments({
-          account: accountObjId,
-          status: { $nin: ['completed', 'cancelled'] }
-        }),
+      // Count open service orders (not completed or cancelled)
+      this.serviceOrderModel.countDocuments({
+        account: accountObjId,
+        status: { $nin: ['completed', 'cancelled', 'payment_order_created'] }
+      }),
 
-        // Count today's scheduled events
-        this.eventModel.countDocuments({
-          account: accountObjId,
-          date: todayString,
-          status: 'scheduled'
-        }),
+      // Count today's scheduled events
+      this.eventModel.countDocuments({
+        account: accountObjId,
+        date: todayString,
+        status: 'scheduled'
+      }),
 
-        // Get monthly sales data (payments received in the date range)
-        this.getMonthlyPaymentData(accountId, start, end),
+      // Get monthly sales data (payments received in the date range)
+      this.getMonthlyPaymentData(accountId, start, end),
 
-        // Get payment statistics
-        this.getPaymentStats(accountId, start, end),
+      // Get payment statistics
+      this.getPaymentStats(accountId, start, end),
 
-        // Get expected revenue from open service orders
-        this.getExpectedRevenue(accountId, start, end)
-      ]);
+      // Get expected revenue from open service orders
+      this.getExpectedRevenue(accountId, start, end),
+
+      // Get total expenses in the date range
+      this.getTotalExpenses(accountId, start, end)
+    ]);
+
+    const balance = paymentStats.totalReceived - totalExpenses;
 
     return {
       customerCount,
@@ -79,7 +95,9 @@ export class DashboardService {
       todaysEventsCount,
       monthlySalesData,
       ...paymentStats,
-      expectedRevenue
+      expectedRevenue,
+      totalExpenses,
+      balance
     };
   }
 
@@ -201,6 +219,38 @@ export class DashboardService {
         }
       }
     ]);
+
+    return result.length > 0 ? result[0].total : 0;
+  }
+
+  private async getTotalExpenses(accountId: Types.ObjectId, fromDate: Date, toDate: Date) {
+    // Format dates to match the stored format (YYYY/MM/DD)
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}/${month}/${day}`;
+    };
+
+    const fromDateStr = formatDate(fromDate);
+    const toDateStr = formatDate(toDate);
+
+    const query = [
+      {
+        $match: {
+          account: accountId,
+          expenseDate: { $gte: fromDateStr, $lte: toDateStr }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ];
+    console.log('Expense aggregation query:', JSON.stringify(query, null, 2));
+    const result = await this.expenseModel.aggregate(query);
 
     return result.length > 0 ? result[0].total : 0;
   }

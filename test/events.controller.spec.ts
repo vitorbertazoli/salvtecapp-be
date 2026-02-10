@@ -75,7 +75,7 @@ describe('EventsController', () => {
         ...createEventDto,
         account: mockAccountId,
         customer: new Types.ObjectId(createEventDto.customer),
-        technician: createEventDto.technician.map(id => new Types.ObjectId(id)),
+        technician: createEventDto.technician.map((id) => new Types.ObjectId(id)),
         serviceOrder: new Types.ObjectId(createEventDto.serviceOrder),
         createdBy: mockUserId,
         updatedBy: mockUserId
@@ -102,7 +102,7 @@ describe('EventsController', () => {
         ...createEventDto,
         account: mockAccountId,
         customer: new Types.ObjectId(createEventDto.customer),
-        technician: createEventDto.technician.map(id => new Types.ObjectId(id)),
+        technician: createEventDto.technician.map((id) => new Types.ObjectId(id)),
         createdBy: mockUserId,
         updatedBy: mockUserId
       };
@@ -227,7 +227,7 @@ describe('EventsController', () => {
       const expectedUpdateData = {
         ...updateEventDto,
         customer: new Types.ObjectId(updateEventDto.customer),
-        technician: updateEventDto.technician.map(id => new Types.ObjectId(id)),
+        technician: updateEventDto.technician.map((id) => new Types.ObjectId(id)),
         serviceOrder: new Types.ObjectId(updateEventDto.serviceOrder),
         updatedBy: mockUserId
       };
@@ -254,7 +254,7 @@ describe('EventsController', () => {
       const expectedUpdateData = {
         ...updateEventDto,
         customer: new Types.ObjectId(updateEventDto.customer),
-        technician: updateEventDto.technician.map(id => new Types.ObjectId(id)),
+        technician: updateEventDto.technician.map((id) => new Types.ObjectId(id)),
         updatedBy: mockUserId
       };
 

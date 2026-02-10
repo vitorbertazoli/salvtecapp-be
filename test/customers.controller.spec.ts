@@ -502,19 +502,12 @@ describe('CustomersController', () => {
 
       const result = await controller.uploadCustomerPicture(mockCustomerId, mockFile, mockAccountId, mockUserId);
 
-      expect(customersService.addCustomerPicture).toHaveBeenCalledWith(
-        mockCustomerId,
-        expectedPictureUrl,
-        mockUserId,
-        mockAccountId
-      );
+      expect(customersService.addCustomerPicture).toHaveBeenCalledWith(mockCustomerId, expectedPictureUrl, mockUserId, mockAccountId);
       expect(result).toEqual(updatedCustomer);
     });
 
     it('should throw BadRequestException when no file uploaded', async () => {
-      await expect(controller.uploadCustomerPicture(mockCustomerId, null as any, mockAccountId, mockUserId)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(controller.uploadCustomerPicture(mockCustomerId, null as any, mockAccountId, mockUserId)).rejects.toThrow(BadRequestException);
     });
   });
 

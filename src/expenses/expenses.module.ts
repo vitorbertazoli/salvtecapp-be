@@ -5,11 +5,7 @@ import { ExpensesService } from './expenses.service';
 import { Expense, ExpenseSchema } from './schemas/expense.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: Expense.name, schema: ExpenseSchema }
-    ])
-  ],
+  imports: [MongooseModule.forFeature([{ name: Expense.name, schema: ExpenseSchema }])],
   controllers: [ExpensesController],
   providers: [ExpensesService],
   exports: [ExpensesService]

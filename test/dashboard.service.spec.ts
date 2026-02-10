@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Customer, CustomerDocument } from '../src/customers/schemas/customer.schema';
 import { DashboardService } from '../src/dashboard/dashboard.service';
 import { Event, EventDocument } from '../src/events/schemas/event.schema';
+import { Expense, ExpenseDocument } from '../src/expenses/schemas/expense.schema';
 import { PaymentOrder, PaymentOrderDocument } from '../src/payments/schemas/payment-order.schema';
 import { Quote, QuoteDocument } from '../src/quotes/schemas/quote.schema';
 import { ServiceOrder, ServiceOrderDocument } from '../src/service-orders/schemas/service-order.schema';
@@ -17,6 +18,7 @@ describe('DashboardService', () => {
   let serviceOrderModel: jest.Mocked<Model<ServiceOrderDocument>>;
   let eventModel: jest.Mocked<Model<EventDocument>>;
   let paymentOrderModel: jest.Mocked<Model<PaymentOrderDocument>>;
+  let expenseModel: jest.Mocked<Model<ExpenseDocument>>;
 
   const mockAccountId = new Types.ObjectId('507f1f77bcf86cd799439012');
 
@@ -29,6 +31,8 @@ describe('DashboardService', () => {
     totalReceived: 5000,
     totalOwed: 2000,
     expectedRevenue: 8000,
+    totalExpenses: 1500,
+    balance: 3500,
     monthlySalesData: [
       { date: '2024-01-01', sales: 1500 },
       { date: '2024-01-02', sales: 2200 },
@@ -62,6 +66,10 @@ describe('DashboardService', () => {
       aggregate: jest.fn()
     };
 
+    const mockExpenseModel = {
+      aggregate: jest.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DashboardService,
@@ -88,6 +96,10 @@ describe('DashboardService', () => {
         {
           provide: getModelToken(PaymentOrder.name),
           useValue: mockPaymentOrderModel
+        },
+        {
+          provide: getModelToken(Expense.name),
+          useValue: mockExpenseModel
         }
       ]
     }).compile();
@@ -99,6 +111,7 @@ describe('DashboardService', () => {
     serviceOrderModel = module.get(getModelToken(ServiceOrder.name));
     eventModel = module.get(getModelToken(Event.name));
     paymentOrderModel = module.get(getModelToken(PaymentOrder.name));
+    expenseModel = module.get(getModelToken(Expense.name));
   });
 
   it('should be defined', () => {
@@ -127,6 +140,7 @@ describe('DashboardService', () => {
       });
       jest.spyOn(service as any, 'getExpectedRevenue').mockResolvedValue(mockStats.expectedRevenue);
       jest.spyOn(service as any, 'getMonthlyPaymentData').mockResolvedValue(mockStats.monthlySalesData);
+      jest.spyOn(service as any, 'getTotalExpenses').mockResolvedValue(mockStats.totalExpenses);
 
       const result = await service.getStats(mockAccountId);
 
@@ -138,7 +152,7 @@ describe('DashboardService', () => {
       });
       expect(serviceOrderModel.countDocuments).toHaveBeenCalledWith({
         account: mockAccountId,
-        status: { $nin: ['completed', 'cancelled'] }
+        status: { $nin: ['completed', 'cancelled', 'payment_order_created'] }
       });
       expect(eventModel.countDocuments).toHaveBeenCalledWith({
         account: mockAccountId,
@@ -155,6 +169,8 @@ describe('DashboardService', () => {
         totalReceived: mockStats.totalReceived,
         totalOwed: mockStats.totalOwed,
         expectedRevenue: mockStats.expectedRevenue,
+        totalExpenses: mockStats.totalExpenses,
+        balance: mockStats.balance,
         monthlySalesData: expect.any(Array)
       });
     });
@@ -177,6 +193,7 @@ describe('DashboardService', () => {
       });
       jest.spyOn(service as any, 'getExpectedRevenue').mockResolvedValue(0);
       jest.spyOn(service as any, 'getMonthlyPaymentData').mockResolvedValue([]);
+      jest.spyOn(service as any, 'getTotalExpenses').mockResolvedValue(0);
 
       const result = await service.getStats(mockAccountId);
 
@@ -189,6 +206,8 @@ describe('DashboardService', () => {
         totalReceived: 0,
         totalOwed: 0,
         expectedRevenue: 0,
+        totalExpenses: 0,
+        balance: 0,
         monthlySalesData: expect.any(Array)
       });
     });
@@ -227,6 +246,7 @@ describe('DashboardService', () => {
         { date: yesterdayStr, sales: 1000 },
         { date: twoDaysAgoStr, sales: 2000 }
       ]);
+      jest.spyOn(service as any, 'getTotalExpenses').mockResolvedValue(1);
 
       const result = await service.getStats(mockAccountId);
 
