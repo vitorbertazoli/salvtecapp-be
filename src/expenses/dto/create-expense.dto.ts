@@ -2,9 +2,9 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Min } from 'class-
 import type { ExpenseCategoryType } from '../schemas/expense.schema';
 
 export class CreateExpenseDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  title: string;
+  title?: string;
 
   @IsOptional()
   @IsString()

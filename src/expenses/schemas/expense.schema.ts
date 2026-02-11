@@ -15,6 +15,8 @@ export const ExpenseCategory = {
   FUEL: 'fuel',
   VEHICLE_MAINTENANCE: 'vehicle_maintenance',
   TRANSPORTATION: 'transportation',
+  TOLLS: 'tolls',
+  PARKING: 'parking',
 
   // Labor and Services
   LABOR: 'labor',
@@ -69,8 +71,8 @@ export class Expense {
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   account: Types.ObjectId;
 
-  @Prop({ required: true })
-  title: string; // Brief description of the expense
+  @Prop()
+  title?: string; // Brief description of the expense
 
   @Prop({
     enum: Object.values(ExpenseCategory),
