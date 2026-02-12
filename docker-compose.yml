@@ -40,20 +40,6 @@ services:
       - ./.env:/app/.env:ro
       - uploads_data:/app/uploads
 
-  # Frontend
-  frontend:
-    image: vitorbertazoli/salvtec-frontend:latest
-    container_name: salvtec-frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    expose:
-      - "8080"
-    ports:
-      - "127.0.0.1:8080:80"
-    networks:
-      - salvtec-network
-
 volumes:
   mongodb_data:
   uploads_data:
