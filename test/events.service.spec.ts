@@ -82,7 +82,8 @@ describe('EventsService', () => {
     };
 
     const mockServiceOrdersService = {
-      updateByAccount: jest.fn()
+      updateByAccount: jest.fn(),
+      findByIdAndAccount: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -476,11 +477,80 @@ describe('EventsService', () => {
   });
 
   describe('deleteByAccount', () => {
-    it('should delete event successfully', async () => {
-      jest.spyOn(eventModel, 'findOneAndDelete').mockResolvedValue(mockEvent as any);
+    it('should delete event successfully and update service order status', async () => {
+      const mockEventWithServiceOrder = {
+        ...mockEvent,
+        serviceOrder: mockServiceOrderId
+      };
+
+      jest.spyOn(eventModel, 'findOne').mockResolvedValue(mockEventWithServiceOrder as any);
+      jest.spyOn(serviceOrdersService, 'findByIdAndAccount').mockResolvedValue({
+        _id: mockServiceOrderId,
+        status: 'scheduled'
+      } as any);
+      jest.spyOn(serviceOrdersService, 'updateByAccount').mockResolvedValue({} as any);
+      jest.spyOn(eventModel, 'findOneAndDelete').mockResolvedValue(mockEventWithServiceOrder as any);
 
       const result = await service.deleteByAccount(mockEvent._id.toString(), mockAccountId);
 
+      expect(eventModel.findOne).toHaveBeenCalledWith({
+        _id: mockEvent._id.toString(),
+        account: mockAccountId
+      });
+      expect(serviceOrdersService.findByIdAndAccount).toHaveBeenCalledWith(mockServiceOrderId.toString(), mockAccountId);
+      expect(serviceOrdersService.updateByAccount).toHaveBeenCalledWith(mockServiceOrderId.toString(), { status: 'pending' }, mockAccountId);
+      expect(eventModel.findOneAndDelete).toHaveBeenCalledWith({
+        _id: mockEvent._id.toString(),
+        account: mockAccountId
+      });
+      expect(result).toBe(true);
+    });
+
+    it('should delete event successfully when service order is not scheduled', async () => {
+      const mockEventWithServiceOrder = {
+        ...mockEvent,
+        serviceOrder: mockServiceOrderId
+      };
+
+      jest.spyOn(eventModel, 'findOne').mockResolvedValue(mockEventWithServiceOrder as any);
+      jest.spyOn(serviceOrdersService, 'findByIdAndAccount').mockResolvedValue({
+        _id: mockServiceOrderId,
+        status: 'pending'
+      } as any);
+      jest.spyOn(eventModel, 'findOneAndDelete').mockResolvedValue(mockEventWithServiceOrder as any);
+
+      const result = await service.deleteByAccount(mockEvent._id.toString(), mockAccountId);
+
+      expect(eventModel.findOne).toHaveBeenCalledWith({
+        _id: mockEvent._id.toString(),
+        account: mockAccountId
+      });
+      expect(serviceOrdersService.findByIdAndAccount).toHaveBeenCalledWith(mockServiceOrderId.toString(), mockAccountId);
+      expect(serviceOrdersService.updateByAccount).not.toHaveBeenCalled();
+      expect(eventModel.findOneAndDelete).toHaveBeenCalledWith({
+        _id: mockEvent._id.toString(),
+        account: mockAccountId
+      });
+      expect(result).toBe(true);
+    });
+
+    it('should delete event successfully when no service order is linked', async () => {
+      const mockEventWithoutServiceOrder = {
+        ...mockEvent,
+        serviceOrder: null
+      };
+
+      jest.spyOn(eventModel, 'findOne').mockResolvedValue(mockEventWithoutServiceOrder as any);
+      jest.spyOn(eventModel, 'findOneAndDelete').mockResolvedValue(mockEventWithoutServiceOrder as any);
+
+      const result = await service.deleteByAccount(mockEvent._id.toString(), mockAccountId);
+
+      expect(eventModel.findOne).toHaveBeenCalledWith({
+        _id: mockEvent._id.toString(),
+        account: mockAccountId
+      });
+      expect(serviceOrdersService.findByIdAndAccount).not.toHaveBeenCalled();
+      expect(serviceOrdersService.updateByAccount).not.toHaveBeenCalled();
       expect(eventModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockEvent._id.toString(),
         account: mockAccountId
@@ -489,10 +559,17 @@ describe('EventsService', () => {
     });
 
     it('should return false when event not found', async () => {
-      jest.spyOn(eventModel, 'findOneAndDelete').mockResolvedValue(null);
+      jest.spyOn(eventModel, 'findOne').mockResolvedValue(null);
 
       const result = await service.deleteByAccount('nonexistent-id', mockAccountId);
 
+      expect(eventModel.findOne).toHaveBeenCalledWith({
+        _id: 'nonexistent-id',
+        account: mockAccountId
+      });
+      expect(serviceOrdersService.findByIdAndAccount).not.toHaveBeenCalled();
+      expect(serviceOrdersService.updateByAccount).not.toHaveBeenCalled();
+      expect(eventModel.findOneAndDelete).not.toHaveBeenCalled();
       expect(result).toBe(false);
     });
   });

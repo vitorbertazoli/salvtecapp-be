@@ -256,12 +256,23 @@ export class EventsService {
   }
 
   async deleteByAccount(id: string, accountId: Types.ObjectId): Promise<boolean> {
-    const result = await this.eventModel.findOneAndDelete({
-      _id: id,
-      account: accountId
-    });
+    const event = await this.eventModel.findOne({ _id: id, account: accountId });
 
-    return !!result;
+    if (!event) {
+      return false;
+    }
+
+    // If there's a linked service order with status 'scheduled', change it back to 'pending'
+    if (event.serviceOrder) {
+      const serviceOrder = await this.serviceOrdersService.findByIdAndAccount(event.serviceOrder.toString(), accountId);
+      if (serviceOrder && serviceOrder.status === 'scheduled') {
+        await this.serviceOrdersService.updateByAccount(event.serviceOrder.toString(), { status: 'pending' }, accountId);
+      }
+    }
+
+    await this.eventModel.findOneAndDelete({ _id: id, account: accountId });
+
+    return true;
   }
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {

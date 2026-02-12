@@ -1,3 +1,5 @@
+import { HttpModule } from '@nestjs/axios';
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -23,12 +25,21 @@ import { UsersModule } from './users/users.module';
 import { EmailModule } from './utils/email.module';
 import { VehicleUsagesModule } from './vehicle-usages/vehicle-usages.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
+import { WeatherModule } from './weather/weather.module';
 import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 600000, // 10 minutes in milliseconds
+    }),
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
     }),
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -57,7 +68,8 @@ import { WebsocketModule } from './websocket/websocket.module';
     EmailModule,
     VehiclesModule,
     VehicleUsagesModule,
-    WebsocketModule
+    WebsocketModule,
+    WeatherModule
   ],
   controllers: [AppController],
   providers: []
