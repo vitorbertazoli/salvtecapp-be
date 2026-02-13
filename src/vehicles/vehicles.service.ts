@@ -16,7 +16,8 @@ export class VehiclesService {
     accountId?: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
-    search: string = ''
+    search: string = '',
+    isActive?: boolean
   ): Promise<{
     vehicles: Vehicle[];
     total: number;
@@ -25,7 +26,12 @@ export class VehiclesService {
     totalPages: number;
   }> {
     const skip = (page - 1) * limit;
-    const query: any = { account: accountId, isActive: true };
+    const query: any = { account: accountId };
+
+    // Filter by isActive if specified
+    if (isActive !== undefined) {
+      query.isActive = isActive;
+    }
 
     if (search) {
       query.$or = [

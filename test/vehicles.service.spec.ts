@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Types } from 'mongoose';
+import { Vehicle } from '../src/vehicles/schemas/vehicles.schema';
 import { VehiclesService } from '../src/vehicles/vehicles.service';
-import { Vehicle, VehicleDocument } from '../src/vehicles/schemas/vehicles.schema';
 
 describe('VehiclesService', () => {
   let service: VehiclesService;
@@ -115,7 +115,6 @@ describe('VehiclesService', () => {
 
       expect(vehicleModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
-        isActive: true,
         $or: [
           { name: { $regex: 'Ford', $options: 'i' } },
           { licensePlate: { $regex: 'Ford', $options: 'i' } },
@@ -125,7 +124,6 @@ describe('VehiclesService', () => {
       });
       expect(vehicleModel.countDocuments).toHaveBeenCalledWith({
         account: mockAccountId,
-        isActive: true,
         $or: [
           { name: { $regex: 'Ford', $options: 'i' } },
           { licensePlate: { $regex: 'Ford', $options: 'i' } },
@@ -146,8 +144,7 @@ describe('VehiclesService', () => {
       const result = await service.findAll(mockAccountId, 1, 10, '');
 
       expect(vehicleModel.find).toHaveBeenCalledWith({
-        account: mockAccountId,
-        isActive: true
+        account: mockAccountId
       });
       expect(result).toEqual({
         vehicles: mockVehicleArray,
@@ -162,14 +159,45 @@ describe('VehiclesService', () => {
       const result = await service.findAll(mockAccountId, 2, 5, '');
 
       expect(vehicleModel.find).toHaveBeenCalledWith({
-        account: mockAccountId,
-        isActive: true
+        account: mockAccountId
       });
       expect(result).toEqual({
         vehicles: mockVehicleArray,
         total: 1,
         page: 2,
         limit: 5,
+        totalPages: 1
+      });
+    });
+
+    it('should filter by active vehicles when isActive is true', async () => {
+      const result = await service.findAll(mockAccountId, 1, 10, '', true);
+
+      expect(vehicleModel.find).toHaveBeenCalledWith({
+        account: mockAccountId,
+        isActive: true
+      });
+      expect(result).toEqual({
+        vehicles: mockVehicleArray,
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      });
+    });
+
+    it('should filter by inactive vehicles when isActive is false', async () => {
+      const result = await service.findAll(mockAccountId, 1, 10, '', false);
+
+      expect(vehicleModel.find).toHaveBeenCalledWith({
+        account: mockAccountId,
+        isActive: false
+      });
+      expect(result).toEqual({
+        vehicles: mockVehicleArray,
+        total: 1,
+        page: 1,
+        limit: 10,
         totalPages: 1
       });
     });

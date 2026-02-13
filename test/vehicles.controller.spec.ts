@@ -99,9 +99,9 @@ describe('VehiclesController', () => {
 
       vehiclesService.findAll.mockResolvedValue(mockResult);
 
-      const result = await controller.findAll('1', '10', 'Ford', mockAccountId);
+      const result = await controller.findAll(mockAccountId, '1', '10', 'Ford');
 
-      expect(vehiclesService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, 'Ford');
+      expect(vehiclesService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, 'Ford', undefined);
       expect(result).toEqual(mockResult);
     });
 
@@ -116,9 +116,43 @@ describe('VehiclesController', () => {
 
       vehiclesService.findAll.mockResolvedValue(mockResult);
 
-      const result = await controller.findAll(undefined, undefined, '', mockAccountId);
+      const result = await controller.findAll(mockAccountId, undefined, undefined, '');
 
-      expect(vehiclesService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '');
+      expect(vehiclesService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', undefined);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should filter by active vehicles when isActive is true', async () => {
+      const mockResult = {
+        vehicles: [mockVehicle],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      };
+
+      vehiclesService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(mockAccountId, '1', '10', '', 'true');
+
+      expect(vehiclesService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', true);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should filter by inactive vehicles when isActive is false', async () => {
+      const mockResult = {
+        vehicles: [mockVehicle],
+        total: 1,
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      };
+
+      vehiclesService.findAll.mockResolvedValue(mockResult);
+
+      const result = await controller.findAll(mockAccountId, '1', '10', '', 'false');
+
+      expect(vehiclesService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', false);
       expect(result).toEqual(mockResult);
     });
   });

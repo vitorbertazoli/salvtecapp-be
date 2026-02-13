@@ -27,15 +27,17 @@ export class VehiclesController {
 
   @Get()
   findAll(
+    @GetAccountId() accountId: Types.ObjectId,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
     @Query('search') search: string = '',
-    @GetAccountId() accountId: Types.ObjectId
+    @Query('isActive') isActive?: string
   ) {
     // Always filter by the user's account from JWT token
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
-    return this.vehiclesService.findAll(accountId, pageNum, limitNum, search);
+    const isActiveBool = isActive === 'true' ? true : isActive === 'false' ? false : undefined;
+    return this.vehiclesService.findAll(accountId, pageNum, limitNum, search, isActiveBool);
   }
 
   @Get(':id')
