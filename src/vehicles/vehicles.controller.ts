@@ -63,8 +63,8 @@ export class VehiclesController {
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR')
   async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
-    const vehicle = await this.vehiclesService.remove(id, accountId);
-    if (!vehicle) throw new NotFoundException('vehicles.notFound');
-    return vehicle;
+    const result = await this.vehiclesService.remove(id, accountId);
+    if (!result.vehicle) throw new NotFoundException('vehicles.notFound');
+    return result;
   }
 }

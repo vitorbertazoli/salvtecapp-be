@@ -1,12 +1,14 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
+import { VehicleUsage } from '../src/vehicle-usages/schemas/vehicle-usages.schema';
 import { Vehicle } from '../src/vehicles/schemas/vehicles.schema';
 import { VehiclesService } from '../src/vehicles/vehicles.service';
 
 describe('VehiclesService', () => {
   let service: VehiclesService;
   let vehicleModel: any;
+  let vehicleUsageModel: any;
 
   const mockAccountId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
@@ -66,7 +68,14 @@ describe('VehiclesService', () => {
     mockVehicleModel.findOneAndUpdate = jest.fn().mockReturnValue({
       exec: jest.fn()
     });
+    mockVehicleModel.findOneAndDelete = jest.fn().mockReturnValue({
+      exec: jest.fn()
+    });
     mockVehicleModel.countDocuments = jest.fn().mockResolvedValue(1);
+
+    const mockVehicleUsageModel = {
+      countDocuments: jest.fn()
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -74,12 +83,17 @@ describe('VehiclesService', () => {
         {
           provide: getModelToken(Vehicle.name),
           useValue: mockVehicleModel
+        },
+        {
+          provide: getModelToken(VehicleUsage.name),
+          useValue: mockVehicleUsageModel
         }
       ]
     }).compile();
 
     service = module.get<VehiclesService>(VehiclesService);
     vehicleModel = module.get(getModelToken(Vehicle.name));
+    vehicleUsageModel = module.get(getModelToken(VehicleUsage.name));
   });
 
   it('should be defined', () => {
@@ -236,16 +250,47 @@ describe('VehiclesService', () => {
   });
 
   describe('remove', () => {
-    it('should soft delete vehicle successfully', async () => {
+    it('should deactivate vehicle when it has usage history', async () => {
       const mockQuery = {
         exec: jest.fn().mockResolvedValue({ ...mockVehicle, isActive: false })
       };
       vehicleModel.findOneAndUpdate.mockReturnValue(mockQuery);
+      vehicleUsageModel.countDocuments.mockResolvedValue(5); // Has usages
 
       const result = await service.remove(mockVehicleId.toString(), mockAccountId);
 
+      expect(vehicleUsageModel.countDocuments).toHaveBeenCalledWith({
+        vehicle: mockVehicleId.toString(),
+        account: mockAccountId
+      });
       expect(vehicleModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: mockVehicleId.toString(), account: mockAccountId }, { isActive: false }, { new: true });
-      expect(result).toEqual({ ...mockVehicle, isActive: false });
+      expect(result).toEqual({
+        vehicle: { ...mockVehicle, isActive: false },
+        deleted: false
+      });
+    });
+
+    it('should permanently delete vehicle when it has no usage history', async () => {
+      const mockQuery = {
+        exec: jest.fn().mockResolvedValue(mockVehicle)
+      };
+      vehicleModel.findOneAndDelete.mockReturnValue(mockQuery);
+      vehicleUsageModel.countDocuments.mockResolvedValue(0); // No usages
+
+      const result = await service.remove(mockVehicleId.toString(), mockAccountId);
+
+      expect(vehicleUsageModel.countDocuments).toHaveBeenCalledWith({
+        vehicle: mockVehicleId.toString(),
+        account: mockAccountId
+      });
+      expect(vehicleModel.findOneAndDelete).toHaveBeenCalledWith({
+        _id: mockVehicleId.toString(),
+        account: mockAccountId
+      });
+      expect(result).toEqual({
+        vehicle: mockVehicle,
+        deleted: true
+      });
     });
   });
 });

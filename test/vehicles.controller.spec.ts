@@ -208,17 +208,28 @@ describe('VehiclesController', () => {
   });
 
   describe('remove', () => {
-    it('should remove vehicle', async () => {
-      vehiclesService.remove.mockResolvedValue(mockVehicle);
+    it('should remove vehicle and return result with deleted flag', async () => {
+      const mockResult = { vehicle: mockVehicle, deleted: true };
+      vehiclesService.remove.mockResolvedValue(mockResult);
 
       const result = await controller.remove(mockVehicleId.toString(), mockAccountId);
 
       expect(vehiclesService.remove).toHaveBeenCalledWith(mockVehicleId.toString(), mockAccountId);
-      expect(result).toEqual(mockVehicle);
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should return deactivated vehicle when has usage history', async () => {
+      const mockResult = { vehicle: { ...mockVehicle, isActive: false }, deleted: false };
+      vehiclesService.remove.mockResolvedValue(mockResult);
+
+      const result = await controller.remove(mockVehicleId.toString(), mockAccountId);
+
+      expect(vehiclesService.remove).toHaveBeenCalledWith(mockVehicleId.toString(), mockAccountId);
+      expect(result).toEqual(mockResult);
     });
 
     it('should throw NotFoundException if vehicle not found', async () => {
-      vehiclesService.remove.mockResolvedValue(null);
+      vehiclesService.remove.mockResolvedValue({ vehicle: null, deleted: false });
 
       await expect(controller.remove(mockVehicleId.toString(), mockAccountId)).rejects.toThrow('vehicles.notFound');
     });
