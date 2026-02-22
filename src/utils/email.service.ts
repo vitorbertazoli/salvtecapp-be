@@ -1,6 +1,7 @@
-import { SESClient, SendEmailCommand, SendEmailCommandInput } from '@aws-sdk/client-ses';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
+import { Transporter } from 'nodemailer';
 
 export interface EmailOptions {
   to: string | string[];
@@ -14,30 +15,29 @@ export interface EmailOptions {
 
 @Injectable()
 export class EmailService {
-  private sesClient: SESClient;
+  private transporter: Transporter;
 
   constructor(private configService: ConfigService) {
-    const region = this.configService.get<string>('AWS_REGION', 'us-east-1');
-    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
-    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    const host = this.configService.get<string>('SMTP_HOST', '127.0.0.1');
+    const portValue = this.configService.get<string>('SMTP_PORT', '25');
+    const secureValue = this.configService.get<string>('SMTP_SECURE', 'false');
+    const user = this.configService.get<string>('SMTP_USER');
+    const pass = this.configService.get<string>('SMTP_PASS');
+    const port = Number.parseInt(portValue, 10);
+    const secure = secureValue === 'true';
 
-    if (!accessKeyId || !secretAccessKey) {
-      throw new BadRequestException('email.errors.awsCredentialsNotConfigured');
-    }
-
-    this.sesClient = new SESClient({
-      region,
-      credentials: {
-        accessKeyId,
-        secretAccessKey
-      }
+    this.transporter = nodemailer.createTransport({
+      host,
+      port: Number.isNaN(port) ? 25 : port,
+      secure,
+      auth: user && pass ? { user, pass } : undefined
     });
   }
 
   async sendEmail(options: EmailOptions): Promise<void> {
     const { to, subject, html, text, from, bcc, replyToEmail } = options;
 
-    const fromEmail = from || this.configService.get<string>('AWS_SES_FROM_EMAIL');
+    const fromEmail = from || this.configService.get<string>('MAIL_FROM_EMAIL');
     if (!fromEmail) {
       throw new BadRequestException('email.errors.emailConfigurationMissing');
     }
@@ -45,28 +45,16 @@ export class EmailService {
     const toAddresses = Array.isArray(to) ? to : [to];
     const bccAddresses = bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined;
 
-    const emailParams: SendEmailCommandInput = {
-      Source: fromEmail,
-      ReplyToAddresses: replyToEmail ? [replyToEmail] : undefined,
-      Destination: {
-        ToAddresses: toAddresses,
-        BccAddresses: bccAddresses
-      },
-      Message: {
-        Subject: {
-          Data: subject,
-          Charset: 'UTF-8'
-        },
-        Body: {
-          Html: html ? { Data: html, Charset: 'UTF-8' } : undefined,
-          Text: text ? { Data: text, Charset: 'UTF-8' } : undefined
-        }
-      }
-    };
-
     try {
-      const command = new SendEmailCommand(emailParams);
-      await this.sesClient.send(command);
+      await this.transporter.sendMail({
+        from: fromEmail,
+        to: toAddresses,
+        bcc: bccAddresses,
+        replyTo: replyToEmail,
+        subject,
+        html,
+        text
+      });
     } catch (error) {
       console.error('Error sending email:', error);
       throw new BadRequestException('email.errors.failedToSendEmail');

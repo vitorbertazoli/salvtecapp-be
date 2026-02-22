@@ -1,0 +1,99 @@
+{
+  "id": "d9d565f1-5e68-49a1-9ec2-2f0d7fbdc2e9",
+  "name": "Salvtec BE - Data Isolation",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "enabled": true
+    },
+    {
+      "key": "masterAdminEmail",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "masterAdminPassword",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "masterAdminAccessToken",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "newUserPassword",
+      "value": "TestPass123!",
+      "enabled": true
+    },
+    {
+      "key": "runId",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountAName",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountAEmail",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountAId",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountAAccessToken",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountAUserId",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "customerAName",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "customerAId",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountBName",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountBEmail",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountBId",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountBAccessToken",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "accountBUserId",
+      "value": "",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2026-02-21T00:00:00.000Z",
+  "_postman_exported_using": "GPT-5.3-Codex"
+}

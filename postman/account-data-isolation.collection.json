@@ -1,0 +1,556 @@
+{
+  "info": {
+    "name": "Account Data Isolation Leak Test",
+    "_postman_id": "9f0190fb-3b14-4dc0-9f3e-7ba57e4e7f50",
+    "description": "Creates two separate accounts, authenticates both, creates data in account A, and verifies the same data is not visible from account B.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Login Master Admin (required for auto-activation)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{masterAdminEmail}}\",\n  \"password\": \"{{masterAdminPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Logs in a master admin user so we can activate newly created accounts via /api/admin/accounts/:id/status."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Master admin login succeeded', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.expect(responseJson.access_token).to.be.a('string').and.not.empty;",
+              "pm.environment.set('masterAdminAccessToken', responseJson.access_token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Create Account A",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{accountAName}}\",\n  \"plan\": \"free\",\n  \"firstName\": \"Leak\",\n  \"lastName\": \"AccountA\",\n  \"email\": \"{{accountAEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/public-accounts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "public-accounts"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;",
+              "pm.environment.set('runId', runId);",
+              "pm.environment.set('accountAName', `leak-a-${runId}`);",
+              "pm.environment.set('accountAEmail', `leak.a.${runId}@example.com`);",
+              "pm.environment.set('customerAName', `Leak Customer ${runId}`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account A created', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.environment.set('accountAId', responseJson.account.id);",
+              "pm.environment.set('accountAStatus', responseJson.account.status);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Activate Account A (admin)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{masterAdminAccessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"active\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/accounts/{{accountAId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "accounts",
+            "{{accountAId}}",
+            "status"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account A activated', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.expect(responseJson.status).to.eql('active');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Login Account A User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{accountAEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account A login succeeded', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.environment.set('accountAAccessToken', responseJson.access_token);",
+              "pm.environment.set('accountAUserId', responseJson.user.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Create Customer in Account A",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accountAAccessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{customerAName}}\",\n  \"email\": \"{{accountAEmail}}\",\n  \"type\": \"residential\",\n  \"status\": \"active\",\n  \"phoneNumbers\": [\"+55-11-99999-0000\"],\n  \"address\": {\n    \"street\": \"Leak Test St\",\n    \"number\": \"100\",\n    \"city\": \"Sao Paulo\",\n    \"state\": \"SP\",\n    \"country\": \"Brazil\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/customers",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "customers"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Customer created in account A', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "const createdCustomerId = responseJson.id || responseJson._id;",
+              "pm.expect(createdCustomerId).to.be.a('string').and.not.empty;",
+              "pm.environment.set('customerAId', createdCustomerId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - List Customers in Account A",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accountAAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/customers?page=1&limit=50",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "customers"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "50"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account A customer list returned', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "const customers = responseJson.customers || [];",
+              "const customerAId = pm.environment.get('customerAId');",
+              "",
+              "pm.test('Created customer is visible in account A', function () {",
+              "  const found = customers.some(c => (c.id || c._id) === customerAId);",
+              "  pm.expect(found).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Create Account B",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{accountBName}}\",\n  \"plan\": \"free\",\n  \"firstName\": \"Leak\",\n  \"lastName\": \"AccountB\",\n  \"email\": \"{{accountBEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/public-accounts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "public-accounts"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const runId = pm.environment.get('runId') || `${Date.now()}-${Math.floor(Math.random() * 100000)}`;",
+              "pm.environment.set('runId', runId);",
+              "pm.environment.set('accountBName', `leak-b-${runId}`);",
+              "pm.environment.set('accountBEmail', `leak.b.${runId}@example.com`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account B created', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.environment.set('accountBId', responseJson.account.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Activate Account B (admin)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{masterAdminAccessToken}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"active\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/accounts/{{accountBId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "accounts",
+            "{{accountBId}}",
+            "status"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account B activated', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.expect(responseJson.status).to.eql('active');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Login Account B User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{accountBEmail}}\",\n  \"password\": \"{{newUserPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account B login succeeded', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "pm.environment.set('accountBAccessToken', responseJson.access_token);",
+              "pm.environment.set('accountBUserId', responseJson.user.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - List Customers in Account B (no leak expected)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accountBAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/customers?page=1&limit=50",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "customers"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "50"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account B customer list returned', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "});",
+              "",
+              "const responseJson = pm.response.json();",
+              "const customers = responseJson.customers || [];",
+              "const customerAId = pm.environment.get('customerAId');",
+              "const customerAName = pm.environment.get('customerAName');",
+              "",
+              "pm.test('Customer from account A is not visible in account B list', function () {",
+              "  const leakedById = customers.some(c => (c.id || c._id) === customerAId);",
+              "  const leakedByName = customers.some(c => c.name === customerAName);",
+              "  pm.expect(leakedById || leakedByName).to.eql(false);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Direct Read Customer A with Account B Token (must fail)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accountBAccessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/customers/{{customerAId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "customers",
+            "{{customerAId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const code = pm.response.code;",
+              "const validCodes = [200, 403, 404];",
+              "",
+              "pm.test('Cross-account direct access does not return account A customer', function () {",
+              "  pm.expect(validCodes.includes(code)).to.eql(true);",
+              "",
+              "  if (code === 200) {",
+              "    const responseJson = pm.response.json();",
+              "    const returnedId = responseJson && (responseJson.id || responseJson._id);",
+              "    const customerAId = pm.environment.get('customerAId');",
+              "    pm.expect(returnedId === customerAId).to.eql(false);",
+              "    pm.expect(responseJson === null || Object.keys(responseJson).length === 0).to.eql(true);",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
