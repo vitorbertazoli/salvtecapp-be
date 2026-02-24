@@ -1,5 +1,7 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Account, AccountDocument } from '../accounts/schemas/account.schema';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -11,13 +13,25 @@ import { TechniciansService } from './technicians.service';
 @Controller('technicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TechniciansController {
-  constructor(private readonly techniciansService: TechniciansService) {}
+  constructor(
+    private readonly techniciansService: TechniciansService,
+    @InjectModel(Account.name) private accountModel: Model<AccountDocument>
+  ) {}
 
   @Post()
   @Roles('ADMIN') // Only users with ADMIN role can create technicians
   async create(@Body() createTechnicianDto: CreateTechnicianDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     if (!createTechnicianDto.userAccount) {
       throw new BadRequestException('technicians.errors.userAccountDataRequired');
+    }
+
+    // Check account plan limits for free accounts
+    const account = await this.accountModel.findById(accountId);
+    if (account?.plan === 'free') {
+      const currentTechnicianCount = await this.techniciansService.countByAccount(accountId);
+      if (currentTechnicianCount >= 3) {
+        throw new BadRequestException('technicians.errors.freePlanLimitReached');
+      }
     }
 
     const userAccount = {

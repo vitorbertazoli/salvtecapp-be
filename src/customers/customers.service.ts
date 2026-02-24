@@ -9,6 +9,10 @@ import { Customer, CustomerDocument } from './schemas/customer.schema';
 export class CustomersService {
   constructor(@InjectModel(Customer.name) private customerModel: Model<CustomerDocument>) {}
 
+  async countByAccount(accountId: Types.ObjectId): Promise<number> {
+    return this.customerModel.countDocuments({ account: accountId }).exec();
+  }
+
   async create(customerData: Partial<Customer> & { address?: any; equipments?: any[] }, accountId: Types.ObjectId): Promise<Customer> {
     // Set default type if not provided
     if (!customerData.type) {

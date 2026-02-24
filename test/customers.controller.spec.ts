@@ -54,6 +54,7 @@ import { UpdateCustomerDto } from '../src/customers/dto/update-customer.dto';
 describe('CustomersController', () => {
   let controller: CustomersController;
   let customersService: jest.Mocked<CustomersService>;
+  let accountModel: any;
 
   const mockCustomerId = '507f1f77bcf86cd799439011';
   const mockAccountId = new Types.ObjectId('507f1f77bcf86cd799439012');
@@ -115,7 +116,12 @@ describe('CustomersController', () => {
       deleteNote: jest.fn(),
       addEquipmentPicture: jest.fn(),
       addCustomerPicture: jest.fn(),
-      deleteCustomerPicture: jest.fn()
+      deleteCustomerPicture: jest.fn(),
+      countByAccount: jest.fn()
+    };
+
+    accountModel = {
+      findById: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -124,6 +130,10 @@ describe('CustomersController', () => {
         {
           provide: CustomersService,
           useValue: mockCustomersService
+        },
+        {
+          provide: 'AccountModel',
+          useValue: accountModel
         }
       ]
     })
@@ -168,6 +178,7 @@ describe('CustomersController', () => {
         ]
       };
 
+      accountModel.findById.mockResolvedValue({ plan: 'pro' });
       customersService.create.mockResolvedValue(mockCustomer as any);
 
       const result = await controller.create(createDto, mockUserId, mockAccountId);
@@ -192,6 +203,7 @@ describe('CustomersController', () => {
         cpf: '12345678901'
       };
 
+      accountModel.findById.mockResolvedValue({ plan: 'enterprise' });
       customersService.create.mockResolvedValue(mockCustomer as any);
 
       const result = await controller.create(createDto, mockUserId, mockAccountId);
@@ -205,6 +217,63 @@ describe('CustomersController', () => {
         },
         mockAccountId
       );
+      expect(result).toEqual(mockCustomer);
+    });
+
+    it('should allow free account to create customer within limit', async () => {
+      const createDto: CreateCustomerDto = {
+        name: 'Test Customer',
+        email: 'customer@example.com',
+        type: 'residential',
+        cpf: '12345678901'
+      };
+
+      accountModel.findById.mockResolvedValue({ plan: 'free' });
+      customersService.countByAccount.mockResolvedValue(15); // Under 20 limit
+      customersService.create.mockResolvedValue(mockCustomer as any);
+
+      const result = await controller.create(createDto, mockUserId, mockAccountId);
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(customersService.countByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(customersService.create).toHaveBeenCalled();
+      expect(result).toEqual(mockCustomer);
+    });
+
+    it('should throw error when free account exceeds customer limit', async () => {
+      const createDto: CreateCustomerDto = {
+        name: 'Test Customer',
+        email: 'customer@example.com',
+        type: 'residential',
+        cpf: '12345678901'
+      };
+
+      accountModel.findById.mockResolvedValue({ plan: 'free' });
+      customersService.countByAccount.mockResolvedValue(20); // At limit
+
+      await expect(controller.create(createDto, mockUserId, mockAccountId)).rejects.toThrow(new BadRequestException('customers.errors.freePlanLimitReached'));
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(customersService.countByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(customersService.create).not.toHaveBeenCalled();
+    });
+
+    it('should not check limits for pro account', async () => {
+      const createDto: CreateCustomerDto = {
+        name: 'Test Customer',
+        email: 'customer@example.com',
+        type: 'residential',
+        cpf: '12345678901'
+      };
+
+      accountModel.findById.mockResolvedValue({ plan: 'pro' });
+      customersService.create.mockResolvedValue(mockCustomer as any);
+
+      const result = await controller.create(createDto, mockUserId, mockAccountId);
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(customersService.countByAccount).not.toHaveBeenCalled();
+      expect(customersService.create).toHaveBeenCalled();
       expect(result).toEqual(mockCustomer);
     });
   });

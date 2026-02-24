@@ -13,6 +13,10 @@ export class TechniciansService {
     private readonly usersService: UsersService
   ) {}
 
+  async countByAccount(accountId: Types.ObjectId): Promise<number> {
+    return this.technicianModel.countDocuments({ account: accountId }).exec();
+  }
+
   async create(
     account: Types.ObjectId,
     cpf: string,

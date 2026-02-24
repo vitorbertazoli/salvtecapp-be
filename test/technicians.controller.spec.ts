@@ -10,6 +10,7 @@ import { TechniciansService } from '../src/technicians/technicians.service';
 describe('TechniciansController', () => {
   let controller: TechniciansController;
   let service: TechniciansService;
+  let accountModel: any;
 
   const mockAccountId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
@@ -45,17 +46,27 @@ describe('TechniciansController', () => {
     findByAccount: jest.fn(),
     findByIdAndAccount: jest.fn(),
     update: jest.fn(),
-    delete: jest.fn()
+    delete: jest.fn(),
+    countByAccount: jest.fn()
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    accountModel = {
+      findById: jest.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TechniciansController],
       providers: [
         {
           provide: TechniciansService,
           useValue: mockTechniciansService
+        },
+        {
+          provide: 'AccountModel',
+          useValue: accountModel
         }
       ]
     })
@@ -113,6 +124,7 @@ describe('TechniciansController', () => {
         }
       };
 
+      accountModel.findById.mockResolvedValue({ plan: 'pro' });
       mockTechniciansService.create.mockResolvedValue(mockTechnician);
 
       const result = await controller.create(createTechnicianDto, mockAccountId, mockUserId);
@@ -124,6 +136,99 @@ describe('TechniciansController', () => {
         email: 'joao.silva@example.com',
         roles: ['TECHNICIAN']
       });
+      expect(result).toEqual(mockTechnician);
+    });
+
+    it('should allow free account to create technician within limit', async () => {
+      const createTechnicianDto: CreateTechnicianDto = {
+        cpf: '12345678901',
+        phoneNumber: '+5511999999999',
+        address: {
+          street: 'Rua Teste',
+          number: '123',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01234567'
+        },
+        userAccount: {
+          password: 'password123',
+          firstName: 'João',
+          lastName: 'Silva',
+          email: 'joao.silva@example.com',
+          roles: ['TECHNICIAN']
+        }
+      };
+
+      accountModel.findById.mockResolvedValue({ plan: 'free' });
+      mockTechniciansService.countByAccount.mockResolvedValue(2); // Under 3 limit
+      mockTechniciansService.create.mockResolvedValue(mockTechnician);
+
+      const result = await controller.create(createTechnicianDto, mockAccountId, mockUserId);
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(mockTechniciansService.countByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(mockTechniciansService.create).toHaveBeenCalled();
+      expect(result).toEqual(mockTechnician);
+    });
+
+    it('should throw error when free account exceeds technician limit', async () => {
+      const createTechnicianDto: CreateTechnicianDto = {
+        cpf: '12345678901',
+        phoneNumber: '+5511999999999',
+        address: {
+          street: 'Rua Teste',
+          number: '123',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01234567'
+        },
+        userAccount: {
+          password: 'password123',
+          firstName: 'João',
+          lastName: 'Silva',
+          email: 'joao.silva@example.com',
+          roles: ['TECHNICIAN']
+        }
+      };
+
+      accountModel.findById.mockResolvedValue({ plan: 'free' });
+      mockTechniciansService.countByAccount.mockResolvedValue(3); // At limit
+
+      await expect(controller.create(createTechnicianDto, mockAccountId, mockUserId)).rejects.toThrow('technicians.errors.freePlanLimitReached');
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(mockTechniciansService.countByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(mockTechniciansService.create).not.toHaveBeenCalled();
+    });
+
+    it('should not check limits for enterprise account', async () => {
+      const createTechnicianDto: CreateTechnicianDto = {
+        cpf: '12345678901',
+        phoneNumber: '+5511999999999',
+        address: {
+          street: 'Rua Teste',
+          number: '123',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01234567'
+        },
+        userAccount: {
+          password: 'password123',
+          firstName: 'João',
+          lastName: 'Silva',
+          email: 'joao.silva@example.com',
+          roles: ['TECHNICIAN']
+        }
+      };
+
+      accountModel.findById.mockResolvedValue({ plan: 'enterprise' });
+      mockTechniciansService.create.mockResolvedValue(mockTechnician);
+
+      const result = await controller.create(createTechnicianDto, mockAccountId, mockUserId);
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(mockTechniciansService.countByAccount).not.toHaveBeenCalled();
+      expect(mockTechniciansService.create).toHaveBeenCalled();
       expect(result).toEqual(mockTechnician);
     });
   });

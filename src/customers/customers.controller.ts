@@ -1,10 +1,12 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { promises as fs } from 'fs';
-import { Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import sharp from 'sharp';
+import { Account, AccountDocument } from '../accounts/schemas/account.schema';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -16,11 +18,23 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 @Controller('customers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CustomersController {
-  constructor(private readonly customersService: CustomersService) {}
+  constructor(
+    private readonly customersService: CustomersService,
+    @InjectModel(Account.name) private accountModel: Model<AccountDocument>
+  ) {}
 
   @Post()
   @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create customers
   async create(@Body() dto: CreateCustomerDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
+    // Check account plan limits for free accounts
+    const account = await this.accountModel.findById(accountId);
+    if (account?.plan === 'free') {
+      const currentCustomerCount = await this.customersService.countByAccount(accountId);
+      if (currentCustomerCount >= 20) {
+        throw new BadRequestException('customers.errors.freePlanLimitReached');
+      }
+    }
+
     const customerData = {
       ...dto,
       account: accountId,
