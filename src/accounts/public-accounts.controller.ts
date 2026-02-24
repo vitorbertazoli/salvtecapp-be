@@ -91,6 +91,7 @@ export class PublicAccountsController {
       verificationToken,
       verificationTokenExpires,
       billingInfo: {},
+      replyToEmail: createAccountDto.email,
       expireDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days trial
       createdBy: new Types.ObjectId('000000000000000000000000'), // System user
       updatedBy: new Types.ObjectId('000000000000000000000000') // System user

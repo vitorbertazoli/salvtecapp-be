@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEmail, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { BillingInfoDto } from './billing-info.dto';
 
 export class UpdateAccountDto {
@@ -7,9 +7,9 @@ export class UpdateAccountDto {
   @IsString()
   name?: string;
 
-  @IsOptional()
-  @IsEmail()
-  replyToEmail?: string;
+  @IsNotEmpty({ message: 'account.validation.replyToEmailRequired' })
+  @IsEmail({}, { message: 'account.validation.replyToEmailInvalid' })
+  replyToEmail: string;
 
   @IsOptional()
   @ValidateNested()

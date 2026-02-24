@@ -20,7 +20,8 @@ describe('AccountsController', () => {
     _id: mockAccountId,
     name: 'Test Account',
     email: 'test@example.com',
-    logoUrl: 'https://example.com/logo.png'
+    logoUrl: 'https://example.com/logo.png',
+    replyToEmail: 'test@example.com'
   };
 
   const mockFile = {
@@ -115,7 +116,8 @@ describe('AccountsController', () => {
     it('should update account successfully when user has access', async () => {
       const accountId = mockAccountId.toString();
       const updateData: UpdateAccountDto = {
-        name: 'Updated Account Name'
+        name: 'Updated Account Name',
+        replyToEmail: 'updated@example.com'
       };
 
       const updatedAccount = { ...mockAccount, ...updateData };
@@ -131,7 +133,8 @@ describe('AccountsController', () => {
       const accountId = 'different-account-id';
       const differentAccountId = new Types.ObjectId();
       const updateData: UpdateAccountDto = {
-        name: 'Updated Account Name'
+        name: 'Updated Account Name',
+        replyToEmail: 'updated@example.com'
       };
 
       const result = await controller.update(accountId, updateData, differentAccountId);
@@ -145,7 +148,8 @@ describe('AccountsController', () => {
     it('should handle partial updates', async () => {
       const accountId = mockAccountId.toString();
       const updateData: UpdateAccountDto = {
-        name: 'Only Name Updated'
+        name: 'Only Name Updated',
+        replyToEmail: 'test@example.com'
       };
 
       const updatedAccount = { ...mockAccount, name: 'Only Name Updated' };
