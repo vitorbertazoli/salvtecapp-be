@@ -158,6 +158,7 @@ describe('PublicAccountsController', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
         billingInfo: {},
+        expireDate: expect.any(Date),
         createdBy: new Types.ObjectId('000000000000000000000000'),
         updatedBy: new Types.ObjectId('000000000000000000000000')
       });
@@ -214,6 +215,7 @@ describe('PublicAccountsController', () => {
         verificationToken: expect.any(String),
         verificationTokenExpires: expect.any(Date),
         billingInfo: {},
+        expireDate: expect.any(Date),
         createdBy: new Types.ObjectId('000000000000000000000000'),
         updatedBy: new Types.ObjectId('000000000000000000000000')
       });

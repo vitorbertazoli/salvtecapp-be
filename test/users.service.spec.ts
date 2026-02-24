@@ -206,7 +206,7 @@ describe('UsersService', () => {
       const result = await service.findOneByEmail('joao.silva@example.com');
 
       expect(userModel.findOne).toHaveBeenCalledWith({ email: 'joao.silva@example.com' });
-      expect(mockQuery.populate).toHaveBeenCalledWith('account', 'name id logoUrl status');
+      expect(mockQuery.populate).toHaveBeenCalledWith('account', 'name id logoUrl status expireDate');
       expect(mockQuery.populate).toHaveBeenCalledWith('roles');
       expect(result).toEqual(mockPopulatedUser);
     });

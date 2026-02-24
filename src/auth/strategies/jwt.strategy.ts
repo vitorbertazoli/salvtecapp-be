@@ -36,6 +36,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('auth.errors.accountNotActive');
     }
 
+    // Check if account is expired
+    if (user.account?.expireDate) {
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const expireDate = new Date(user.account.expireDate);
+      expireDate.setUTCHours(0, 0, 0, 0);
+
+      if (today > expireDate) {
+        throw new UnauthorizedException('auth.errors.accountExpired');
+      }
+    }
+
     // if this user is a TECHNICIAN, ensure their technician id gets added to the user object
     let technicianId = undefined;
     if (user.roles.some((role) => (typeof role === 'string' ? role : (role as any).name) === 'TECHNICIAN')) {

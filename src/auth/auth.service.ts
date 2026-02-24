@@ -136,6 +136,18 @@ export class AuthService {
     if (account?.status !== 'active') {
       throw new BadRequestException('auth.errors.accountNotActive');
     }
+
+    // Check if account is expired
+    if (account?.expireDate) {
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const expireDate = new Date(account.expireDate);
+      expireDate.setUTCHours(0, 0, 0, 0);
+
+      if (today > expireDate) {
+        throw new BadRequestException('auth.errors.accountExpired');
+      }
+    }
   }
 
   /**

@@ -45,11 +45,11 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<(UserDocument & { account: any }) | null> {
-    return this.userModel.findOne({ email }).populate('account', 'name id logoUrl status').populate('roles').exec();
+    return this.userModel.findOne({ email }).populate('account', 'name id logoUrl status expireDate').populate('roles').exec();
   }
 
   async findById(id: string): Promise<(UserDocument & { account: any }) | null> {
-    return this.userModel.findById(id).populate('account', 'name id logoUrl status').populate('roles', 'name').exec();
+    return this.userModel.findById(id).populate('account', 'name id logoUrl status expireDate').populate('roles', 'name').exec();
   }
 
   async findAll(): Promise<{
@@ -59,7 +59,7 @@ export class UsersService {
     limit: number;
     totalPages: number;
   }> {
-    const users = await this.userModel.find().populate('account', 'name id logoUrl').populate('roles', 'name').exec();
+    const users = await this.userModel.find().populate('account', 'name id logoUrl status expireDate').populate('roles', 'name').exec();
     return {
       users: users,
       total: users.length,
