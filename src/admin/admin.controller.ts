@@ -4,6 +4,7 @@ import { GetAccountId } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminService } from './admin.service';
 import { UpdateAccountStatusDto } from './dto/update-account-status.dto';
+import { UpdateAccountDto } from './dto/update-account.dto';
 import { MasterAdminGuard } from './guards/master-admin.guard';
 
 @Controller('admin')
@@ -22,6 +23,11 @@ export class AdminController {
   @Put('accounts/:id/status')
   async updateAccountStatus(@Param('id') accountId: string, @Body() updateAccountStatusDto: UpdateAccountStatusDto) {
     return this.adminService.updateAccountStatus(accountId, updateAccountStatusDto.status);
+  }
+
+  @Put('accounts/:id')
+  async updateAccount(@Param('id') accountId: string, @Body() updateAccountDto: UpdateAccountDto) {
+    return this.adminService.updateAccount(accountId, updateAccountDto);
   }
 
   @Delete('accounts/:id')

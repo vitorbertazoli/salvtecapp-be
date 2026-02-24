@@ -98,6 +98,38 @@ export class AdminService {
     };
   }
 
+  async updateAccount(accountId: string, updateData: { status?: 'pending' | 'active' | 'suspended'; replyToEmail?: string; expireDate?: string }) {
+    const dataToUpdate: any = {};
+
+    if (updateData.status) {
+      dataToUpdate.status = updateData.status;
+    }
+    if (updateData.replyToEmail !== undefined) {
+      dataToUpdate.replyToEmail = updateData.replyToEmail;
+    }
+    if (updateData.expireDate !== undefined) {
+      dataToUpdate.expireDate = updateData.expireDate ? new Date(updateData.expireDate) : null;
+    } else {
+      dataToUpdate.expireDate = null;
+    }
+
+    const updatedAccount = (await this.accountsService.update(accountId, dataToUpdate)) as AccountDocument;
+
+    if (!updatedAccount) {
+      throw new NotFoundException('admin.errors.accountNotFound');
+    }
+
+    return {
+      id: updatedAccount._id.toString(),
+      name: updatedAccount.name,
+      plan: updatedAccount.plan,
+      status: updatedAccount.status,
+      logoUrl: updatedAccount.logoUrl,
+      replyToEmail: updatedAccount.replyToEmail,
+      expireDate: updatedAccount.expireDate
+    };
+  }
+
   async deleteAccount(accountId: Types.ObjectId) {
     // First verify the account exists
     const account = await this.accountsService.findOne(accountId);
