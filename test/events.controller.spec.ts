@@ -289,20 +289,20 @@ describe('EventsController', () => {
     it('should delete an event successfully', async () => {
       const eventId = mockEvent._id.toString();
 
-      service.deleteByAccount.mockResolvedValue(true);
+      service.deleteByAccount.mockResolvedValue({ deleted: true, deletedCount: 1 });
 
-      const result = await controller.delete(eventId, mockAccountId);
+      const result = await controller.delete(eventId, 'single', mockAccountId);
 
-      expect(service.deleteByAccount).toHaveBeenCalledWith(eventId, mockAccountId);
-      expect(result).toEqual({ message: 'Event deleted successfully' });
+      expect(service.deleteByAccount).toHaveBeenCalledWith(eventId, mockAccountId, 'single');
+      expect(result).toEqual({ message: 'Event deleted successfully', deletedCount: 1, scope: 'single' });
     });
 
     it('should return not found message when event does not exist', async () => {
       const eventId = 'nonexistent-id';
 
-      service.deleteByAccount.mockResolvedValue(false);
+      service.deleteByAccount.mockResolvedValue({ deleted: false });
 
-      const result = await controller.delete(eventId, mockAccountId);
+      const result = await controller.delete(eventId, 'single', mockAccountId);
 
       expect(result).toEqual({ message: 'Event not found' });
     });

@@ -16,15 +16,21 @@ export class EventsController {
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
   async create(@Body() dto: CreateEventDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    const eventData = {
-      ...dto,
-      account: accountId,
+    const eventData: any = {
+      date: dto.date,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
       customer: new Types.ObjectId(dto.customer),
       technician: dto.technician.map((id) => new Types.ObjectId(id)),
+      account: accountId,
+      ...(dto.title && { title: dto.title }),
+      ...(dto.description && { description: dto.description }),
+      ...(dto.status && { status: dto.status }),
       ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
+      ...(dto.recurringConfig && { recurringConfig: dto.recurringConfig }),
       createdBy: new Types.ObjectId(userId),
       updatedBy: new Types.ObjectId(userId)
-    } as any;
+    };
 
     return this.eventsService.create(eventData, accountId);
   }
@@ -68,13 +74,22 @@ export class EventsController {
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
   async update(@Param('id') id: string, @Body() dto: UpdateEventDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    const eventData = {
-      ...dto,
-      ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
-      ...(dto.technician && { technician: dto.technician.map((id) => new Types.ObjectId(id)) }),
-      ...(dto.serviceOrder && { serviceOrder: new Types.ObjectId(dto.serviceOrder) }),
+    const eventData: any = {
+      date: dto.date,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      customer: new Types.ObjectId(dto.customer),
+      technician: dto.technician.map((id) => new Types.ObjectId(id)),
       updatedBy: new Types.ObjectId(userId)
-    } as any;
+    };
+
+    if (dto.title !== undefined) eventData.title = dto.title;
+    if (dto.description !== undefined) eventData.description = dto.description;
+    if (dto.status !== undefined) eventData.status = dto.status;
+    if (dto.completionNotes !== undefined) eventData.completionNotes = dto.completionNotes;
+    if (dto.serviceOrder !== undefined) eventData.serviceOrder = new Types.ObjectId(dto.serviceOrder);
+    if (dto.recurringConfigId !== undefined) eventData.recurringConfig = new Types.ObjectId(dto.recurringConfigId);
+    if (dto.recurringUpdate !== undefined) eventData.recurringUpdate = dto.recurringUpdate;
 
     const result = await this.eventsService.updateByAccount(id, eventData, accountId);
 
@@ -87,14 +102,18 @@ export class EventsController {
 
   @Delete(':id')
   @Roles('ADMIN', 'SUPERVISOR')
-  async delete(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
-    const deleted = await this.eventsService.deleteByAccount(id, accountId);
+  async delete(@Param('id') id: string, @Query('scope') scope: 'single' | 'future' | 'all' = 'single', @GetAccountId() accountId: Types.ObjectId) {
+    const result = await this.eventsService.deleteByAccount(id, accountId, scope);
 
-    if (!deleted) {
+    if (!result.deleted) {
       return { message: 'Event not found' };
     }
 
-    return { message: 'Event deleted successfully' };
+    return {
+      message: 'Event deleted successfully',
+      deletedCount: result.deletedCount,
+      scope
+    };
   }
 
   @Patch(':id/complete')

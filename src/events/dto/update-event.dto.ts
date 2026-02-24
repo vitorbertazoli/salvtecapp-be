@@ -1,4 +1,6 @@
-import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { RecurringUpdateOptionsDto } from './recurring-config.dto';
 
 export class UpdateEventDto {
   @IsNotEmpty()
@@ -41,4 +43,13 @@ export class UpdateEventDto {
   @IsOptional()
   @IsMongoId()
   serviceOrder?: string;
+
+  @IsOptional()
+  @IsMongoId()
+  recurringConfigId?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RecurringUpdateOptionsDto)
+  recurringUpdate?: RecurringUpdateOptionsDto;
 }

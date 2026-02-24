@@ -4,12 +4,14 @@ import { Types } from 'mongoose';
 import { Customer } from '../src/customers/schemas/customer.schema';
 import { EventsService } from '../src/events/events.service';
 import { Event } from '../src/events/schemas/event.schema';
+import { RecurringEventConfig } from '../src/events/schemas/recurring-event-config.schema';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 import { Technician } from '../src/technicians/schemas/technician.schema';
 
 describe('EventsService', () => {
   let service: EventsService;
   let eventModel: any;
+  let recurringConfigModel: any;
   let customerModel: any;
   let technicianModel: any;
   let serviceOrdersService: any;
@@ -71,6 +73,13 @@ describe('EventsService', () => {
     mockEventModel.findOneAndDelete = jest.fn();
     mockEventModel.countDocuments = jest.fn();
     mockEventModel.deleteMany = jest.fn();
+    mockEventModel.insertMany = jest.fn();
+
+    const mockRecurringConfigModel = {
+      create: jest.fn(),
+      findOne: jest.fn(),
+      findOneAndDelete: jest.fn()
+    };
 
     const mockCustomerModel = {
       findById: jest.fn()
@@ -78,7 +87,9 @@ describe('EventsService', () => {
 
     const mockTechnicianModel = {
       findById: jest.fn(),
-      find: jest.fn()
+      find: jest.fn().mockReturnValue({
+        populate: jest.fn().mockResolvedValue([mockTechnician])
+      })
     };
 
     const mockServiceOrdersService = {
@@ -92,6 +103,10 @@ describe('EventsService', () => {
         {
           provide: getModelToken(Event.name),
           useValue: mockEventModel
+        },
+        {
+          provide: getModelToken(RecurringEventConfig.name),
+          useValue: mockRecurringConfigModel
         },
         {
           provide: getModelToken(Customer.name),
@@ -110,6 +125,7 @@ describe('EventsService', () => {
 
     service = module.get<EventsService>(EventsService);
     eventModel = module.get(getModelToken(Event.name));
+    recurringConfigModel = module.get(getModelToken(RecurringEventConfig.name));
     customerModel = module.get(getModelToken(Customer.name));
     technicianModel = module.get(getModelToken(Technician.name));
     serviceOrdersService = module.get(ServiceOrdersService);
@@ -132,7 +148,9 @@ describe('EventsService', () => {
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
-      technicianModel.find.mockResolvedValue([mockTechnician] as any);
+      technicianModel.find.mockReturnValue({
+        populate: jest.fn().mockResolvedValue([mockTechnician])
+      });
       serviceOrdersService.updateByAccount.mockResolvedValue({} as any);
 
       const result = await service.create(eventData, mockAccountId);
@@ -160,7 +178,9 @@ describe('EventsService', () => {
       };
 
       customerModel.findById.mockResolvedValue(null);
-      technicianModel.find.mockResolvedValue([mockTechnician] as any);
+      technicianModel.find.mockReturnValue({
+        populate: jest.fn().mockResolvedValue([mockTechnician])
+      });
 
       await expect(service.create(eventData, mockAccountId)).rejects.toThrow('events.errors.invalidCustomerOrTechnician');
     });
@@ -175,7 +195,9 @@ describe('EventsService', () => {
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
-      technicianModel.find.mockResolvedValue([]);
+      technicianModel.find.mockReturnValue({
+        populate: jest.fn().mockResolvedValue([])
+      });
 
       await expect(service.create(eventData, mockAccountId)).rejects.toThrow('events.errors.invalidCustomerOrTechnician');
     });
@@ -191,7 +213,9 @@ describe('EventsService', () => {
       };
 
       customerModel.findById.mockResolvedValue(mockCustomer as any);
-      technicianModel.find.mockResolvedValue([mockTechnician] as any);
+      technicianModel.find.mockReturnValue({
+        populate: jest.fn().mockResolvedValue([mockTechnician])
+      });
 
       const result = await service.create(eventData, mockAccountId);
 
@@ -407,7 +431,7 @@ describe('EventsService', () => {
         startTime: '10:00',
         endTime: '11:00',
         customer: mockCustomerId.toString(),
-        technician: mockTechnicianId.toString(),
+        technician: [mockTechnicianId],
         description: 'Updated service call',
         updatedBy: mockUserId
       };
@@ -417,6 +441,10 @@ describe('EventsService', () => {
         save: jest.fn().mockResolvedValue(mockEvent)
       };
 
+      customerModel.findById.mockResolvedValue(mockCustomer as any);
+      technicianModel.find.mockReturnValue({
+        populate: jest.fn().mockResolvedValue([mockTechnician])
+      });
       jest.spyOn(eventModel, 'findOne').mockResolvedValue(mockEventDoc as any);
       jest.spyOn(service, 'findByIdAndAccount').mockResolvedValue(mockEvent);
 
@@ -503,7 +531,7 @@ describe('EventsService', () => {
         _id: mockEvent._id.toString(),
         account: mockAccountId
       });
-      expect(result).toBe(true);
+      expect(result).toEqual({ deleted: true, deletedCount: 1 });
     });
 
     it('should delete event successfully when service order is not scheduled', async () => {
@@ -531,7 +559,7 @@ describe('EventsService', () => {
         _id: mockEvent._id.toString(),
         account: mockAccountId
       });
-      expect(result).toBe(true);
+      expect(result).toEqual({ deleted: true, deletedCount: 1 });
     });
 
     it('should delete event successfully when no service order is linked', async () => {
@@ -555,7 +583,7 @@ describe('EventsService', () => {
         _id: mockEvent._id.toString(),
         account: mockAccountId
       });
-      expect(result).toBe(true);
+      expect(result).toEqual({ deleted: true, deletedCount: 1 });
     });
 
     it('should return false when event not found', async () => {
@@ -570,7 +598,7 @@ describe('EventsService', () => {
       expect(serviceOrdersService.findByIdAndAccount).not.toHaveBeenCalled();
       expect(serviceOrdersService.updateByAccount).not.toHaveBeenCalled();
       expect(eventModel.findOneAndDelete).not.toHaveBeenCalled();
-      expect(result).toBe(false);
+      expect(result).toEqual({ deleted: false });
     });
   });
 

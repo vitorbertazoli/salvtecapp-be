@@ -54,6 +54,9 @@ export class Event {
 
   @Prop({ type: Types.ObjectId, ref: 'ServiceOrder' })
   serviceOrder?: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'RecurringEventConfig', index: true })
+  recurringConfig?: Types.ObjectId;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
@@ -62,3 +65,4 @@ export const EventSchema = SchemaFactory.createForClass(Event);
 EventSchema.index({ account: 1, date: 1, technician: 1 });
 EventSchema.index({ account: 1, date: 1, customer: 1 });
 EventSchema.index({ account: 1, status: 1, date: 1 });
+EventSchema.index({ account: 1, recurringConfig: 1, date: 1 });

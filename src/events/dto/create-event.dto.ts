@@ -1,4 +1,6 @@
-import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { RecurringConfigDto } from './recurring-config.dto';
 
 export class CreateEventDto {
   @IsNotEmpty()
@@ -37,4 +39,9 @@ export class CreateEventDto {
   @IsOptional()
   @IsMongoId()
   serviceOrder?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RecurringConfigDto)
+  recurringConfig?: RecurringConfigDto;
 }
