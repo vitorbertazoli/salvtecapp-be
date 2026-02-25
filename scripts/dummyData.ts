@@ -1,14 +1,17 @@
 import { faker } from '@faker-js/faker/locale/pt_BR';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import * as path from 'path';
 import { AccountSchema } from '../src/accounts/schemas/account.schema';
 import { ContractSchema } from '../src/contracts/schemas/contract.schema';
 import { CustomerSchema } from '../src/customers/schemas/customer.schema';
 import { EquipmentTypeSchema } from '../src/equipmentType/schemas/equipment-type.schema';
 import { EventSchema } from '../src/events/schemas/event.schema';
+import { RecurringEventConfigSchema } from '../src/events/schemas/recurring-event-config.schema';
+import { ExpenseCategory, ExpenseSchema } from '../src/expenses/schemas/expense.schema';
 import { FollowUpSchema } from '../src/follow-ups/schemas/follow-up.schema';
+import { PaymentOrderSchema } from '../src/payments/schemas/payment-order.schema';
 import { ProductSchema } from '../src/products/schemas/product.schema';
 import { QuoteSchema } from '../src/quotes/schemas/quote.schema';
 import { RoleSchema } from '../src/roles/schemas/role.schema';
@@ -16,895 +19,1046 @@ import { ServiceOrderSchema } from '../src/service-orders/schemas/service-order.
 import { ServiceSchema } from '../src/services/schemas/service.schema';
 import { TechnicianSchema } from '../src/technicians/schemas/technician.schema';
 import { UserSchema } from '../src/users/schemas/user.schema';
+import { VehicleUsageSchema } from '../src/vehicle-usages/schemas/vehicle-usages.schema';
+import { VehicleSchema } from '../src/vehicles/schemas/vehicles.schema';
 
-// Load environment variables from .env
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-// Configuration for data generation
-const CONFIG = {
-  technicians: 20,
-  customers: 1200,
-  contracts: 500,
-  services: 200,
-  products: 200,
-  quotes: 1500,
-  serviceOrders: 1200,
-  events: 2000,
-  followUps: 1000,
-  equipmentsPerCustomer: { min: 1, max: 5 },
-  servicesPerQuote: { min: 1, max: 8 },
-  productsPerQuote: { min: 0, max: 5 }
+type Address = {
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
 };
 
-// Helper function to generate Brazilian CPF (unformatted)
+const CONFIG = {
+  technicianUsers: 16,
+  officeUsers: 6,
+  customers: 180,
+  contracts: 70,
+  services: 50,
+  products: 70,
+  quotes: 260,
+  serviceOrders: 180,
+  recurringConfigs: 16,
+  events: 320,
+  followUps: 120,
+  vehicles: 10,
+  vehicleUsages: 180,
+  expenses: 360,
+  equipmentsPerCustomer: { min: 1, max: 4 },
+  servicesPerQuote: { min: 1, max: 5 },
+  productsPerQuote: { min: 0, max: 4 },
+  extraDiscountProbability: 0.2
+};
+
+const BRAZILIAN_STATES = ['SP', 'RJ', 'MG', 'PR', 'SC', 'RS', 'GO', 'DF', 'BA', 'PE', 'CE'];
+const CITIES_BY_STATE: Record<string, string[]> = {
+  SP: ['São Paulo', 'Campinas', 'Santos', 'Ribeirão Preto', 'Sorocaba'],
+  RJ: ['Rio de Janeiro', 'Niterói', 'Petrópolis', 'Nova Iguaçu'],
+  MG: ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora'],
+  PR: ['Curitiba', 'Londrina', 'Maringá', 'Cascavel'],
+  SC: ['Florianópolis', 'Joinville', 'Blumenau', 'Itajaí'],
+  RS: ['Porto Alegre', 'Caxias do Sul', 'Canoas', 'Pelotas'],
+  GO: ['Goiânia', 'Anápolis', 'Rio Verde', 'Aparecida de Goiânia'],
+  DF: ['Brasília'],
+  BA: ['Salvador', 'Feira de Santana', 'Vitória da Conquista'],
+  PE: ['Recife', 'Olinda', 'Caruaru'],
+  CE: ['Fortaleza', 'Caucaia', 'Sobral']
+};
+
+const EQUIPMENT_TYPES = [
+  'Ar Condicionado Split',
+  'Ar Condicionado Cassete',
+  'Ar Condicionado Piso Teto',
+  'Ar Condicionado Janela',
+  'Ventilador Industrial',
+  'Exaustor',
+  'Sistema VRF'
+];
+
+const EQUIPMENT_MAKERS = ['LG', 'Samsung', 'Daikin', 'Midea', 'Gree', 'Carrier', 'Hitachi', 'Fujitsu', 'York'];
+
+const SERVICE_NAMES = [
+  'Instalação de Ar Condicionado',
+  'Manutenção Preventiva',
+  'Manutenção Corretiva',
+  'Limpeza de Evaporadora',
+  'Limpeza de Condensadora',
+  'Recarga de Gás Refrigerante',
+  'Troca de Compressor',
+  'Troca de Capacitor',
+  'Inspeção Técnica',
+  'Higienização Completa',
+  'Balanceamento de Ventilação'
+];
+
+const PRODUCT_NAMES = [
+  'Filtro de Ar',
+  'Compressor',
+  'Capacitor',
+  'Placa Eletrônica',
+  'Gás R410A',
+  'Gás R32',
+  'Tubo de Cobre',
+  'Isolamento Térmico',
+  'Sensor de Temperatura',
+  'Controle Remoto Universal'
+];
+
+const VEHICLE_MAKES = ['Fiat', 'Volkswagen', 'Chevrolet', 'Renault', 'Toyota', 'Ford'];
+const VEHICLE_MODELS = ['Strada', 'Saveiro', 'Montana', 'Kangoo', 'Hilux', 'Ranger', 'Doblò'];
+
+const EXPENSE_TITLES_BY_CATEGORY: Record<string, string[]> = {
+  [ExpenseCategory.MATERIAL]: ['Material para instalação', 'Suprimentos de manutenção'],
+  [ExpenseCategory.PARTS]: ['Peças de reposição', 'Compra de componentes'],
+  [ExpenseCategory.CONSUMABLES]: ['Consumíveis para atendimento', 'Itens de uso diário'],
+  [ExpenseCategory.TOOLS]: ['Compra de ferramentas manuais', 'Reposição de ferramentas'],
+  [ExpenseCategory.EQUIPMENT]: ['Compra de equipamento técnico', 'Equipamento de apoio'],
+  [ExpenseCategory.FUEL]: ['Abastecimento de frota', 'Combustível para visitas'],
+  [ExpenseCategory.VEHICLE_MAINTENANCE]: ['Manutenção veicular', 'Revisão de veículo'],
+  [ExpenseCategory.TRANSPORTATION]: ['Transporte para atendimento', 'Frete de equipamentos'],
+  [ExpenseCategory.TOLLS]: ['Pedágios de deslocamento', 'Pedágio de rota técnica'],
+  [ExpenseCategory.PARKING]: ['Estacionamento em atendimento', 'Estacionamento comercial'],
+  [ExpenseCategory.LABOR]: ['Pagamento de mão de obra', 'Mão de obra adicional'],
+  [ExpenseCategory.CONTRACTOR]: ['Pagamento de contratado', 'Serviço terceirizado'],
+  [ExpenseCategory.SUBCONTRACTOR]: ['Pagamento de subcontratado', 'Serviço de apoio terceirizado'],
+  [ExpenseCategory.CONSULTANT]: ['Consultoria técnica', 'Consultoria de processos'],
+  [ExpenseCategory.OWNERS_SALARY]: ['Pró-labore dos sócios', 'Pagamento de pró-labore'],
+  [ExpenseCategory.EQUIPMENT_RENTAL]: ['Locação de equipamento', 'Aluguel de máquinas'],
+  [ExpenseCategory.VEHICLE_RENTAL]: ['Aluguel de veículo', 'Locação de utilitário'],
+  [ExpenseCategory.FACILITY_RENTAL]: ['Aluguel do escritório', 'Locação de galpão'],
+  [ExpenseCategory.SOFTWARE_LICENSE]: ['Licença de software', 'Assinatura de sistema'],
+  [ExpenseCategory.UTILITIES]: ['Conta de energia', 'Conta de água'],
+  [ExpenseCategory.INTERNET]: ['Internet empresarial', 'Link dedicado'],
+  [ExpenseCategory.TELEPHONE]: ['Telefonia móvel', 'Telefonia fixa'],
+  [ExpenseCategory.INSURANCE]: ['Seguro empresarial', 'Seguro de equipamentos'],
+  [ExpenseCategory.SECURITY]: ['Serviço de segurança', 'Monitoramento'],
+  [ExpenseCategory.MARKETING]: ['Campanha de marketing', 'Ações promocionais'],
+  [ExpenseCategory.ADVERTISING]: ['Anúncios online', 'Publicidade local'],
+  [ExpenseCategory.PROMOTIONAL_MATERIALS]: ['Materiais promocionais', 'Brindes e folders'],
+  [ExpenseCategory.OFFICE_SUPPLIES]: ['Materiais de escritório', 'Papelaria'],
+  [ExpenseCategory.SOFTWARE]: ['Compra de software', 'Ferramenta digital'],
+  [ExpenseCategory.TRAINING]: ['Treinamento da equipe', 'Curso técnico'],
+  [ExpenseCategory.CERTIFICATION]: ['Certificação profissional', 'Recertificação técnica'],
+  [ExpenseCategory.LEGAL_FEES]: ['Honorários advocatícios', 'Custas jurídicas'],
+  [ExpenseCategory.ACCOUNTING_FEES]: ['Honorários contábeis', 'Serviço de contabilidade'],
+  [ExpenseCategory.FACILITY_MAINTENANCE]: ['Manutenção predial', 'Reparo de instalações'],
+  [ExpenseCategory.CLEANING]: ['Serviço de limpeza', 'Materiais de limpeza'],
+  [ExpenseCategory.REPAIRS]: ['Reparos gerais', 'Conserto de infraestrutura'],
+  [ExpenseCategory.SECURITY_SYSTEMS]: ['Sistema de segurança', 'Câmeras e alarmes'],
+  [ExpenseCategory.MISCELLANEOUS]: ['Despesa diversa', 'Outras despesas operacionais'],
+  [ExpenseCategory.TAXES]: ['Pagamento de impostos', 'Tributos e taxas'],
+  [ExpenseCategory.DONATIONS]: ['Doação institucional', 'Ação social'],
+  [ExpenseCategory.ENTERTAINMENT]: ['Evento corporativo', 'Relacionamento com clientes'],
+  [ExpenseCategory.MEALS]: ['Refeições em atendimento', 'Alimentação da equipe']
+};
+
+function weighted<T>(options: Array<{ value: T; weight: number }>): T {
+  const total = options.reduce((acc, item) => acc + item.weight, 0);
+  const random = faker.number.float({ min: 0, max: total });
+  let acc = 0;
+  for (const option of options) {
+    acc += option.weight;
+    if (random <= acc) return option.value;
+  }
+  return options[options.length - 1].value;
+}
+
+function chance(probability: number): boolean {
+  return faker.number.float({ min: 0, max: 1 }) < probability;
+}
+
+function randomDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}/${month}/${day}`;
+}
+
+function randomIsoDateString(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
 function generateCPF(): string {
-  const n1 = Math.floor(Math.random() * 10);
-  const n2 = Math.floor(Math.random() * 10);
-  const n3 = Math.floor(Math.random() * 10);
-  const n4 = Math.floor(Math.random() * 10);
-  const n5 = Math.floor(Math.random() * 10);
-  const n6 = Math.floor(Math.random() * 10);
-  const n7 = Math.floor(Math.random() * 10);
-  const n8 = Math.floor(Math.random() * 10);
-  const n9 = Math.floor(Math.random() * 10);
-
-  let d1 = n9 * 2 + n8 * 3 + n7 * 4 + n6 * 5 + n5 * 6 + n4 * 7 + n3 * 8 + n2 * 9 + n1 * 10;
-  d1 = 11 - (d1 % 11);
-  if (d1 >= 10) d1 = 0;
-
-  let d2 = d1 * 2 + n9 * 3 + n8 * 4 + n7 * 5 + n6 * 6 + n5 * 7 + n4 * 8 + n3 * 9 + n2 * 10 + n1 * 11;
-  d2 = 11 - (d2 % 11);
-  if (d2 >= 10) d2 = 0;
-
-  return `${n1}${n2}${n3}${n4}${n5}${n6}${n7}${n8}${n9}${d1}${d2}`;
+  const numbers = Array.from({ length: 9 }, () => faker.number.int({ min: 0, max: 9 }));
+  const calcDigit = (base: number[], factor: number) => {
+    const total = base.reduce((sum, num) => sum + num * factor--, 0);
+    const remainder = total % 11;
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+  const digit1 = calcDigit(numbers, 10);
+  const digit2 = calcDigit([...numbers, digit1], 11);
+  return [...numbers, digit1, digit2].join('');
 }
 
-// Helper function to generate Brazilian phone number (unformatted)
+function generateCNPJ(): string {
+  return faker.string.numeric(14);
+}
+
 function generatePhone(): string {
-  const ddd = faker.helpers.arrayElement([
-    '11',
-    '12',
-    '13',
-    '14',
-    '15',
-    '16',
-    '17',
-    '18',
-    '19',
-    '21',
-    '22',
-    '24',
-    '27',
-    '28',
-    '31',
-    '32',
-    '33',
-    '34',
-    '35',
-    '37',
-    '38',
-    '41',
-    '42',
-    '43',
-    '44',
-    '45',
-    '46',
-    '47',
-    '48',
-    '49',
-    '51',
-    '53',
-    '54',
-    '55',
-    '61',
-    '62',
-    '63',
-    '64',
-    '65',
-    '66',
-    '67',
-    '68',
-    '69',
-    '71',
-    '73',
-    '74',
-    '75',
-    '77',
-    '79',
-    '81',
-    '82',
-    '83',
-    '84',
-    '85',
-    '86',
-    '87',
-    '88',
-    '89',
-    '91',
-    '92',
-    '93',
-    '94',
-    '95',
-    '96',
-    '97',
-    '98',
-    '99'
-  ]);
-  const prefix = faker.helpers.arrayElement(['9', '8', '7']);
-  const number = faker.string.numeric(4) + faker.string.numeric(4);
-  return `${ddd}${prefix}${number}`;
+  const ddd = faker.helpers.arrayElement(['11', '21', '31', '41', '51', '61', '71', '81', '85']);
+  return `${ddd}9${faker.string.numeric(8)}`;
 }
 
-// Helper function to generate Brazilian ZIP code (unformatted)
 function generateZipCode(): string {
-  return faker.string.numeric(5) + faker.string.numeric(3);
+  return `${faker.string.numeric(5)}${faker.string.numeric(3)}`;
 }
 
-function generateAddress(): any {
+function generateAddress(): Address {
   const state = faker.helpers.arrayElement(BRAZILIAN_STATES);
   const city = faker.helpers.arrayElement(CITIES_BY_STATE[state] || ['São Paulo']);
-
   return {
     street: faker.location.street(),
     number: faker.location.buildingNumber(),
-    complement: faker.helpers.maybe(() => faker.location.secondaryAddress(), { probability: 0.3 }),
+    complement: faker.helpers.maybe(() => faker.location.secondaryAddress(), { probability: 0.25 }) || undefined,
     neighborhood: faker.location.county(),
-    city: city,
-    state: state,
+    city,
+    state,
     zipCode: generateZipCode(),
     country: 'Brazil'
   };
 }
 
-// Equipment types for HVAC systems
-const EQUIPMENT_TYPES = [
-  'Ar Condicionado Split',
-  'Ar Condicionado Janela',
-  'Ar Condicionado Cassete',
-  'Ar Condicionado Piso Teto',
-  'Ventilador',
-  'Exaustor',
-  'Ar Condicionado Central',
-  'Climatizador',
-  'Purificador de Ar',
-  'Umidificador'
-];
+function pickManyUnique<T>(items: T[], min: number, max: number): T[] {
+  const desired = faker.number.int({ min, max: Math.min(max, items.length) });
+  const shuffled = faker.helpers.shuffle(items);
+  return shuffled.slice(0, desired);
+}
 
-const EQUIPMENT_MAKERS = [
-  'LG',
-  'Samsung',
-  'Daikin',
-  'Fujitsu',
-  'Midea',
-  'Gree',
-  'Philco',
-  'Consul',
-  'Electrolux',
-  'Mondial',
-  'Springer',
-  'Carrier',
-  'Trane',
-  'York',
-  'Hitachi',
-  'Panasonic',
-  'Sharp',
-  'Toshiba',
-  'Haier',
-  'Challenger'
-];
-
-const BRAZILIAN_STATES = [
-  'AC',
-  'AL',
-  'AP',
-  'AM',
-  'BA',
-  'CE',
-  'DF',
-  'ES',
-  'GO',
-  'MA',
-  'MT',
-  'MS',
-  'MG',
-  'PA',
-  'PB',
-  'PR',
-  'PE',
-  'PI',
-  'RJ',
-  'RN',
-  'RS',
-  'RO',
-  'RR',
-  'SC',
-  'SP',
-  'SE',
-  'TO'
-];
-
-const CITIES_BY_STATE: Record<string, string[]> = {
-  SP: ['São Paulo', 'Campinas', 'São Bernardo do Campo', 'Santo André', 'Osasco', 'São José dos Campos', 'Ribeirão Preto', 'Sorocaba', 'Guarulhos', 'Jundiaí'],
-  RJ: [
-    'Rio de Janeiro',
-    'Niterói',
-    'Duque de Caxias',
-    'Nova Iguaçu',
-    'São Gonçalo',
-    'Belford Roxo',
-    'Campos dos Goytacazes',
-    'Petrópolis',
-    'Volta Redonda',
-    'Magé'
-  ],
-  MG: [
-    'Belo Horizonte',
-    'Uberlândia',
-    'Contagem',
-    'Juiz de Fora',
-    'Betim',
-    'Montes Claros',
-    'Ribeirão das Neves',
-    'Uberaba',
-    'Governador Valadares',
-    'Ipatinga'
-  ],
-  RS: ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande'],
-  PR: ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'São José dos Pinhais', 'Foz do Iguaçu', 'Colombo', 'Guarapuava', 'Paranaguá'],
-  SC: ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Criciúma', 'Chapecó', 'Itajaí', 'Lages', 'Palhoça', 'Balneário Camboriú'],
-  DF: ['Brasília'],
-  GO: [
-    'Goiânia',
-    'Aparecida de Goiânia',
-    'Anápolis',
-    'Rio Verde',
-    'Luziânia',
-    'Águas Lindas de Goiás',
-    'Valparaíso de Goiás',
-    'Trindade',
-    'Formosa',
-    'Novo Gama'
-  ],
-  PE: [
-    'Recife',
-    'Jaboatão dos Guararapes',
-    'Olinda',
-    'Caruaru',
-    'Petrolina',
-    'Paulista',
-    'Cabo de Santo Agostinho',
-    'Camaragibe',
-    'Garanhuns',
-    'Vitória de Santo Antão'
-  ],
-  CE: ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral', 'Crato', 'Itapipoca', 'Maranguape', 'Iguatu', 'Quixadá'],
-  PA: ['Belém', 'Ananindeua', 'Santarém', 'Marabá', 'Castanhal', 'Parauapebas', 'Abaetetuba', 'Cametá', 'Bragança', 'São Félix do Xingu'],
-  BA: [
-    'Salvador',
-    'Feira de Santana',
-    'Vitória da Conquista',
-    'Camaçari',
-    'Itabuna',
-    'Juazeiro',
-    'Lauro de Freitas',
-    'Ilhéus',
-    'Jequié',
-    'Teixeira de Freitas'
-  ],
-  MA: ['São Luís', 'Imperatriz', 'São José de Ribamar', 'Timon', 'Caxias', 'Codó', 'Paço do Lumiar', 'Açailândia', 'Bacabal', 'Balsas'],
-  PB: ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos', 'Bayeux', 'Sousa', 'Cabedelo', 'Cajazeiras', 'Guarabira', 'Sapé'],
-  RN: ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante', 'Macaíba', 'Ceará-Mirim', 'Caicó', 'Açu', 'Currais Novos', 'São José de Mipibu'],
-  AL: [
-    'Maceió',
-    'Arapiraca',
-    'Rio Largo',
-    'Palmeira dos Índios',
-    'São Miguel dos Campos',
-    'Penedo',
-    'União dos Palmares',
-    'São Luís do Quitunde',
-    'Delmiro Gouveia',
-    'Coruripe'
-  ],
-  PI: ['Teresina', 'Parnaíba', 'Picos', 'Piripiri', 'Floriano', 'Campo Maior', 'Barras', 'União', 'Altos', 'Esperantina'],
-  MT: [
-    'Cuiabá',
-    'Várzea Grande',
-    'Rondonópolis',
-    'Sinop',
-    'Tangará da Serra',
-    'Cáceres',
-    'Sorriso',
-    'Lucas do Rio Verde',
-    'Primavera do Leste',
-    'Barra do Garças'
-  ],
-  ES: ['Vitória', 'Vila Velha', 'Serra', 'Cariacica', 'Viana', 'Nova Venécia', 'Barra de São Francisco', 'Santa Teresa', 'São Mateus', 'Linhares'],
-  MS: ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã', 'Naviraí', 'Nova Andradina', 'Aquidauana', 'Maracaju', 'Rio Brilhante'],
-  RO: ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Vilhena', 'Cacoal', 'Rolim de Moura', 'Jaru', 'Guajará-Mirim', 'Buritis', "Machadinho d'Oeste"],
-  TO: [
-    'Palmas',
-    'Araguaína',
-    'Gurupi',
-    'Porto Nacional',
-    'Paraíso do Tocantins',
-    'Colinas do Tocantins',
-    'Araguatins',
-    'Formoso do Araguaia',
-    'Tocantinópolis',
-    'Augustinópolis'
-  ],
-  SE: [
-    'Aracaju',
-    'Nossa Senhora do Socorro',
-    'Lagarto',
-    'Itabaiana',
-    'São Cristóvão',
-    'Estância',
-    'Tobias Barreto',
-    "Itaporanga d'Ajuda",
-    'Simão Dias',
-    'Poço Redondo'
-  ],
-  AM: ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru', 'Coari', 'Tefé', 'Humaitá', 'Iranduba', 'Eirunepé', 'Envira'],
-  AC: ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira', 'Tarauacá', 'Feijó', 'Brasiléia', 'Mâncio Lima', 'Xapuri', 'Epitaciolândia', 'Plácido de Castro'],
-  AP: ['Macapá', 'Santana', 'Laranjal do Jari', 'Oiapoque', 'Mazagão', 'Porto Grande', 'Ferreira Gomes', 'Cutias', 'Amapá', 'Calçoene'],
-  RR: ['Boa Vista', 'Rorainópolis', 'Caracaraí', 'Alto Alegre', 'Mucajaí', 'Cantá', 'Pacaraima', 'Iracema', 'Normandia', 'Amajari']
-};
+function calculateQuoteTotals(
+  services: Array<{ quantity: number; unitValue: number }>,
+  products: Array<{ quantity: number; unitValue: number }>,
+  discountPercent = 0,
+  otherDiscounts: ReadonlyArray<{ amount: number }> = []
+) {
+  const subtotalServices = services.reduce((acc, item) => acc + item.quantity * item.unitValue, 0);
+  const subtotalProducts = products.reduce((acc, item) => acc + item.quantity * item.unitValue, 0);
+  const subtotal = subtotalServices + subtotalProducts;
+  const percentageDiscount = subtotal * (discountPercent / 100);
+  const additionalDiscount = otherDiscounts.reduce((acc, item) => acc + item.amount, 0);
+  const totalValue = Math.max(0, subtotal - percentageDiscount - additionalDiscount);
+  return {
+    subtotal,
+    totalValue
+  };
+}
 
 async function populateDummyData() {
   try {
-    console.log('🚀 Starting dummy data population...\n');
+    console.log('🚀 Starting realistic seed data generation...\n');
 
-    // Get account name from command line argument
     const accountName = process.argv[2];
     if (!accountName) {
-      console.log('❌ Please provide an account name as a command line argument.');
-      console.log('Usage: npm run dummyData <account-name>');
+      console.log('❌ Missing account name argument.');
+      console.log('Usage: npm run seed -- "<account-name>"');
       process.exit(1);
     }
 
-    console.log(`Account name: ${accountName}\n`);
+    if (!process.env.MONGODB_URI) {
+      console.log('❌ MONGODB_URI not found in environment variables.');
+      process.exit(1);
+    }
 
-    // Connect to database
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log('✅ Connected to MongoDB\n');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ Connected to MongoDB');
 
-    // Create models
     const Account = mongoose.model('Account', AccountSchema);
-    const Contract = mongoose.model('Contract', ContractSchema);
+    const Role = mongoose.model('Role', RoleSchema);
+    const User = mongoose.model('User', UserSchema);
+    const Technician = mongoose.model('Technician', TechnicianSchema);
     const Customer = mongoose.model('Customer', CustomerSchema);
     const EquipmentType = mongoose.model('EquipmentType', EquipmentTypeSchema);
-    const Event = mongoose.model('Event', EventSchema);
-    const FollowUp = mongoose.model('FollowUp', FollowUpSchema);
+    const Contract = mongoose.model('Contract', ContractSchema);
+    const Service = mongoose.model('Service', ServiceSchema);
     const Product = mongoose.model('Product', ProductSchema);
     const Quote = mongoose.model('Quote', QuoteSchema);
-    const Role = mongoose.model('Role', RoleSchema);
     const ServiceOrder = mongoose.model('ServiceOrder', ServiceOrderSchema);
-    const Service = mongoose.model('Service', ServiceSchema);
-    const Technician = mongoose.model('Technician', TechnicianSchema);
-    const User = mongoose.model('User', UserSchema);
+    const RecurringEventConfig = mongoose.model('RecurringEventConfig', RecurringEventConfigSchema);
+    const Event = mongoose.model('Event', EventSchema);
+    const FollowUp = mongoose.model('FollowUp', FollowUpSchema);
+    const PaymentOrder = mongoose.model('PaymentOrder', PaymentOrderSchema);
+    const Expense = mongoose.model('Expense', ExpenseSchema);
+    const Vehicle = mongoose.model('Vehicle', VehicleSchema);
+    const VehicleUsage = mongoose.model('VehicleUsage', VehicleUsageSchema);
 
-    // Find account
     const account = await Account.findOne({ name: { $regex: new RegExp(`^${accountName}$`, 'i') } });
     if (!account) {
-      console.log(`❌ Account "${accountName}" not found. Please run initDB.ts first to create the account.`);
+      console.log(`❌ Account "${accountName}" not found. Run initDB first.`);
       process.exit(1);
     }
 
-    console.log(`✅ Found account: ${account.name}\n`);
-
-    // Get admin user for createdBy/updatedBy
-    const adminUser = await User.findOne({ account: account._id });
+    const adminUser = await User.findOne({ account: account._id }).sort({ createdAt: 1 });
     if (!adminUser) {
-      console.log('❌ No admin user found for this account.');
+      console.log('❌ No user found for the account. Run initDB first.');
       process.exit(1);
     }
 
-    const userId = adminUser._id.toString();
+    const defaultPassword = process.env.DEFAULT_TEST_USER_PASSWORD || 'Teste@123456';
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
 
-    console.log('🗑️  Deleting existing data (except users)...\n');
+    await Account.updateOne(
+      { _id: account._id },
+      {
+        $set: {
+          status: 'active',
+          plan: 'pro',
+          replyToEmail: `contato+${account.name.toLowerCase().replace(/\s+/g, '')}@salvtec.com.br`,
+          expireDate: faker.date.future({ years: 1 }),
+          customizations: JSON.stringify({ theme: 'default', locale: 'pt-BR' }),
+          updatedBy: adminUser._id
+        }
+      }
+    );
 
-    // select all userIds from the technicians in this account, so we can clean up their user accounts later
-    const technicianUsers = await Technician.find({ account: account._id }).select('user').exec();
-    const technicianUserIds = technicianUsers.map((t) => t.user);
+    const roleNames = ['ADMIN', 'SUPERVISOR', 'TECHNICIAN'];
+    const rolesMap: Record<string, any> = {};
+    for (const roleName of roleNames) {
+      const role = await Role.findOneAndUpdate(
+        { name: roleName },
+        {
+          $set: { description: `${roleName} role`, updatedBy: adminUser._id },
+          $setOnInsert: { createdBy: adminUser._id }
+        },
+        { upsert: true, new: true }
+      );
+      rolesMap[roleName] = role;
+    }
 
-    // Delete all data except users
+    console.log('🧹 Cleaning previous seeded data...');
+
+    const existingTechnicians = await Technician.find({ account: account._id }).select('user');
+    const technicianUserIds = existingTechnicians.map((tech) => tech.user).filter((id): id is typeof id & {} => id != null);
+
+    const accountUsersToDelete = await User.find({
+      account: account._id,
+      _id: { $ne: adminUser._id }
+    }).select('_id');
+
+    const uniqueUserIds = Array.from(new Set([...technicianUserIds.map((id) => id.toString()), ...accountUsersToDelete.map((u) => u._id.toString())]));
+    const userIdsToDelete = uniqueUserIds.map((id) => new Types.ObjectId(id));
+
     await Promise.all([
       Contract.deleteMany({ account: account._id }),
       Customer.deleteMany({ account: account._id }),
-      Event.deleteMany({ account: account._id }),
-      FollowUp.deleteMany({ account: account._id }),
+      Service.deleteMany({ account: account._id }),
       Product.deleteMany({ account: account._id }),
       Quote.deleteMany({ account: account._id }),
       ServiceOrder.deleteMany({ account: account._id }),
-      Service.deleteMany({ account: account._id }),
+      RecurringEventConfig.deleteMany({ account: account._id }),
+      Event.deleteMany({ account: account._id }),
+      FollowUp.deleteMany({ account: account._id }),
+      PaymentOrder.deleteMany({ account: account._id }),
+      Expense.deleteMany({ account: account._id }),
+      VehicleUsage.deleteMany({ account: account._id }),
+      Vehicle.deleteMany({ account: account._id }),
       Technician.deleteMany({ account: account._id }),
-      // Also delete technician user accounts
-      User.deleteMany({ _id: { $in: technicianUserIds }, account: account._id })
+      User.deleteMany({ _id: { $in: userIdsToDelete }, account: account._id })
     ]);
 
-    console.log('✅ Deleted existing data\n');
+    console.log('✅ Cleanup complete');
 
-    console.log('📦 Creating dummy data...\n');
+    console.log('👥 Creating users and technicians...');
 
-    // Create technicians
-    console.log(`Creating ${CONFIG.technicians} technicians...`);
-
-    // Get the TECHNICIAN role
-    const technicianRole = await Role.findOne({ name: 'TECHNICIAN' });
-    if (!technicianRole) {
-      console.log('❌ TECHNICIAN role not found. Please run initDB.ts first.');
-      process.exit(1);
-    }
-
-    // Get default password from environment
-    const defaultPassword = process.env.DEFAULT_TEST_USER_PASSWORD;
-    if (!defaultPassword) {
-      console.log('❌ DEFAULT_TEST_USER_PASSWORD not found in environment variables.');
-      process.exit(1);
-    }
-
-    const technicians: any[] = [];
-    const users: any[] = [];
-
-    for (let i = 0; i < CONFIG.technicians; i++) {
+    const technicianUsersPayload: any[] = [];
+    for (let i = 0; i < CONFIG.technicianUsers; i++) {
       const firstName = faker.person.firstName();
       const lastName = faker.person.lastName();
-      const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+      const email = `${firstName}.${lastName}.${faker.string.alphanumeric({ length: 4, casing: 'lower' })}@demo-salvtec.com.br`
+        .toLowerCase()
+        .replace(/\s+/g, '');
 
-      // Create user account
-      const hashedPassword = await bcrypt.hash(defaultPassword, 10);
-      const user = {
+      technicianUsersPayload.push({
         account: account._id,
         firstName,
         lastName,
         email,
-        passwordHash: hashedPassword,
-        roles: [technicianRole._id],
-        status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
-        createdBy: userId,
-        updatedBy: userId
-      };
-      users.push(user);
-
-      // Create technician linked to user
-      technicians.push({
-        account: account._id,
-        user: null, // Will be set after user creation
-        cpf: generateCPF(),
-        startDate: faker.date.past({ years: 5 }),
-        endDate: faker.helpers.maybe(() => faker.date.recent({ days: 365 }), { probability: 0.1 }),
-        address: generateAddress(),
+        passwordHash,
+        status: weighted([
+          { value: 'active', weight: 88 },
+          { value: 'inactive', weight: 8 },
+          { value: 'suspended', weight: 4 }
+        ]),
+        roles: [rolesMap.TECHNICIAN._id],
+        language: 'pt-BR',
         phoneNumber: generatePhone(),
-        createdBy: userId,
-        updatedBy: userId
+        createdBy: adminUser._id,
+        updatedBy: adminUser._id
       });
     }
 
-    // Create all users first
-    const createdUsers = await User.insertMany(users);
-    console.log(`✅ Created ${createdUsers.length} technician user accounts`);
+    const officeUsersPayload: any[] = [];
+    for (let i = 0; i < CONFIG.officeUsers; i++) {
+      const firstName = faker.person.firstName();
+      const lastName = faker.person.lastName();
+      const isSupervisor = i < Math.ceil(CONFIG.officeUsers / 2);
+      const role = isSupervisor ? rolesMap.SUPERVISOR._id : rolesMap.ADMIN._id;
+      const email = `${firstName}.${lastName}.office.${faker.string.alphanumeric({ length: 3, casing: 'lower' })}@demo-salvtec.com.br`
+        .toLowerCase()
+        .replace(/\s+/g, '');
 
-    // Link users to technicians
-    technicians.forEach((technician, index) => {
-      technician.user = createdUsers[index]._id;
+      officeUsersPayload.push({
+        account: account._id,
+        firstName,
+        lastName,
+        email,
+        passwordHash,
+        status: 'active',
+        roles: [role],
+        language: 'pt-BR',
+        phoneNumber: generatePhone(),
+        createdBy: adminUser._id,
+        updatedBy: adminUser._id
+      });
+    }
+
+    const createdTechnicianUsers = await User.insertMany(technicianUsersPayload);
+    const createdOfficeUsers = await User.insertMany(officeUsersPayload);
+    const allOperationalUsers = [adminUser, ...createdOfficeUsers];
+
+    const cpfSet = new Set<string>();
+    const techniciansPayload = createdTechnicianUsers.map((user: any) => {
+      let cpf = generateCPF();
+      while (cpfSet.has(cpf)) cpf = generateCPF();
+      cpfSet.add(cpf);
+
+      const status = weighted([
+        { value: 'active', weight: 90 },
+        { value: 'inactive', weight: 7 },
+        { value: 'suspended', weight: 3 }
+      ]);
+
+      const startDate = faker.date.past({ years: 4 });
+      const endDate = status === 'active' ? undefined : faker.date.between({ from: startDate, to: new Date() });
+
+      return {
+        account: account._id,
+        user: user._id,
+        cpf,
+        status,
+        startDate,
+        endDate,
+        address: generateAddress(),
+        createdBy: adminUser._id,
+        updatedBy: adminUser._id
+      };
     });
 
-    // Create technicians
-    const createdTechnicians = await Technician.insertMany(technicians);
-    console.log(`✅ Created ${createdTechnicians.length} technicians`);
+    const createdTechnicians = await Technician.insertMany(techniciansPayload);
 
-    // Create customers
-    console.log(`Creating ${CONFIG.customers} customers...`);
-    const customers: any[] = [];
-    for (let i = 0; i < CONFIG.customers; i++) {
-      const isCompany = faker.datatype.boolean({ probability: 0.3 });
-      const numEquipments = faker.number.int(CONFIG.equipmentsPerCustomer);
+    console.log(`✅ Users created: ${createdTechnicianUsers.length + createdOfficeUsers.length}`);
+    console.log(`✅ Technicians created: ${createdTechnicians.length}`);
 
-      const equipments: any[] = [];
-      for (let j = 0; j < numEquipments; j++) {
-        equipments.push({
-          name: faker.helpers.arrayElement(EQUIPMENT_TYPES),
-          room: faker.helpers.arrayElement(['Sala', 'Quarto', 'Cozinha', 'Banheiro', 'Escritório', 'Sala de Estar', 'Varanda']),
-          btus: faker.helpers.arrayElement([7000, 9000, 12000, 18000, 24000, 30000, 36000]),
-          type: faker.helpers.arrayElement(EQUIPMENT_TYPES),
-          subType: faker.helpers.maybe(() => faker.commerce.productAdjective(), { probability: 0.5 }),
-          maker: faker.helpers.arrayElement(EQUIPMENT_MAKERS),
-          model: faker.string.alphanumeric({ length: { min: 3, max: 8 }, casing: 'upper' })
-        });
-      }
+    console.log('🏷️ Creating equipment types...');
 
-      const customerData: any = {
-        name: isCompany ? faker.company.name() : faker.person.fullName(),
-        email: faker.internet.email().toLowerCase(),
-        type: isCompany ? 'commercial' : 'residential',
-        status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
-        phoneNumbers: [generatePhone()],
-        address: generateAddress(),
-        account: account._id,
-        equipments: equipments,
-        createdBy: userId,
-        updatedBy: userId
-      };
+    const equipmentTypePayload = EQUIPMENT_TYPES.map((name) => ({
+      name,
+      description: `Tipo de equipamento: ${name}`,
+      isActive: true,
+      createdBy: adminUser._id,
+      updatedBy: adminUser._id
+    }));
 
-      if (isCompany) {
-        // Generate a basic CNPJ-like number (14 digits)
-        customerData.cnpj = faker.string.numeric(14);
-      } else {
-        customerData.cpf = generateCPF();
-      }
-
-      customers.push(customerData);
+    for (const equipmentType of equipmentTypePayload) {
+      await EquipmentType.findOneAndUpdate({ name: equipmentType.name }, { $set: equipmentType, $setOnInsert: { createdAt: new Date() } }, { upsert: true });
     }
-    const createdCustomers = await Customer.insertMany(customers);
-    console.log(`✅ Created ${createdCustomers.length} customers`);
 
-    // Create contracts
-    console.log(`Creating ${CONFIG.contracts} contracts...`);
-    const contracts: any[] = [];
-    for (let i = 0; i < CONFIG.contracts; i++) {
-      const customer = faker.helpers.arrayElement(createdCustomers);
+    console.log('✅ Equipment types ready');
+
+    console.log('🏢 Creating customers and contracts...');
+
+    const customerPayload: any[] = [];
+    for (let i = 0; i < CONFIG.customers; i++) {
+      const type = weighted([
+        { value: 'residential', weight: 72 },
+        { value: 'commercial', weight: 28 }
+      ]);
+      const status = weighted([
+        { value: 'active', weight: 84 },
+        { value: 'inactive', weight: 10 },
+        { value: 'suspended', weight: 6 }
+      ]);
+
+      const equipments = Array.from({ length: faker.number.int({ min: CONFIG.equipmentsPerCustomer.min, max: CONFIG.equipmentsPerCustomer.max }) }, () => ({
+        name: faker.helpers.arrayElement(EQUIPMENT_TYPES),
+        room: faker.helpers.arrayElement(['Sala', 'Quarto', 'Escritório', 'Loja', 'Recepção', 'Depósito']),
+        btus: faker.helpers.arrayElement([9000, 12000, 18000, 24000, 30000, 36000]),
+        maker: faker.helpers.arrayElement(EQUIPMENT_MAKERS),
+        model: faker.string.alphanumeric({ length: { min: 4, max: 8 }, casing: 'upper' }),
+        pictures: []
+      }));
+
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+      const noteDate = faker.date.recent({ days: 120 });
+
+      customerPayload.push({
+        account: account._id,
+        name: type === 'commercial' ? faker.company.name() : faker.person.fullName(),
+        email: faker.helpers.maybe(() => faker.internet.email().toLowerCase(), { probability: 0.92 }),
+        type,
+        status,
+        cpf: type === 'residential' ? generateCPF() : undefined,
+        cnpj: type === 'commercial' ? generateCNPJ() : undefined,
+        contactName: type === 'commercial' ? faker.person.fullName() : undefined,
+        phoneNumbers: [generatePhone(), ...(chance(0.35) ? [generatePhone()] : [])],
+        notes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.45 }),
+        noteHistory: chance(0.55)
+          ? [
+              {
+                date: noteDate,
+                content: faker.helpers.arrayElement([
+                  'Cliente solicita manutenção trimestral.',
+                  'Preferência por atendimento no período da manhã.',
+                  'Equipamento em área de difícil acesso.',
+                  'Histórico de chamados recorrentes no verão.'
+                ]),
+                createdBy: createdByUser._id
+              }
+            ]
+          : [],
+        address: generateAddress(),
+        equipments,
+        pictures: [],
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      });
+    }
+
+    const createdCustomers = await Customer.insertMany(customerPayload);
+
+    const contractsPayload: any[] = [];
+    const contractCustomers = faker.helpers.shuffle(createdCustomers).slice(0, CONFIG.contracts);
+    for (const customer of contractCustomers) {
       const startDate = faker.date.past({ years: 2 });
       const frequency = faker.helpers.arrayElement(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual']);
-      let expireDate: Date;
-      switch (frequency) {
-        case 'monthly':
-          expireDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-          break;
-        case 'bimonthly':
-          expireDate = new Date(startDate.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
-          break;
-        case 'quarterly':
-          expireDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-          break;
-        case 'biannual':
-          expireDate = new Date(startDate.getTime() + 2 * 365 * 24 * 60 * 60 * 1000);
-          break;
-        case 'annual':
-          expireDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
-          break;
-      }
-      const status = faker.helpers.arrayElement(['pending', 'active', 'expired', 'cancelled']);
-      if (status === 'expired') {
-        expireDate = faker.date.past({ years: 1 });
-      }
-      const value = faker.number.float({ min: 100, max: 5000, fractionDigits: 2 });
-      const terms = faker.lorem.sentences({ min: 2, max: 5 });
-      contracts.push({
+      const monthsToAdd = { monthly: 12, bimonthly: 12, quarterly: 12, biannual: 24, annual: 24 }[frequency];
+      const expireDate = new Date(startDate);
+      expireDate.setMonth(expireDate.getMonth() + monthsToAdd);
+
+      const status =
+        expireDate < new Date()
+          ? 'expired'
+          : weighted([
+              { value: 'active', weight: 70 },
+              { value: 'pending', weight: 20 },
+              { value: 'cancelled', weight: 10 }
+            ]);
+
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+
+      contractsPayload.push({
         startDate,
         expireDate,
         status,
         frequency,
-        terms,
-        value,
+        terms: faker.helpers.arrayElement([
+          'Visita técnica conforme periodicidade acordada, incluindo checklist de segurança.',
+          'Inclui manutenção preventiva com relatório técnico digital.',
+          'Atendimento corretivo com SLA de até 48 horas úteis.',
+          'Cobertura de mão de obra e deslocamento em horário comercial.'
+        ]),
+        value: faker.number.float({ min: 390, max: 6200, fractionDigits: 2 }),
         customer: customer._id,
         account: account._id,
-        createdBy: userId,
-        updatedBy: userId
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
       });
     }
-    const createdContracts = await Contract.insertMany(contracts);
-    console.log(`✅ Created ${createdContracts.length} contracts`);
 
-    // Create services
-    console.log(`Creating ${CONFIG.services} services...`);
-    const services: any[] = [];
-    for (let i = 0; i < CONFIG.services; i++) {
-      services.push({
-        name: faker.helpers.arrayElement([
-          'Instalação de Ar Condicionado',
-          'Manutenção Preventiva',
-          'Reparo de Compressor',
-          'Limpeza de Filtros',
-          'Recarga de Gás',
-          'Instalação de Ventilador',
-          'Reparo de Ventilador',
-          'Instalação de Exaustor',
-          'Manutenção de Climatizador',
-          'Reparo de Climatizador',
-          'Instalação de Purificador',
-          'Manutenção de Sistema Central',
-          'Reparo de Sistema Central',
-          'Instalação de Umidificador',
-          'Manutenção de Umidificador'
-        ]),
-        description: faker.lorem.sentence({ min: 5, max: 15 }),
-        value: faker.number.float({ min: 50, max: 1500, fractionDigits: 2 }),
+    const createdContracts = await Contract.insertMany(contractsPayload);
+
+    console.log(`✅ Customers created: ${createdCustomers.length}`);
+    console.log(`✅ Contracts created: ${createdContracts.length}`);
+
+    console.log('🧰 Creating services and products...');
+
+    const servicesPayload = Array.from({ length: CONFIG.services }, (_, index) => {
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+      return {
         account: account._id,
-        createdBy: userId,
-        updatedBy: userId
-      });
-    }
-    const createdServices = await Service.insertMany(services);
-    console.log(`✅ Created ${createdServices.length} services`);
+        name: `${faker.helpers.arrayElement(SERVICE_NAMES)} ${index + 1}`,
+        description: faker.lorem.sentence({ min: 8, max: 18 }),
+        value: faker.number.float({ min: 120, max: 2400, fractionDigits: 2 }),
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      };
+    });
 
-    // Create products
-    console.log(`Creating ${CONFIG.products} products...`);
-    const products: any[] = [];
-    for (let i = 0; i < CONFIG.products; i++) {
-      products.push({
-        name: faker.helpers.arrayElement([
-          'Filtro de Ar',
-          'Compressor 12000 BTU',
-          'Gás Refrigerante R410A',
-          'Ventilador de Teto',
-          'Termostato Digital',
-          'Controle Remoto',
-          'Cabo de Energia',
-          'Mangueira de Drenagem',
-          'Suporte para Ar Condicionado',
-          'Isolamento Térmico',
-          'Fita Vedante',
-          'Conector Elétrico',
-          'Sensor de Temperatura',
-          'Painel de Controle',
-          'Motor do Ventilador'
-        ]),
-        description: faker.lorem.sentence({ min: 3, max: 10 }),
+    const productsPayload = Array.from({ length: CONFIG.products }, (_, index) => {
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+      return {
+        account: account._id,
+        name: `${faker.helpers.arrayElement(PRODUCT_NAMES)} ${index + 1}`,
+        description: faker.lorem.sentence({ min: 6, max: 16 }),
         maker: faker.helpers.arrayElement(EQUIPMENT_MAKERS),
-        model: faker.string.alphanumeric({ length: { min: 3, max: 10 }, casing: 'upper' }),
-        value: faker.number.float({ min: 10, max: 800, fractionDigits: 2 }),
-        sku: faker.string.alphanumeric({ length: 8, casing: 'upper' }),
-        account: account._id,
-        createdBy: userId,
-        updatedBy: userId
-      });
-    }
-    const createdProducts = await Product.insertMany(products);
-    console.log(`✅ Created ${createdProducts.length} products`);
+        model: faker.string.alphanumeric({ length: { min: 4, max: 8 }, casing: 'upper' }),
+        value: faker.number.float({ min: 20, max: 1600, fractionDigits: 2 }),
+        sku: `SKU-${faker.string.alphanumeric({ length: 8, casing: 'upper' })}`,
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      };
+    });
 
-    // Create quotes
-    console.log(`Creating ${CONFIG.quotes} quotes...`);
-    const quotes: any[] = [];
+    const createdServices = await Service.insertMany(servicesPayload);
+    const createdProducts = await Product.insertMany(productsPayload);
+
+    console.log(`✅ Services created: ${createdServices.length}`);
+    console.log(`✅ Products created: ${createdProducts.length}`);
+
+    console.log('📄 Creating quotes and service orders...');
+
+    const quotesPayload: any[] = [];
     for (let i = 0; i < CONFIG.quotes; i++) {
       const customer = faker.helpers.arrayElement(createdCustomers);
-      const numServices = faker.number.int(CONFIG.servicesPerQuote);
-      const numProducts = faker.number.int(CONFIG.productsPerQuote);
+      const quoteServicesBase = pickManyUnique(createdServices, CONFIG.servicesPerQuote.min, CONFIG.servicesPerQuote.max).map((service) => ({
+        service: service._id,
+        quantity: faker.number.int({ min: 1, max: 3 }),
+        unitValue: service.value
+      }));
 
-      const quoteServices: any[] = [];
-      let totalValue = 0;
+      const quoteProductsBase = pickManyUnique(createdProducts, CONFIG.productsPerQuote.min, CONFIG.productsPerQuote.max).map((product) => ({
+        product: product._id,
+        quantity: faker.number.int({ min: 1, max: 4 }),
+        unitValue: product.value
+      }));
 
-      for (let j = 0; j < numServices; j++) {
-        const service = faker.helpers.arrayElement(createdServices);
-        const quantity = faker.number.int({ min: 1, max: 5 });
-        const unitValue = service.value;
-        quoteServices.push({
-          service: service._id,
-          quantity: quantity,
-          unitValue: unitValue
-        });
-        totalValue += quantity * unitValue;
-      }
+      const discount = faker.helpers.maybe(() => faker.number.int({ min: 5, max: 18 }), { probability: 0.35 }) || 0;
+      const otherDiscounts =
+        faker.helpers.maybe(
+          () => [
+            {
+              description: faker.helpers.arrayElement(['Desconto comercial', 'Ajuste de fidelidade', 'Campanha sazonal']),
+              amount: faker.number.float({ min: 50, max: 350, fractionDigits: 2 })
+            }
+          ],
+          { probability: CONFIG.extraDiscountProbability }
+        ) || [];
 
-      const quoteProducts: any[] = [];
-      for (let j = 0; j < numProducts; j++) {
-        const product = faker.helpers.arrayElement(createdProducts);
-        const quantity = faker.number.int({ min: 1, max: 3 });
-        const unitValue = product.value;
-        quoteProducts.push({
-          product: product._id,
-          quantity: quantity,
-          unitValue: unitValue
-        });
-        totalValue += quantity * unitValue;
-      }
+      const totals = calculateQuoteTotals(quoteServicesBase, quoteProductsBase, discount, otherDiscounts);
+      const issuedAt = faker.date.recent({ days: 150 });
+      const validUntil = faker.date.between({ from: issuedAt, to: faker.date.future({ years: 1, refDate: issuedAt }) });
+      const status = weighted([
+        { value: 'draft', weight: 16 },
+        { value: 'sent', weight: 36 },
+        { value: 'accepted', weight: 38 },
+        { value: 'rejected', weight: 10 }
+      ]);
 
-      const discount = faker.helpers.maybe(() => faker.number.int({ min: 5, max: 20 }), { probability: 0.3 }) || 0;
-      totalValue = totalValue * (1 - discount / 100);
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
 
-      quotes.push({
+      quotesPayload.push({
         account: account._id,
         customer: customer._id,
-        equipments: customer.equipments,
-        services: quoteServices,
-        products: quoteProducts,
-        totalValue: totalValue,
-        description: faker.helpers.maybe(() => faker.lorem.sentence({ min: 5, max: 15 }), { probability: 0.7 }),
-        discount: discount,
-        status: faker.helpers.arrayElement(['draft', 'sent', 'accepted', 'rejected']),
-        validUntil: faker.date.future({ years: 1 }),
-        issuedAt: faker.date.recent({ days: 90 }),
-        createdBy: userId,
-        updatedBy: userId
+        equipments: customer.equipments || [],
+        services: quoteServicesBase,
+        products: quoteProductsBase,
+        totalValue: totals.totalValue,
+        description: faker.helpers.maybe(() => faker.lorem.sentences({ min: 1, max: 3 }), { probability: 0.75 }),
+        discount,
+        otherDiscounts,
+        status,
+        notes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.4 }),
+        validUntil,
+        issuedAt,
+        accountCustomizations: account.customizations,
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
       });
     }
-    const createdQuotes = await Quote.insertMany(quotes);
-    console.log(`✅ Created ${createdQuotes.length} quotes`);
 
-    // Create service orders (from accepted quotes)
-    console.log(`Creating ${CONFIG.serviceOrders} service orders...`);
-    const acceptedQuotes = createdQuotes.filter((q) => q.status === 'accepted');
-    const serviceOrders: any[] = [];
+    const createdQuotes = await Quote.insertMany(quotesPayload);
 
-    for (let i = 0; i < Math.min(CONFIG.serviceOrders, acceptedQuotes.length); i++) {
+    const acceptedQuotes = createdQuotes.filter((quote: any) => quote.status === 'accepted');
+    const serviceOrdersPayload: any[] = [];
+    const orderCount = Math.min(CONFIG.serviceOrders, acceptedQuotes.length);
+
+    for (let i = 0; i < orderCount; i++) {
       const quote = acceptedQuotes[i];
-      const customer = createdCustomers.find((c) => c._id.toString() === quote.customer.toString());
+      const quoteCustomer = createdCustomers.find((customer: any) => customer._id.toString() === quote.customer.toString());
+      if (!quoteCustomer) continue;
+
+      const itemServices = (quote.services || []).map((serviceItem: any) => {
+        const linkedService = createdServices.find((service: any) => service._id.toString() === serviceItem.service.toString());
+        const totalValue = serviceItem.quantity * serviceItem.unitValue;
+        return {
+          type: 'service',
+          itemId: serviceItem.service,
+          name: linkedService?.name || 'Serviço',
+          description: linkedService?.description,
+          quantity: serviceItem.quantity,
+          unitValue: serviceItem.unitValue,
+          totalValue
+        };
+      });
+
+      const itemProducts = (quote.products || []).map((productItem: any) => {
+        const linkedProduct = createdProducts.find((product: any) => product._id.toString() === productItem.product.toString());
+        const totalValue = productItem.quantity * productItem.unitValue;
+        return {
+          type: 'product',
+          itemId: productItem.product,
+          name: linkedProduct?.name || 'Produto',
+          description: linkedProduct?.description,
+          quantity: productItem.quantity,
+          unitValue: productItem.unitValue,
+          totalValue
+        };
+      });
+
+      const items = [...itemServices, ...itemProducts];
+      const subtotal = items.reduce((acc, item) => acc + item.totalValue, 0);
+      const discount = quote.discount || 0;
+      const orderOtherDiscounts = quote.otherDiscounts || [];
+      const percentageDiscountValue = subtotal * (discount / 100);
+      const otherDiscountValue = orderOtherDiscounts.reduce((acc: number, item: { amount: number }) => acc + item.amount, 0);
+      const totalValue = Math.max(0, subtotal - percentageDiscountValue - otherDiscountValue);
+
+      const status = weighted([
+        { value: 'pending', weight: 14 },
+        { value: 'scheduled', weight: 24 },
+        { value: 'in_progress', weight: 18 },
+        { value: 'completed', weight: 30 },
+        { value: 'payment_order_created', weight: 10 },
+        { value: 'cancelled', weight: 4 }
+      ]);
+
+      const issuedAt = faker.date.recent({ days: 120 });
+      const now = new Date();
+      let scheduledDate: Date | undefined;
+      if (status === 'scheduled') {
+        scheduledDate = faker.date.between({ from: issuedAt, to: faker.date.future({ years: 1, refDate: issuedAt }) });
+      } else if (['in_progress', 'completed', 'payment_order_created'].includes(status)) {
+        scheduledDate = faker.date.between({ from: issuedAt, to: now });
+      }
+
+      const startedAt =
+        ['in_progress', 'completed', 'payment_order_created'].includes(status) && scheduledDate
+          ? faker.date.between({ from: scheduledDate, to: now })
+          : undefined;
+      const completedAt = ['completed', 'payment_order_created'].includes(status) && startedAt ? faker.date.between({ from: startedAt, to: now }) : undefined;
+
+      const assignedTechnician = faker.helpers.arrayElement(createdTechnicians);
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+
+      serviceOrdersPayload.push({
+        orderNumber: `SO-${new Date().getFullYear()}-${String(i + 1).padStart(5, '0')}-${faker.string.alphanumeric({ length: 3, casing: 'upper' })}`,
+        quote: quote._id,
+        customer: quoteCustomer._id,
+        equipments: quote.equipments || quoteCustomer.equipments || [],
+        account: account._id,
+        items,
+        changeOrders: [],
+        description: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.5 }),
+        discount,
+        otherDiscounts: orderOtherDiscounts,
+        subtotal,
+        totalValue,
+        issuedAt,
+        scheduledDate,
+        startedAt,
+        completedAt,
+        assignedTechnician: assignedTechnician._id,
+        status,
+        priority: weighted([
+          { value: 'low', weight: 10 },
+          { value: 'normal', weight: 65 },
+          { value: 'high', weight: 20 },
+          { value: 'urgent', weight: 5 }
+        ]),
+        notes: faker.helpers.maybe(() => faker.lorem.sentences({ min: 1, max: 2 }), { probability: 0.45 }),
+        customerNotes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.3 }),
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      });
+    }
+
+    const createdServiceOrders = await ServiceOrder.insertMany(serviceOrdersPayload);
+
+    console.log(`✅ Quotes created: ${createdQuotes.length}`);
+    console.log(`✅ Service orders created: ${createdServiceOrders.length}`);
+
+    console.log('🗓️ Creating recurring configs and events...');
+
+    const recurringConfigsPayload = Array.from({ length: CONFIG.recurringConfigs }, () => {
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+      const startDate = faker.date.recent({ days: 120 });
+      const untilDate = faker.date.future({ years: 1, refDate: startDate });
+      const frequency = faker.helpers.arrayElement(['weekly', 'monthly']);
+
+      return {
+        account: account._id,
+        frequency,
+        interval: frequency === 'weekly' ? faker.number.int({ min: 1, max: 2 }) : 1,
+        daysOfWeek: frequency === 'weekly' ? pickManyUnique([1, 2, 3, 4, 5], 1, 2).sort() : [],
+        startDate: randomIsoDateString(startDate),
+        untilDate: randomIsoDateString(untilDate),
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      };
+    });
+
+    const createdRecurringConfigs = await RecurringEventConfig.insertMany(recurringConfigsPayload);
+
+    const eventsPayload: any[] = [];
+
+    for (const order of createdServiceOrders.slice(0, Math.floor(createdServiceOrders.length * 0.7))) {
+      const customer = createdCustomers.find((item: any) => item._id.toString() === order.customer.toString());
       if (!customer) continue;
 
-      const orderNumber = `SO-${faker.date.recent({ days: 365 }).getFullYear()}-${faker.string.numeric(4)}${i}`;
+      const assignedTechnician = order.assignedTechnician ? [order.assignedTechnician] : [faker.helpers.arrayElement(createdTechnicians)._id];
+      const status = order.status === 'completed' || order.status === 'payment_order_created' ? 'completed' : 'scheduled';
+      const day = order.scheduledDate || faker.date.recent({ days: 50 });
+      const startHour = faker.number.int({ min: 8, max: 16 });
+      const duration = faker.number.int({ min: 1, max: 3 });
 
-      // Calculate totals from quote
-      let subtotal = 0;
-      const items: any[] = [];
-
-      quote.services?.forEach((serviceItem) => {
-        const service = createdServices.find((s) => s._id.toString() === serviceItem.service.toString());
-        if (service) {
-          const totalValue = serviceItem.quantity * serviceItem.unitValue;
-          items.push({
-            type: 'service',
-            itemId: serviceItem.service,
-            name: service.name,
-            description: service.description,
-            quantity: serviceItem.quantity,
-            unitValue: serviceItem.unitValue,
-            totalValue: totalValue
-          });
-          subtotal += totalValue;
-        }
-      });
-
-      quote.products?.forEach((productItem) => {
-        const product = createdProducts.find((p) => p._id.toString() === productItem.product.toString());
-        if (product) {
-          const totalValue = productItem.quantity * productItem.unitValue;
-          items.push({
-            type: 'product',
-            itemId: productItem.product,
-            name: product.name,
-            description: product.description,
-            quantity: productItem.quantity,
-            unitValue: productItem.unitValue,
-            totalValue: totalValue
-          });
-          subtotal += totalValue;
-        }
-      });
-
-      const discount = quote.discount || 0;
-      const totalValue = subtotal * (1 - discount / 100);
-
-      const status = faker.helpers.arrayElement(['pending', 'scheduled', 'in_progress', 'completed', 'cancelled']);
-      let scheduledDate, startedAt, completedAt, paymentStatus, paidAmount, paymentMethod, paymentDate;
-
-      if (status === 'scheduled' || status === 'in_progress' || status === 'completed') {
-        scheduledDate = faker.date.recent({ days: 30 });
-      }
-
-      if (status === 'in_progress' || status === 'completed') {
-        startedAt = scheduledDate ? faker.date.between({ from: scheduledDate, to: new Date() }) : faker.date.recent({ days: 14 });
-      }
-
-      if (status === 'completed') {
-        completedAt = startedAt ? faker.date.between({ from: startedAt, to: new Date() }) : faker.date.recent({ days: 7 });
-        paymentStatus = faker.helpers.arrayElement(['pending', 'partial', 'paid']);
-        if (paymentStatus === 'paid') {
-          paidAmount = totalValue;
-          paymentMethod = faker.helpers.arrayElement(['Dinheiro', 'Cartão de Crédito', 'Cartão de Débito', 'PIX', 'Boleto']);
-          paymentDate = completedAt;
-        } else if (paymentStatus === 'partial') {
-          paidAmount = faker.number.float({ min: totalValue * 0.1, max: totalValue * 0.9, fractionDigits: 2 });
-        }
-      }
-
-      serviceOrders.push({
-        orderNumber: orderNumber,
-        quote: quote._id,
+      eventsPayload.push({
+        date: randomIsoDateString(day),
+        startTime: `${String(startHour).padStart(2, '0')}:00`,
+        endTime: `${String(Math.min(22, startHour + duration)).padStart(2, '0')}:00`,
         customer: customer._id,
-        equipments: customer.equipments,
+        technician: assignedTechnician,
         account: account._id,
-        items: items,
-        description: faker.helpers.maybe(() => faker.lorem.sentence({ min: 5, max: 15 }), { probability: 0.5 }),
-        discount: discount,
-        subtotal: subtotal,
-        totalValue: totalValue,
-        issuedAt: faker.date.recent({ days: 90 }),
-        scheduledDate: scheduledDate,
-        startedAt: startedAt,
-        completedAt: completedAt,
-        assignedTechnician: faker.helpers.arrayElement(createdTechnicians)._id,
-        status: status,
-        priority: faker.helpers.arrayElement(['low', 'normal', 'high', 'urgent']),
-        notes: faker.helpers.maybe(() => faker.lorem.sentences({ min: 1, max: 3 }), { probability: 0.6 }),
-        customerNotes: faker.helpers.maybe(() => faker.lorem.sentences({ min: 1, max: 2 }), { probability: 0.3 }),
-        paymentStatus: paymentStatus || 'pending',
-        paidAmount: paidAmount || 0,
-        paymentMethod: paymentMethod,
-        paymentDate: paymentDate,
-        createdBy: userId,
-        updatedBy: userId
+        title: faker.helpers.arrayElement(['Visita técnica', 'Execução de serviço', 'Retorno técnico']),
+        description: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.7 }),
+        status,
+        completionNotes: status === 'completed' ? faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.6 }) : undefined,
+        completedAt: status === 'completed' ? order.completedAt || new Date() : undefined,
+        completedBy: status === 'completed' ? faker.helpers.arrayElement(allOperationalUsers)._id : undefined,
+        serviceOrder: order._id,
+        recurringConfig: chance(0.2) ? faker.helpers.arrayElement(createdRecurringConfigs)._id : undefined,
+        createdBy: faker.helpers.arrayElement(allOperationalUsers)._id,
+        updatedBy: faker.helpers.arrayElement(allOperationalUsers)._id
       });
     }
-    const createdServiceOrders = await ServiceOrder.insertMany(serviceOrders);
-    console.log(`✅ Created ${createdServiceOrders.length} service orders`);
 
-    // Create events
-    console.log(`Creating ${CONFIG.events} events...`);
-    const events: any[] = [];
-    for (let i = 0; i < CONFIG.events; i++) {
+    while (eventsPayload.length < CONFIG.events) {
       const customer = faker.helpers.arrayElement(createdCustomers);
-      const technician = faker.helpers.arrayElement(createdTechnicians);
-      const date = faker.date.between({ from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), to: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) });
+      const technicians = pickManyUnique(createdTechnicians, 1, 2).map((technician) => technician._id);
       const startHour = faker.number.int({ min: 8, max: 17 });
-      const duration = faker.number.int({ min: 1, max: 4 });
+      const duration = faker.number.int({ min: 1, max: 3 });
+      const status = weighted([
+        { value: 'scheduled', weight: 62 },
+        { value: 'completed', weight: 33 },
+        { value: 'cancelled', weight: 5 }
+      ]);
 
-      const status = faker.helpers.arrayElement(['scheduled', 'completed']);
-      let completionNotes, completedAt, completedBy;
+      const now = new Date();
+      const date =
+        status === 'completed'
+          ? faker.date.between({ from: faker.date.past({ years: 1 }), to: now })
+          : faker.date.between({ from: faker.date.past({ years: 1 }), to: faker.date.future({ years: 1 }) });
 
-      if (status === 'completed') {
-        completionNotes = faker.lorem.sentences({ min: 1, max: 3 });
-        completedAt = faker.date.recent({ days: 90 });
-        completedBy = userId;
-      }
+      const recurringConfig = chance(0.3) ? faker.helpers.arrayElement(createdRecurringConfigs)._id : undefined;
 
-      events.push({
-        date: date.toISOString().split('T')[0],
-        startTime: `${startHour.toString().padStart(2, '0')}:00`,
-        endTime: `${(startHour + duration).toString().padStart(2, '0')}:00`,
+      eventsPayload.push({
+        date: randomIsoDateString(date),
+        startTime: `${String(startHour).padStart(2, '0')}:00`,
+        endTime: `${String(Math.min(22, startHour + duration)).padStart(2, '0')}:00`,
         customer: customer._id,
-        technician: technician._id,
+        technician: technicians,
         account: account._id,
-        title: faker.helpers.arrayElement([
-          'Instalação de Ar Condicionado',
-          'Manutenção Preventiva',
-          'Reparo de Compressor',
-          'Limpeza de Sistema',
-          'Recarga de Gás',
-          'Instalação de Ventilador',
-          'Reparo de Ventilador',
-          'Manutenção de Climatizador',
-          'Instalação de Purificador',
-          'Manutenção Geral'
-        ]),
-        description: faker.lorem.sentences({ min: 1, max: 3 }),
-        status: status,
-        completionNotes: completionNotes,
-        completedAt: completedAt,
-        completedBy: completedBy,
-        createdBy: userId,
-        updatedBy: userId
+        title: faker.helpers.arrayElement(['Visita de manutenção', 'Inspeção preventiva', 'Atendimento técnico']),
+        description: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.7 }),
+        status,
+        completionNotes: status === 'completed' ? faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.7 }) : undefined,
+        completedAt: status === 'completed' ? faker.date.between({ from: date, to: new Date() }) : undefined,
+        completedBy: status === 'completed' ? faker.helpers.arrayElement(allOperationalUsers)._id : undefined,
+        recurringConfig,
+        createdBy: faker.helpers.arrayElement(allOperationalUsers)._id,
+        updatedBy: faker.helpers.arrayElement(allOperationalUsers)._id
       });
     }
-    const createdEvents = await Event.insertMany(events);
-    console.log(`✅ Created ${createdEvents.length} events`);
 
-    // Create follow-ups
-    console.log(`Creating ${CONFIG.followUps} follow-ups...`);
-    const followUps: any[] = [];
-    for (let i = 0; i < CONFIG.followUps; i++) {
-      const customer = faker.helpers.arrayElement(createdCustomers);
-      const status = faker.helpers.arrayElement(['pending', 'completed']);
-      let completedAt, completedBy, notes;
+    const createdEvents = await Event.insertMany(eventsPayload);
 
-      if (status === 'completed') {
-        completedAt = faker.date.recent({ days: 30 });
-        completedBy = userId;
-        notes = [faker.lorem.sentences({ min: 1, max: 3 })];
-      } else {
-        notes = [faker.lorem.sentences({ min: 1, max: 2 })];
+    console.log(`✅ Recurring configs created: ${createdRecurringConfigs.length}`);
+    console.log(`✅ Events created: ${createdEvents.length}`);
+
+    console.log('💰 Creating payment orders and expenses...');
+
+    const paymentOrdersPayload: any[] = [];
+    for (const order of createdServiceOrders) {
+      if (order.status === 'cancelled' || order.totalValue <= 0) continue;
+
+      const paymentStatus = weighted([
+        { value: 'pending', weight: 22 },
+        { value: 'partial', weight: 28 },
+        { value: 'paid', weight: 46 },
+        { value: 'refunded', weight: 4 }
+      ]);
+
+      const dueDate = faker.date.between({ from: order.issuedAt || new Date(), to: faker.date.future({ years: 1 }) });
+      let paidAmount = 0;
+      if (paymentStatus === 'paid') paidAmount = order.totalValue;
+      if (paymentStatus === 'partial') {
+        paidAmount = faker.number.float({ min: order.totalValue * 0.25, max: order.totalValue * 0.85, fractionDigits: 2 });
       }
+      if (paymentStatus === 'refunded') paidAmount = order.totalValue;
 
-      followUps.push({
-        customer: customer._id,
+      const payments =
+        paidAmount > 0
+          ? [
+              {
+                amount: paidAmount,
+                paymentMethod: faker.helpers.arrayElement(['pix', 'credit_card', 'debit_card', 'cash', 'bank_transfer']),
+                transactionId: faker.helpers.maybe(() => `TX-${faker.string.alphanumeric({ length: 12, casing: 'upper' })}`, { probability: 0.75 }),
+                paymentDate: faker.date.between({ from: order.issuedAt || new Date(), to: new Date() }),
+                notes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.45 }),
+                recordedBy: faker.helpers.arrayElement(allOperationalUsers)._id
+              }
+            ]
+          : [];
+
+      paymentOrdersPayload.push({
         account: account._id,
-        startDate:
-          status === 'completed'
-            ? faker.date.between({ from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), to: new Date() })
-            : faker.date.future({ years: 1 }),
-        status: status,
-        completedAt: completedAt,
-        completedBy: completedBy,
-        notes: notes,
-        createdBy: userId,
-        updatedBy: userId
+        customer: order.customer,
+        serviceOrder: order._id,
+        paymentStatus,
+        payments,
+        totalAmount: order.totalValue,
+        dueDate,
+        invoiceNumber: `INV-${new Date().getFullYear()}-${faker.string.numeric(6)}`,
+        notes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.35 }),
+        discountAmount: faker.helpers.maybe(() => faker.number.float({ min: 0, max: 250, fractionDigits: 2 }), { probability: 0.25 }),
+        taxAmount: faker.helpers.maybe(() => faker.number.float({ min: 0, max: 300, fractionDigits: 2 }), { probability: 0.3 }),
+        createdBy: faker.helpers.arrayElement(allOperationalUsers)._id,
+        updatedBy: faker.helpers.arrayElement(allOperationalUsers)._id
       });
     }
-    const createdFollowUps = await FollowUp.insertMany(followUps);
-    console.log(`✅ Created ${createdFollowUps.length} follow-ups`);
 
-    console.log('\n🎉 Dummy data population completed successfully!\n');
-    console.log('Summary:');
+    const createdPaymentOrders = await PaymentOrder.insertMany(paymentOrdersPayload);
+
+    const expenseCategories = Object.values(ExpenseCategory);
+    const expensesPayload = Array.from({ length: CONFIG.expenses }, () => {
+      const category = faker.helpers.arrayElement(expenseCategories);
+      const date = faker.date.between({ from: faker.date.past({ years: 1 }), to: new Date() });
+      const title = faker.helpers.arrayElement(EXPENSE_TITLES_BY_CATEGORY[category] || ['Despesa operacional']);
+      const approved = chance(0.68);
+      const approver = approved ? faker.helpers.arrayElement(allOperationalUsers) : undefined;
+      const creator = faker.helpers.arrayElement(allOperationalUsers);
+
+      return {
+        account: account._id,
+        title,
+        category,
+        amount: faker.number.float({ min: 40, max: category === ExpenseCategory.OWNERS_SALARY ? 14000 : 3800, fractionDigits: 2 }),
+        expenseDate: randomDateString(date),
+        approvedBy: approver?._id,
+        approvedDate: approved ? faker.date.between({ from: date, to: new Date() }) : undefined,
+        createdBy: creator._id,
+        updatedBy: creator._id
+      };
+    });
+
+    const createdExpenses = await Expense.insertMany(expensesPayload);
+
+    console.log(`✅ Payment orders created: ${createdPaymentOrders.length}`);
+    console.log(`✅ Expenses created: ${createdExpenses.length}`);
+
+    console.log('🚚 Creating fleet and vehicle usage records...');
+
+    const vehiclesPayload = Array.from({ length: CONFIG.vehicles }, (_, index) => {
+      const make = faker.helpers.arrayElement(VEHICLE_MAKES);
+      const model = faker.helpers.arrayElement(VEHICLE_MODELS);
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+      return {
+        account: account._id,
+        name: `Veículo ${index + 1} - ${model}`,
+        licensePlate: `${faker.string.alpha({ length: 3, casing: 'upper' })}${faker.string.alphanumeric({ length: 4, casing: 'upper' })}`,
+        make,
+        model,
+        year: faker.number.int({ min: 2014, max: new Date().getFullYear() }),
+        isActive: chance(0.9),
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      };
+    });
+
+    const createdVehicles = await Vehicle.insertMany(vehiclesPayload);
+
+    const vehicleUsagesPayload: any[] = [];
+    for (let i = 0; i < CONFIG.vehicleUsages; i++) {
+      const departureDate = faker.date.between({ from: faker.date.past({ years: 1 }), to: new Date() });
+      const status = weighted([
+        { value: 'approved', weight: 72 },
+        { value: 'pending', weight: 28 }
+      ]);
+      const departureMileage = faker.number.int({ min: 5000, max: 160000 });
+      const hasArrival = chance(0.82);
+      const arrivalDate = hasArrival ? faker.date.between({ from: departureDate, to: new Date() }) : undefined;
+      const arrivalMileage = hasArrival ? departureMileage + faker.number.int({ min: 5, max: 180 }) : undefined;
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+      const approvedByUser = status === 'approved' ? faker.helpers.arrayElement(allOperationalUsers) : undefined;
+
+      vehicleUsagesPayload.push({
+        account: account._id,
+        technician: faker.helpers.arrayElement(createdTechnicians)._id,
+        vehicle: faker.helpers.arrayElement(createdVehicles)._id,
+        departureDate,
+        departureMileage,
+        arrivalDate,
+        arrivalMileage,
+        status,
+        approvedBy: approvedByUser?._id,
+        approvedAt: approvedByUser ? faker.date.between({ from: departureDate, to: new Date() }) : undefined,
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      });
+    }
+
+    const createdVehicleUsages = await VehicleUsage.insertMany(vehicleUsagesPayload);
+
+    console.log(`✅ Vehicles created: ${createdVehicles.length}`);
+    console.log(`✅ Vehicle usages created: ${createdVehicleUsages.length}`);
+
+    console.log('📌 Creating follow-ups...');
+
+    const followUpsPayload = Array.from({ length: CONFIG.followUps }, () => {
+      const status = weighted([
+        { value: 'pending', weight: 44 },
+        { value: 'completed', weight: 56 }
+      ]);
+      const startDate = faker.date.between({ from: faker.date.past({ years: 1 }), to: faker.date.future({ years: 1 }) });
+      const completedAt = status === 'completed' ? faker.date.between({ from: faker.date.past({ years: 1 }), to: new Date() }) : undefined;
+      const completedBy = completedAt ? faker.helpers.arrayElement(allOperationalUsers)._id : undefined;
+      const createdByUser = faker.helpers.arrayElement(allOperationalUsers);
+
+      return {
+        customer: faker.helpers.arrayElement(createdCustomers)._id,
+        account: account._id,
+        startDate,
+        status,
+        completedAt,
+        completedBy,
+        notes: faker.helpers.maybe(
+          () => [
+            faker.helpers.arrayElement([
+              'Retornar contato para proposta de manutenção anual.',
+              'Cliente solicitou revisão de orçamento enviado.',
+              'Agendar visita técnica no próximo mês.',
+              'Confirmar troca de equipamento em garantia.'
+            ])
+          ],
+          { probability: 0.75 }
+        ),
+        createdBy: createdByUser._id,
+        updatedBy: createdByUser._id
+      };
+    });
+
+    const createdFollowUps = await FollowUp.insertMany(followUpsPayload);
+
+    console.log(`✅ Follow-ups created: ${createdFollowUps.length}`);
+
+    console.log('\n🎉 Seed completed successfully!\n');
+    console.log(`Account: ${account.name}`);
+    console.log(`Admin kept: ${adminUser.email}`);
+    console.log('Generated entities:');
+    console.log(`- Users (new): ${createdTechnicianUsers.length + createdOfficeUsers.length}`);
     console.log(`- Technicians: ${createdTechnicians.length}`);
     console.log(`- Customers: ${createdCustomers.length}`);
     console.log(`- Contracts: ${createdContracts.length}`);
@@ -912,16 +1066,18 @@ async function populateDummyData() {
     console.log(`- Products: ${createdProducts.length}`);
     console.log(`- Quotes: ${createdQuotes.length}`);
     console.log(`- Service Orders: ${createdServiceOrders.length}`);
+    console.log(`- Recurring Configs: ${createdRecurringConfigs.length}`);
     console.log(`- Events: ${createdEvents.length}`);
-    console.log(`- Follow-ups: ${createdFollowUps.length}\n`);
-    console.log(
-      `Total records: ${createdTechnicians.length + createdCustomers.length + createdContracts.length + createdServices.length + createdProducts.length + createdQuotes.length + createdServiceOrders.length + createdEvents.length + createdFollowUps.length}`
-    );
+    console.log(`- Payment Orders: ${createdPaymentOrders.length}`);
+    console.log(`- Expenses: ${createdExpenses.length}`);
+    console.log(`- Vehicles: ${createdVehicles.length}`);
+    console.log(`- Vehicle Usages: ${createdVehicleUsages.length}`);
+    console.log(`- Follow-ups: ${createdFollowUps.length}`);
 
     await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error populating dummy data:', error);
+    console.error('❌ Error while seeding dummy data:', error);
     await mongoose.disconnect();
     process.exit(1);
   }
