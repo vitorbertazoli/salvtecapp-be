@@ -7,6 +7,7 @@ import { VehicleUsagesService } from './vehicle-usages.service';
 @Module({
   imports: [MongooseModule.forFeature([{ name: VehicleUsage.name, schema: VehicleUsageSchema }])],
   controllers: [VehicleUsagesController],
-  providers: [VehicleUsagesService]
+  providers: [VehicleUsagesService],
+  exports: [VehicleUsagesService]
 })
 export class VehicleUsagesModule {}

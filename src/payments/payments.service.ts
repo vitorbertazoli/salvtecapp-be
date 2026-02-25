@@ -205,4 +205,8 @@ export class PaymentsService {
 
     return updatedPaymentOrder;
   }
+
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    return this.paymentOrderModel.deleteMany({ account: accountId }).exec();
+  }
 }

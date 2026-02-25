@@ -217,4 +217,8 @@ export class ExpensesService {
       }))
     };
   }
+
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    return this.expenseModel.deleteMany({ account: accountId }).exec();
+  }
 }

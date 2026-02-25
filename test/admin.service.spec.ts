@@ -7,15 +7,20 @@ import { Types } from 'mongoose';
 import { AccountsService } from '../src/accounts/accounts.service';
 import { AccountDocument } from '../src/accounts/schemas/account.schema';
 import { AdminService } from '../src/admin/admin.service';
+import { ContractsService } from '../src/contracts/contracts.service';
 import { CustomersService } from '../src/customers/customers.service';
 import { EventsService } from '../src/events/events.service';
+import { ExpensesService } from '../src/expenses/expenses.service';
 import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
+import { PaymentsService } from '../src/payments/payments.service';
 import { ProductsService } from '../src/products/products.service';
 import { QuotesService } from '../src/quotes/quotes.service';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 import { ServicesService } from '../src/services/services.service';
 import { TechniciansService } from '../src/technicians/technicians.service';
 import { UsersService } from '../src/users/users.service';
+import { VehicleUsagesService } from '../src/vehicle-usages/vehicle-usages.service';
+import { VehiclesService } from '../src/vehicles/vehicles.service';
 
 describe('AdminService', () => {
   let service: AdminService;
@@ -29,6 +34,11 @@ describe('AdminService', () => {
   let techniciansService: jest.Mocked<TechniciansService>;
   let eventsService: jest.Mocked<EventsService>;
   let followUpsService: jest.Mocked<FollowUpsService>;
+  let contractsService: jest.Mocked<ContractsService>;
+  let paymentsService: jest.Mocked<PaymentsService>;
+  let expensesService: jest.Mocked<ExpensesService>;
+  let vehicleUsagesService: jest.Mocked<VehicleUsagesService>;
+  let vehiclesService: jest.Mocked<VehiclesService>;
 
   const mockAccountId = new Types.ObjectId();
   const mockAccount: AccountDocument = {
@@ -102,6 +112,26 @@ describe('AdminService', () => {
       deleteAllByAccount: jest.fn()
     };
 
+    const mockContractsService = {
+      deleteAllByAccount: jest.fn()
+    };
+
+    const mockPaymentsService = {
+      deleteAllByAccount: jest.fn()
+    };
+
+    const mockExpensesService = {
+      deleteAllByAccount: jest.fn()
+    };
+
+    const mockVehicleUsagesService = {
+      deleteAllByAccount: jest.fn()
+    };
+
+    const mockVehiclesService = {
+      deleteAllByAccount: jest.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
@@ -144,6 +174,26 @@ describe('AdminService', () => {
         {
           provide: FollowUpsService,
           useValue: mockFollowUpsService
+        },
+        {
+          provide: ContractsService,
+          useValue: mockContractsService
+        },
+        {
+          provide: PaymentsService,
+          useValue: mockPaymentsService
+        },
+        {
+          provide: ExpensesService,
+          useValue: mockExpensesService
+        },
+        {
+          provide: VehicleUsagesService,
+          useValue: mockVehicleUsagesService
+        },
+        {
+          provide: VehiclesService,
+          useValue: mockVehiclesService
         }
       ]
     }).compile();
@@ -159,6 +209,11 @@ describe('AdminService', () => {
     techniciansService = module.get(TechniciansService);
     eventsService = module.get(EventsService);
     followUpsService = module.get(FollowUpsService);
+    contractsService = module.get(ContractsService);
+    paymentsService = module.get(PaymentsService);
+    expensesService = module.get(ExpensesService);
+    vehicleUsagesService = module.get(VehicleUsagesService);
+    vehiclesService = module.get(VehiclesService);
   });
 
   it('should be defined', () => {
@@ -291,8 +346,13 @@ describe('AdminService', () => {
       accountsService.delete.mockResolvedValue(mockAccount);
 
       // Mock all the cascade delete methods
+      paymentsService.deleteAllByAccount.mockResolvedValue(undefined);
       serviceOrdersService.deleteAllByAccount.mockResolvedValue(undefined);
+      expensesService.deleteAllByAccount.mockResolvedValue(undefined);
+      vehicleUsagesService.deleteAllByAccount.mockResolvedValue(undefined);
+      vehiclesService.deleteAllByAccount.mockResolvedValue(undefined);
       quotesService.deleteAllByAccount.mockResolvedValue(undefined);
+      contractsService.deleteAllByAccount.mockResolvedValue(undefined);
       followUpsService.deleteAllByAccount.mockResolvedValue(undefined);
       eventsService.deleteAllByAccount.mockResolvedValue(undefined);
       customersService.deleteAllByAccount.mockResolvedValue(undefined);
@@ -306,8 +366,13 @@ describe('AdminService', () => {
       expect(accountsService.findOne).toHaveBeenCalledWith(mockAccountId);
 
       // Verify cascade deletion order
+      expect(paymentsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(serviceOrdersService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(expensesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(vehicleUsagesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(vehiclesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(quotesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(contractsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(followUpsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(eventsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(customersService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
@@ -340,8 +405,13 @@ describe('AdminService', () => {
       accountsService.delete.mockResolvedValue(null);
 
       // Mock cascade deletions to succeed
+      paymentsService.deleteAllByAccount.mockResolvedValue(undefined);
       serviceOrdersService.deleteAllByAccount.mockResolvedValue(undefined);
+      expensesService.deleteAllByAccount.mockResolvedValue(undefined);
+      vehicleUsagesService.deleteAllByAccount.mockResolvedValue(undefined);
+      vehiclesService.deleteAllByAccount.mockResolvedValue(undefined);
       quotesService.deleteAllByAccount.mockResolvedValue(undefined);
+      contractsService.deleteAllByAccount.mockResolvedValue(undefined);
       followUpsService.deleteAllByAccount.mockResolvedValue(undefined);
       eventsService.deleteAllByAccount.mockResolvedValue(undefined);
       customersService.deleteAllByAccount.mockResolvedValue(undefined);

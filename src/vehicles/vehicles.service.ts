@@ -85,4 +85,8 @@ export class VehiclesService {
       return { vehicle, deleted: true };
     }
   }
+
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    return this.vehicleModel.deleteMany({ account: accountId }).exec();
+  }
 }

@@ -82,4 +82,8 @@ export class VehicleUsagesService {
 
     return this.vehicleUsageModel.findOneAndDelete(query).exec();
   }
+
+  async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    return this.vehicleUsageModel.deleteMany({ account: accountId }).exec();
+  }
 }

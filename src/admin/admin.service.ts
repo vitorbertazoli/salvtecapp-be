@@ -2,15 +2,20 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Types } from 'mongoose';
 import { AccountsService } from '../accounts/accounts.service';
 import { AccountDocument } from '../accounts/schemas/account.schema';
+import { ContractsService } from '../contracts/contracts.service';
 import { CustomersService } from '../customers/customers.service';
 import { EventsService } from '../events/events.service';
+import { ExpensesService } from '../expenses/expenses.service';
 import { FollowUpsService } from '../follow-ups/follow-ups.service';
+import { PaymentsService } from '../payments/payments.service';
 import { ProductsService } from '../products/products.service';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
 import { ServicesService } from '../services/services.service';
 import { TechniciansService } from '../technicians/technicians.service';
 import { UsersService } from '../users/users.service';
+import { VehicleUsagesService } from '../vehicle-usages/vehicle-usages.service';
+import { VehiclesService } from '../vehicles/vehicles.service';
 
 @Injectable()
 export class AdminService {
@@ -24,7 +29,12 @@ export class AdminService {
     private servicesService: ServicesService,
     private techniciansService: TechniciansService,
     private eventsService: EventsService,
-    private followUpsService: FollowUpsService
+    private followUpsService: FollowUpsService,
+    private contractsService: ContractsService,
+    private paymentsService: PaymentsService,
+    private expensesService: ExpensesService,
+    private vehicleUsagesService: VehicleUsagesService,
+    private vehiclesService: VehiclesService
   ) {}
 
   async getAllAccounts(
@@ -137,12 +147,27 @@ export class AdminService {
       throw new NotFoundException('admin.errors.accountNotFound');
     }
 
-    // Perform cascade deletion in the correct order to handle dependencies
-    // Delete service orders first (they reference customers, services, technicians)
+    // Perform cascade deletion in dependency-safe order
+    // Delete payment orders first (they reference service orders)
+    await this.paymentsService.deleteAllByAccount(accountId);
+
+    // Delete service orders (they reference customers, services, technicians)
     await this.serviceOrdersService.deleteAllByAccount(accountId);
+
+    // Delete expenses
+    await this.expensesService.deleteAllByAccount(accountId);
+
+    // Delete vehicle usages first (they reference vehicles and technicians)
+    await this.vehicleUsagesService.deleteAllByAccount(accountId);
+
+    // Delete vehicles
+    await this.vehiclesService.deleteAllByAccount(accountId);
 
     // Delete quotes (they reference customers, services)
     await this.quotesService.deleteAllByAccount(accountId);
+
+    // Delete contracts (they reference customers)
+    await this.contractsService.deleteAllByAccount(accountId);
 
     // Delete follow-ups (they reference customers)
     await this.followUpsService.deleteAllByAccount(accountId);

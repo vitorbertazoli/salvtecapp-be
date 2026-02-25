@@ -586,7 +586,8 @@ export class EventsService {
   }
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
-    return this.eventModel.deleteMany({ account: accountId }).exec();
+    await this.eventModel.deleteMany({ account: accountId }).exec();
+    return this.recurringConfigModel.deleteMany({ account: accountId }).exec();
   }
 
   async completeByAccount(id: string, userId: Types.ObjectId, accountId: Types.ObjectId, notes?: string, completeServiceOrder?: boolean) {

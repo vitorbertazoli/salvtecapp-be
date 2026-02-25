@@ -6,9 +6,6 @@ import { extname } from 'path';
 import { GetAccountId, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { RolesService } from '../roles/roles.service';
-import { UsersService } from '../users/users.service';
-import { EmailService } from '../utils/email.service';
 import { AccountsService } from './accounts.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
 
@@ -27,12 +24,7 @@ interface UploadedFile {
 @Controller('accounts')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AccountsController {
-  constructor(
-    private readonly accountsService: AccountsService,
-    private readonly usersService: UsersService,
-    private readonly rolesService: RolesService,
-    private readonly emailService: EmailService
-  ) {}
+  constructor(private readonly accountsService: AccountsService) {}
 
   @Get('customizations')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
