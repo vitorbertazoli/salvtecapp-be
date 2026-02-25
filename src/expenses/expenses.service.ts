@@ -145,6 +145,11 @@ export class ExpensesService {
       this.expenseModel.aggregate([
         { $match: matchQuery },
         {
+          $match: {
+            category: { $exists: true, $ne: null }
+          }
+        },
+        {
           $group: {
             _id: '$category',
             total: { $sum: '$amount' },
