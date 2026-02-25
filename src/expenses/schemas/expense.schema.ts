@@ -23,6 +23,7 @@ export const ExpenseCategory = {
   CONTRACTOR: 'contractor',
   SUBCONTRACTOR: 'subcontractor',
   CONSULTANT: 'consultant',
+  OWNERS_SALARY: 'owners_salary',
 
   // Rentals and Leases
   EQUIPMENT_RENTAL: 'equipment_rental',
