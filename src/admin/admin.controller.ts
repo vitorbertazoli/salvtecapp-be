@@ -20,6 +20,11 @@ export class AdminController {
     return this.adminService.getAllAccounts(pageNum, limitNum, search);
   }
 
+  @Get('accounts/:id/summary')
+  async getAccountSummary(@Param('id') accountId: string) {
+    return this.adminService.getAccountSummary(accountId);
+  }
+
   @Put('accounts/:id/status')
   async updateAccountStatus(@Param('id') accountId: string, @Body() updateAccountStatusDto: UpdateAccountStatusDto) {
     return this.adminService.updateAccountStatus(accountId, updateAccountStatusDto.status);

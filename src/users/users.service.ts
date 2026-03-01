@@ -206,6 +206,47 @@ export class UsersService {
     };
   }
 
+  async countByRoleForAccount(accountId: Types.ObjectId): Promise<{ admins: number; supervisors: number; technicians: number }> {
+    const roleCounts = await this.userModel
+      .aggregate([
+        { $match: { account: accountId } },
+        {
+          $lookup: {
+            from: 'roles',
+            localField: 'roles',
+            foreignField: '_id',
+            as: 'userRoles'
+          }
+        },
+        { $unwind: { path: '$userRoles', preserveNullAndEmptyArrays: false } },
+        {
+          $group: {
+            _id: '$userRoles.name',
+            count: { $sum: 1 }
+          }
+        }
+      ])
+      .exec();
+
+    const counts = {
+      admins: 0,
+      supervisors: 0,
+      technicians: 0
+    };
+
+    for (const roleCount of roleCounts) {
+      if (roleCount._id === 'ADMIN') {
+        counts.admins = roleCount.count;
+      } else if (roleCount._id === 'SUPERVISOR') {
+        counts.supervisors = roleCount.count;
+      } else if (roleCount._id === 'TECHNICIAN') {
+        counts.technicians = roleCount.count;
+      }
+    }
+
+    return counts;
+  }
+
   async update(id: string, userData: Partial<User> & { password?: string }, accountId: Types.ObjectId): Promise<User | null> {
     const query = { _id: id, account: accountId };
 

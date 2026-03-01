@@ -108,6 +108,51 @@ export class AdminService {
     };
   }
 
+  async getAccountSummary(accountId: string) {
+    if (!Types.ObjectId.isValid(accountId)) {
+      throw new NotFoundException('admin.errors.accountNotFound');
+    }
+
+    const accountObjectId = new Types.ObjectId(accountId);
+    const account = (await this.accountsService.findOne(accountObjectId)) as AccountDocument | null;
+
+    if (!account) {
+      throw new NotFoundException('admin.errors.accountNotFound');
+    }
+
+    const [usersByRole, customersData, servicesData, productsData, eventsData, quotesData, serviceOrdersData, paymentOrdersData, expensesData] =
+      await Promise.all([
+        this.usersService.countByRoleForAccount(accountObjectId),
+        this.customersService.findByAccount(accountObjectId, 1, 1),
+        this.servicesService.findByAccount(accountObjectId, 1, 1),
+        this.productsService.findByAccount(accountObjectId, 1, 1),
+        this.eventsService.findAllPaginated(accountObjectId, '1', '1'),
+        this.quotesService.findByAccount(accountObjectId, 1, 1),
+        this.serviceOrdersService.findByAccount(accountObjectId, 1, 1),
+        this.paymentsService.findAll(accountObjectId, 1, 1),
+        this.expensesService.findAll(accountObjectId, 1, 1)
+      ]);
+
+    return {
+      account: {
+        id: account._id.toString(),
+        name: account.name,
+        replyToEmail: account.replyToEmail || ''
+      },
+      usersByRole,
+      totals: {
+        customers: customersData.total,
+        services: servicesData.total,
+        products: productsData.total,
+        events: eventsData.total,
+        quotes: quotesData.total,
+        serviceOrders: serviceOrdersData.total,
+        paymentOrders: paymentOrdersData.total,
+        expenses: expensesData.total
+      }
+    };
+  }
+
   async updateAccount(accountId: string, updateData: { status?: 'pending' | 'active' | 'suspended'; replyToEmail?: string; expireDate?: string }) {
     const dataToUpdate: any = {};
 
