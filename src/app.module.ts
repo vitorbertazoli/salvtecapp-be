@@ -16,7 +16,6 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { FollowUpsModule } from './follow-ups/follow-ups.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
-import { ProspectingModule } from './prospecting/prospecting.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { RolesModule } from './roles/roles.module';
 import { ServiceOrdersModule } from './service-orders/service-orders.module';
@@ -36,11 +35,11 @@ import { WebsocketModule } from './websocket/websocket.module';
     }),
     CacheModule.register({
       isGlobal: true,
-      ttl: 600000, // 10 minutes in milliseconds
+      ttl: 600000 // 10 minutes in milliseconds
     }),
     HttpModule.register({
       timeout: 5000,
-      maxRedirects: 5,
+      maxRedirects: 5
     }),
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -56,7 +55,6 @@ import { WebsocketModule } from './websocket/websocket.module';
     RolesModule,
     ServicesModule,
     ProductsModule,
-    ProspectingModule,
     TechniciansModule,
     CustomersModule,
     QuotesModule,
