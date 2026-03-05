@@ -27,6 +27,7 @@ import { VehicleUsagesModule } from './vehicle-usages/vehicle-usages.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { WeatherModule } from './weather/weather.module';
 import { WebsocketModule } from './websocket/websocket.module';
+import { ProspectingModule } from './prospecting/prospecting.module';
 
 @Module({
   imports: [
@@ -69,7 +70,8 @@ import { WebsocketModule } from './websocket/websocket.module';
     VehiclesModule,
     VehicleUsagesModule,
     WebsocketModule,
-    WeatherModule
+    WeatherModule,
+    ProspectingModule
   ],
   controllers: [AppController],
   providers: []

@@ -33,12 +33,7 @@ export class ProspectingController {
 
   @Post('businesses/:id/calls')
   @Roles('ADMIN')
-  async createCall(
-    @Param('id') id: string,
-    @Body() dto: CreateProspectCallDto,
-    @GetAccountId() accountId: Types.ObjectId,
-    @GetUser('id') userId: string
-  ) {
+  async createCall(@Param('id') id: string, @Body() dto: CreateProspectCallDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     return this.prospectingService.createCallLog(id, dto, accountId, userId);
   }
 }
