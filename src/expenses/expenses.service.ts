@@ -28,11 +28,16 @@ export class ExpensesService {
     search: string = '',
     category?: string,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    createdBy?: Types.ObjectId
   ): Promise<{ data: Expense[]; total: number }> {
     const skip = (page - 1) * limit;
 
     const query: any = { account: accountId };
+
+    if (createdBy) {
+      query.createdBy = createdBy;
+    }
 
     // Add search filter
     if (search) {
@@ -71,9 +76,15 @@ export class ExpensesService {
     return { data, total };
   }
 
-  async findOne(id: string, accountId: Types.ObjectId): Promise<Expense> {
+  async findOne(id: string, accountId: Types.ObjectId, createdBy?: Types.ObjectId): Promise<Expense> {
+    const query: any = { _id: id, account: accountId };
+
+    if (createdBy) {
+      query.createdBy = createdBy;
+    }
+
     const expense = await this.expenseModel
-      .findOne({ _id: id, account: accountId })
+      .findOne(query)
       .populate('createdBy', 'firstName lastName')
       .populate('updatedBy', 'firstName lastName')
       .populate('approvedBy', 'firstName lastName')
@@ -86,11 +97,23 @@ export class ExpensesService {
     return expense;
   }
 
-  async update(id: string, updateExpenseDto: UpdateExpenseDto, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<Expense> {
+  async update(
+    id: string,
+    updateExpenseDto: UpdateExpenseDto,
+    accountId: Types.ObjectId,
+    userId: Types.ObjectId,
+    createdBy?: Types.ObjectId
+  ): Promise<Expense> {
     const updateData: any = {
       ...updateExpenseDto,
       updatedBy: userId
     };
+
+    const query: any = { _id: id, account: accountId };
+
+    if (createdBy) {
+      query.createdBy = createdBy;
+    }
 
     // Convert string IDs to ObjectIds
     if (updateExpenseDto.approvedBy) {
@@ -98,7 +121,7 @@ export class ExpensesService {
     }
 
     const expense = await this.expenseModel
-      .findOneAndUpdate({ _id: id, account: accountId }, updateData, { new: true, runValidators: true })
+      .findOneAndUpdate(query, updateData, { new: true, runValidators: true })
       .populate('createdBy', 'firstName lastName')
       .populate('updatedBy', 'firstName lastName')
       .populate('approvedBy', 'firstName lastName')
@@ -111,8 +134,14 @@ export class ExpensesService {
     return expense;
   }
 
-  async remove(id: string, accountId: Types.ObjectId): Promise<void> {
-    const result = await this.expenseModel.deleteOne({ _id: id, account: accountId }).exec();
+  async remove(id: string, accountId: Types.ObjectId, createdBy?: Types.ObjectId): Promise<void> {
+    const query: any = { _id: id, account: accountId };
+
+    if (createdBy) {
+      query.createdBy = createdBy;
+    }
+
+    const result = await this.expenseModel.deleteOne(query).exec();
 
     if (result.deletedCount === 0) {
       throw new NotFoundException('Expense not found');
@@ -122,13 +151,18 @@ export class ExpensesService {
   async getExpenseStats(
     accountId: Types.ObjectId,
     startDate?: string,
-    endDate?: string
+    endDate?: string,
+    createdBy?: Types.ObjectId
   ): Promise<{
     totalExpenses: number;
     categoryBreakdown: { category: string; total: number; count: number }[];
     monthlyBreakdown: { month: string; total: number; count: number }[];
   }> {
     const matchQuery: any = { account: accountId };
+
+    if (createdBy) {
+      matchQuery.createdBy = createdBy;
+    }
 
     if (startDate || endDate) {
       matchQuery.expenseDate = {};

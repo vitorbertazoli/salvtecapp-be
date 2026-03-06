@@ -4,6 +4,7 @@ jest.mock('marked', () => ({
 
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { PublicQuotesController } from '../src/quotes/public-quotes.controller';
 import { QuotesService } from '../src/quotes/quotes.service';
 
@@ -51,6 +52,14 @@ describe('PublicQuotesController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ThrottlerModule.forRoot([
+          {
+            ttl: 60000,
+            limit: 10
+          }
+        ])
+      ],
       controllers: [PublicQuotesController],
       providers: [
         {

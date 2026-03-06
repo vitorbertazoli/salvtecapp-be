@@ -1,11 +1,14 @@
-import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post, UseGuards } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { QuotesService } from './quotes.service';
 
 @Controller('public/quotes')
+@UseGuards(ThrottlerGuard)
 export class PublicQuotesController {
   constructor(private readonly quotesService: QuotesService) {}
 
   @Get('approve/:token')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async getQuoteForApproval(@Param('token') token: string) {
     const quote = await this.quotesService.getQuoteByToken(token);
     if (!quote) {
@@ -33,6 +36,7 @@ export class PublicQuotesController {
   }
 
   @Post('approve/:token')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async approveQuote(@Param('token') token: string, @Body() approvalData: { approved: boolean; notes?: string }) {
     const result = await this.quotesService.approveQuoteByToken(token, approvalData);
     if (!result) {

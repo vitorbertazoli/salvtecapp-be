@@ -11,7 +11,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
-  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create customers
+  @Roles('ADMIN') // Only ADMIN can access stats
   async getStats(@GetAccountId() accountId: Types.ObjectId, @Query('startDate') startDate?: string, @Query('endDate') endDate?: string) {
     return this.dashboardService.getStats(accountId, startDate, endDate);
   }

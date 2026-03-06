@@ -13,7 +13,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  @Roles('ADMIN') // Only users with ADMIN role can create products
+  @Roles('ADMIN', 'SUPERVISOR') // Only users with ADMIN or SUPERVISOR role can create products
   create(@Body() createProductDto: CreateProductDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const productData = {
       ...createProductDto,
@@ -43,7 +43,7 @@ export class ProductsController {
   }
 
   @Put(':id')
-  @Roles('ADMIN') // Only users with ADMIN role can update products
+  @Roles('ADMIN', 'SUPERVISOR') // Only users with ADMIN or SUPERVISOR role can update products
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const productData = {
       ...updateProductDto,

@@ -77,11 +77,13 @@ export class CustomersController {
   }
 
   @Post(':id/notes')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // All roles can add notes
   async addNote(@Param('id') id: string, @Body() dto: AddNoteDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.customersService.addNote(id, dto, userId, accountId);
   }
 
   @Put(':id/notes/:noteId')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // All roles can update notes
   async updateNote(
     @Param('id') id: string,
     @Param('noteId') noteId: string,
@@ -93,6 +95,7 @@ export class CustomersController {
   }
 
   @Delete(':id/notes/:noteId')
+  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can delete notes
   async deleteNote(@Param('id') id: string, @Param('noteId') noteId: string, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.customersService.deleteNote(id, noteId, userId, accountId);
   }
@@ -104,7 +107,7 @@ export class CustomersController {
   }
 
   @Post(':id/equipments/:equipmentIndex/pictures')
-  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // ADMIN and SUPERVISOR can upload equipment pictures
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // All roles can upload equipment pictures
   @UseInterceptors(
     FileInterceptor('pictures', {
       storage: diskStorage({
@@ -183,7 +186,7 @@ export class CustomersController {
   }
 
   @Delete(':id/equipments/:equipmentId/pictures/:index')
-  @Roles('ADMIN', 'SUPERVISOR')
+  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can delete equipment pictures
   async deleteEquipmentPicture(
     @Param('id') id: string,
     @Param('equipmentId') equipmentId: string,

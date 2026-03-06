@@ -13,7 +13,7 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
-  @Roles('ADMIN') // Only users with ADMIN role can create services
+  @Roles('ADMIN', 'SUPERVISOR') // Only users with ADMIN or SUPERVISOR role can create services
   create(@Body() createServiceDto: CreateServiceDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const serviceData = {
       ...createServiceDto,
@@ -43,7 +43,7 @@ export class ServicesController {
   }
 
   @Put(':id')
-  @Roles('ADMIN') // Only users with ADMIN role can update services
+  @Roles('ADMIN', 'SUPERVISOR') // Only users with ADMIN or SUPERVISOR role can update services
   update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     const serviceData = {
       ...updateServiceDto,

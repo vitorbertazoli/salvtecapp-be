@@ -15,6 +15,7 @@ Guidance for humans/AI agents working in the backend project.
 - Tests: `npm run test`
 - E2E: `npm run test:e2e`
 - You can access the VPS via ssh root@76.13.164.63
+- The VPS is an alpine linux
 - before running any command via SSH, check if you are running the command on powershell or bash, because it will affect how commands are wrapped, ideally you want to create a bash script, scp it to the server and execute it on the server to avoid any issues.
 
 ## Common Scripts

@@ -14,25 +14,25 @@ export class ProspectingController {
   constructor(private readonly prospectingService: ProspectingService) {}
 
   @Post('businesses/upsert')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR') // Only ADMIN and SUPERVISOR can upsert businesses
   async upsertBusiness(@Body() dto: UpsertProspectBusinessDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     return this.prospectingService.upsertBusiness(dto, accountId, userId);
   }
 
   @Post('businesses/statuses')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR') // Only ADMIN and SUPERVISOR can get business statuses
   async getStatuses(@Body() dto: ProspectStatusesDto, @GetAccountId() accountId: Types.ObjectId) {
     return this.prospectingService.getBusinessStatusesByPlaceIds(dto.placeIds, accountId);
   }
 
   @Get('businesses/:id/calls')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR') // Only ADMIN and SUPERVISOR can get business calls
   async getBusinessCalls(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.prospectingService.getBusinessCallLogs(id, accountId);
   }
 
   @Post('businesses/:id/calls')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR') // Only ADMIN and SUPERVISOR can create business calls
   async createCall(@Param('id') id: string, @Body() dto: CreateProspectCallDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     return this.prospectingService.createCallLog(id, dto, accountId, userId);
   }

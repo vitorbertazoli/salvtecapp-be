@@ -65,10 +65,10 @@ export class TechniciansController {
 
   @Get(':id')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
-    // Check if user has ADMIN role
-    const isAdmin = user.roles?.some((role: any) => role === 'ADMIN');
+    // Check if user has ADMIN or SUPERVISOR role
+    const isAdminOrSupervisor = user.roles?.some((role: any) => role === 'ADMIN' || role === 'SUPERVISOR');
 
-    if (isAdmin) {
+    if (isAdminOrSupervisor) {
       return this.techniciansService.findByIdAndAccount(id, accountId);
     } else {
       // return the current user's technician record
