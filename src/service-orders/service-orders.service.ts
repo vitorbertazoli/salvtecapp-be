@@ -292,6 +292,7 @@ export class ServiceOrdersService {
     changeOrder.approvedBy = userId;
 
     // Update service order items and totals
+    serviceOrder.description = changeOrder.description;
     serviceOrder.items = changeOrder.modifiedItems;
     serviceOrder.subtotal = changeOrder.subtotal;
     serviceOrder.totalValue = changeOrder.totalValue;
