@@ -4,12 +4,14 @@ import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
 import { ContractsController } from '../src/contracts/contracts.controller';
 import { ContractsService } from '../src/contracts/contracts.service';
-import { CreateContractDto } from '../src/contracts/dto/create-contract.dto';
-import { UpdateContractDto } from '../src/contracts/dto/update-contract.dto';
+import { ApproveContractChangeOrderDto } from '../src/contracts/dto/approve-change-order.dto';
+import { CreateContractChangeOrderDto } from '../src/contracts/dto/create-change-order.dto';
+import { PaymentsService } from '../src/payments/payments.service';
 
 describe('ContractsController', () => {
   let controller: ContractsController;
   let contractsService: jest.Mocked<ContractsService>;
+  let paymentsService: jest.Mocked<PaymentsService>;
 
   const mockContractId = '507f1f77bcf86cd799439011';
   const mockAccountId = new Types.ObjectId('507f1f77bcf86cd799439012');
@@ -40,6 +42,14 @@ describe('ContractsController', () => {
     totalPages: 1
   };
 
+  const mockContractPayments = {
+    paymentOrders: [],
+    contractValue: 1000,
+    totalScheduled: 1000,
+    totalPaid: 250,
+    totalRemaining: 750
+  };
+
   beforeEach(async () => {
     const mockContractsService = {
       create: jest.fn(),
@@ -47,9 +57,15 @@ describe('ContractsController', () => {
       findByAccount: jest.fn(),
       findOne: jest.fn(),
       findByIdAndAccount: jest.fn(),
-      updateByAccount: jest.fn(),
+      createChangeOrder: jest.fn(),
+      approveChangeOrder: jest.fn(),
+      rejectChangeOrder: jest.fn(),
       deleteByAccount: jest.fn(),
       deleteAllByAccount: jest.fn()
+    };
+
+    const mockPaymentsService = {
+      findByContract: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -58,6 +74,10 @@ describe('ContractsController', () => {
         {
           provide: ContractsService,
           useValue: mockContractsService
+        },
+        {
+          provide: PaymentsService,
+          useValue: mockPaymentsService
         }
       ]
     })
@@ -69,37 +89,11 @@ describe('ContractsController', () => {
 
     controller = module.get<ContractsController>(ContractsController);
     contractsService = module.get(ContractsService);
+    paymentsService = module.get(PaymentsService);
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
-  });
-
-  describe('create', () => {
-    it('should create a contract successfully', async () => {
-      const createDto: CreateContractDto = {
-        startDate: '2024-01-01',
-        expireDate: '2024-12-31',
-        status: 'active',
-        frequency: 'monthly',
-        terms: 'Test contract terms',
-        value: 1000,
-        customer: mockCustomerId
-      };
-
-      contractsService.create.mockResolvedValue(mockContract as any);
-
-      const result = await controller.create(createDto, mockUserId, mockAccountId);
-
-      expect(contractsService.create).toHaveBeenCalledWith({
-        ...createDto,
-        account: mockAccountId,
-        customer: new Types.ObjectId(mockCustomerId),
-        createdBy: new Types.ObjectId(mockUserId),
-        updatedBy: new Types.ObjectId(mockUserId)
-      });
-      expect(result).toEqual(mockContract);
-    });
   });
 
   describe('findAll', () => {
@@ -152,50 +146,14 @@ describe('ContractsController', () => {
     });
   });
 
-  describe('update', () => {
-    it('should update a contract successfully', async () => {
-      const updateDto: UpdateContractDto = {
-        terms: 'Updated terms',
-        value: 1500,
-        customer: mockCustomerId
-      };
+  describe('findPayments', () => {
+    it('should return payments summary for a contract', async () => {
+      paymentsService.findByContract.mockResolvedValue(mockContractPayments as any);
 
-      const updatedContract = { ...mockContract, ...updateDto };
-      contractsService.updateByAccount.mockResolvedValue(updatedContract as any);
+      const result = await controller.findPayments(mockContractId, mockAccountId);
 
-      const result = await controller.update(mockContractId, updateDto, mockUserId, mockAccountId);
-
-      expect(contractsService.updateByAccount).toHaveBeenCalledWith(
-        mockContractId,
-        {
-          ...updateDto,
-          customer: new Types.ObjectId(mockCustomerId),
-          updatedBy: new Types.ObjectId(mockUserId)
-        },
-        mockAccountId
-      );
-      expect(result).toEqual(updatedContract);
-    });
-
-    it('should update contract without customer change', async () => {
-      const updateDto: UpdateContractDto = {
-        terms: 'Updated terms only'
-      };
-
-      const updatedContract = { ...mockContract, ...updateDto };
-      contractsService.updateByAccount.mockResolvedValue(updatedContract as any);
-
-      const result = await controller.update(mockContractId, updateDto, mockUserId, mockAccountId);
-
-      expect(contractsService.updateByAccount).toHaveBeenCalledWith(
-        mockContractId,
-        {
-          ...updateDto,
-          updatedBy: new Types.ObjectId(mockUserId)
-        },
-        mockAccountId
-      );
-      expect(result).toEqual(updatedContract);
+      expect(paymentsService.findByContract).toHaveBeenCalledWith(mockAccountId, mockContractId);
+      expect(result).toEqual(mockContractPayments);
     });
   });
 
@@ -215,6 +173,94 @@ describe('ContractsController', () => {
       const result = await controller.remove(mockContractId, mockAccountId);
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('createChangeOrder', () => {
+    it('should create a contract change order', async () => {
+      const dto: CreateContractChangeOrderDto = {
+        value: 1900,
+        terms: 'Adjusted terms',
+        description: 'Annual adjustment'
+      };
+
+      contractsService.createChangeOrder.mockResolvedValue(mockContract as any);
+
+      const result = await controller.createChangeOrder(mockContractId, dto, mockAccountId, mockUserId);
+
+      expect(contractsService.createChangeOrder).toHaveBeenCalledWith(
+        mockContractId,
+        {
+          terms: 'Adjusted terms',
+          value: 1900
+        },
+        mockAccountId,
+        new Types.ObjectId(mockUserId),
+        'Annual adjustment'
+      );
+      expect(result).toEqual(mockContract);
+    });
+
+    it('should map service ids when services are provided', async () => {
+      const dto: CreateContractChangeOrderDto = {
+        services: [
+          {
+            service: '507f1f77bcf86cd799439099',
+            quantity: 2,
+            unitValue: 500
+          }
+        ]
+      };
+
+      contractsService.createChangeOrder.mockResolvedValue(mockContract as any);
+
+      await controller.createChangeOrder(mockContractId, dto, mockAccountId, mockUserId);
+
+      expect(contractsService.createChangeOrder).toHaveBeenCalledWith(
+        mockContractId,
+        {
+          services: [
+            {
+              service: new Types.ObjectId('507f1f77bcf86cd799439099'),
+              quantity: 2,
+              unitValue: 500
+            }
+          ]
+        },
+        mockAccountId,
+        new Types.ObjectId(mockUserId),
+        undefined
+      );
+    });
+  });
+
+  describe('approveOrRejectChangeOrder', () => {
+    it('should approve a change order', async () => {
+      const dto: ApproveContractChangeOrderDto = {
+        version: 1,
+        action: 'approve'
+      };
+
+      contractsService.approveChangeOrder.mockResolvedValue(mockContract as any);
+
+      const result = await controller.approveOrRejectChangeOrder(mockContractId, '1', dto, mockAccountId, mockUserId);
+
+      expect(contractsService.approveChangeOrder).toHaveBeenCalledWith(mockContractId, 1, mockAccountId, new Types.ObjectId(mockUserId));
+      expect(result).toEqual(mockContract);
+    });
+
+    it('should reject a change order', async () => {
+      const dto: ApproveContractChangeOrderDto = {
+        version: 1,
+        action: 'reject'
+      };
+
+      contractsService.rejectChangeOrder.mockResolvedValue(mockContract as any);
+
+      const result = await controller.approveOrRejectChangeOrder(mockContractId, '1', dto, mockAccountId, mockUserId);
+
+      expect(contractsService.rejectChangeOrder).toHaveBeenCalledWith(mockContractId, 1, mockAccountId, new Types.ObjectId(mockUserId));
+      expect(result).toEqual(mockContract);
     });
   });
 });

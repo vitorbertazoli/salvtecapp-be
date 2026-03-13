@@ -2,22 +2,19 @@ import { Type } from 'class-transformer';
 import { IsArray, IsDateString, IsEnum, IsMongoId, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
 class ContractServiceItemDto {
-  @IsOptional()
   @IsMongoId()
-  service?: string;
+  service: string;
 
-  @IsOptional()
   @IsNumber()
   @Min(1)
-  quantity?: number;
+  quantity: number;
 
-  @IsOptional()
   @IsNumber()
   @Min(0)
-  unitValue?: number;
+  unitValue: number;
 }
 
-export class UpdateContractDto {
+export class CreateContractChangeOrderDto {
   @IsOptional()
   @IsDateString()
   startDate?: string;
@@ -25,10 +22,6 @@ export class UpdateContractDto {
   @IsOptional()
   @IsDateString()
   expireDate?: string;
-
-  @IsOptional()
-  @IsEnum(['pending', 'active', 'expired', 'cancelled'])
-  status?: 'pending' | 'active' | 'expired' | 'cancelled';
 
   @IsOptional()
   @IsEnum(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
@@ -47,6 +40,12 @@ export class UpdateContractDto {
   firstPaymentDate?: string;
 
   @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ContractServiceItemDto)
+  services?: ContractServiceItemDto[];
+
+  @IsOptional()
   @IsString()
   terms?: string;
 
@@ -56,16 +55,6 @@ export class UpdateContractDto {
   value?: number;
 
   @IsOptional()
-  @IsMongoId()
-  customer?: string;
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ContractServiceItemDto)
-  services?: ContractServiceItemDto[];
-
-  @IsOptional()
-  @IsMongoId()
-  contractQuote?: string;
+  @IsString()
+  description?: string;
 }

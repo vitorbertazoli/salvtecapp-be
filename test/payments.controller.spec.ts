@@ -36,10 +36,30 @@ describe('PaymentsController', () => {
 
   const mockPaymentOrderArray = [mockPaymentOrder];
 
+  const mockPaymentSimulation = {
+    frequency: 'monthly',
+    contractValue: 900,
+    netContractValue: 900,
+    totalInstallments: 3,
+    installments: [
+      {
+        installmentNumber: 1,
+        totalInstallments: 3,
+        dueDate: new Date('2026-01-01'),
+        totalAmount: 300,
+        periodStart: new Date('2026-01-01'),
+        periodEnd: new Date('2026-02-01')
+      }
+    ]
+  };
+
   const mockPaymentsService = {
     createFromServiceOrder: jest.fn(),
+    createFromContract: jest.fn(),
+    simulateContractPayments: jest.fn(),
     findAll: jest.fn(),
     findOne: jest.fn(),
+    update: jest.fn(),
     remove: jest.fn()
   };
 
@@ -71,10 +91,71 @@ describe('PaymentsController', () => {
     it('should create a payment order from service order', async () => {
       mockPaymentsService.createFromServiceOrder.mockResolvedValue(mockPaymentOrder);
 
-      const result = await controller.createFromServiceOrder(mockAccountId, mockServiceOrderId.toString());
+      const result = await controller.createFromServiceOrder(mockAccountId, mockServiceOrderId.toString(), mockUserId.toString());
 
       expect(mockPaymentsService.createFromServiceOrder).toHaveBeenCalledWith(mockAccountId, mockServiceOrderId.toString(), expect.anything());
       expect(result).toEqual(mockPaymentOrder);
+    });
+  });
+
+  describe('simulateContractPayments', () => {
+    it('should return payment simulation based on provided contract data', async () => {
+      const dto = {
+        startDate: '2026-01-01',
+        expireDate: '2026-03-01',
+        firstPaymentDate: '2026-01-01',
+        paymentFrequency: 'monthly',
+        value: 900
+      };
+
+      mockPaymentsService.simulateContractPayments.mockResolvedValue(mockPaymentSimulation);
+
+      const result = await controller.simulateContractPayments(dto as any);
+
+      expect(mockPaymentsService.simulateContractPayments).toHaveBeenCalledWith(dto);
+      expect(result).toEqual(mockPaymentSimulation);
+    });
+
+    it('should preserve contiguous installment periods in simulation response', async () => {
+      const dto = {
+        startDate: '2026-03-16T00:00:00.000Z',
+        expireDate: '2027-03-17T00:00:00.000Z',
+        firstPaymentDate: '2026-03-16T00:00:00.000Z',
+        paymentFrequency: 'monthly',
+        value: 26480
+      };
+
+      const contiguousSimulation = {
+        frequency: 'monthly',
+        contractValue: 26480,
+        netContractValue: 26480,
+        totalInstallments: 13,
+        installments: [
+          {
+            installmentNumber: 1,
+            totalInstallments: 13,
+            dueDate: new Date('2026-03-16T00:00:00.000Z'),
+            totalAmount: 2036.93,
+            periodStart: new Date('2026-03-16T00:00:00.000Z'),
+            periodEnd: new Date('2026-04-16T00:00:00.000Z')
+          },
+          {
+            installmentNumber: 2,
+            totalInstallments: 13,
+            dueDate: new Date('2026-04-16T00:00:00.000Z'),
+            totalAmount: 2036.93,
+            periodStart: new Date('2026-04-16T00:00:00.000Z'),
+            periodEnd: new Date('2026-05-16T00:00:00.000Z')
+          }
+        ]
+      };
+
+      mockPaymentsService.simulateContractPayments.mockResolvedValueOnce(contiguousSimulation);
+
+      const result = await controller.simulateContractPayments(dto as any);
+
+      expect(mockPaymentsService.simulateContractPayments).toHaveBeenCalledWith(dto);
+      expect(result.installments[1].periodStart.toISOString()).toBe(result.installments[0].periodEnd.toISOString());
     });
   });
 

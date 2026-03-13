@@ -38,6 +38,9 @@ export class PaymentOrder {
   @Prop({ type: Types.ObjectId, ref: 'ServiceOrder' })
   serviceOrder?: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'Contract' })
+  contract?: Types.ObjectId;
+
   @Prop({
     required: true,
     enum: ['pending', 'partial', 'paid', 'refunded'],
@@ -53,6 +56,18 @@ export class PaymentOrder {
 
   @Prop()
   dueDate?: Date; // When payment is expected
+
+  @Prop({ min: 1 })
+  installmentNumber?: number;
+
+  @Prop({ min: 1 })
+  totalInstallments?: number;
+
+  @Prop()
+  periodStart?: Date;
+
+  @Prop()
+  periodEnd?: Date;
 
   @Prop()
   invoiceNumber?: string; // Reference to generated invoice

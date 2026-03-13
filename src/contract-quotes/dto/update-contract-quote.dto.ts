@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsDateString, IsEnum, IsMongoId, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
-class ContractServiceItemDto {
+class ContractQuoteServiceItemDto {
   @IsOptional()
   @IsMongoId()
   service?: string;
@@ -17,7 +17,7 @@ class ContractServiceItemDto {
   unitValue?: number;
 }
 
-export class UpdateContractDto {
+export class UpdateContractQuoteDto {
   @IsOptional()
   @IsDateString()
   startDate?: string;
@@ -27,12 +27,8 @@ export class UpdateContractDto {
   expireDate?: string;
 
   @IsOptional()
-  @IsEnum(['pending', 'active', 'expired', 'cancelled'])
-  status?: 'pending' | 'active' | 'expired' | 'cancelled';
-
-  @IsOptional()
-  @IsEnum(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
-  frequency?: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
+  @IsEnum(['draft', 'sent'])
+  status?: 'draft' | 'sent';
 
   @IsOptional()
   @IsEnum(['weekly', 'biweekly', 'monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
@@ -41,10 +37,6 @@ export class UpdateContractDto {
   @IsOptional()
   @IsEnum(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
   paymentFrequency?: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
-
-  @IsOptional()
-  @IsDateString()
-  firstPaymentDate?: string;
 
   @IsOptional()
   @IsString()
@@ -60,12 +52,12 @@ export class UpdateContractDto {
   customer?: string;
 
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ContractServiceItemDto)
-  services?: ContractServiceItemDto[];
+  @IsDateString()
+  firstPaymentDate?: string;
 
   @IsOptional()
-  @IsMongoId()
-  contractQuote?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ContractQuoteServiceItemDto)
+  services?: ContractQuoteServiceItemDto[];
 }

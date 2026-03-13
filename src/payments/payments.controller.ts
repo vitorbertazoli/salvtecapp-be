@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { SimulateContractPaymentsDto } from './dto/simulate-contract-payments.dto';
 import { UpdatePaymentOrderDto } from './dto/update-payment-order.dto';
 import { PaymentsService } from './payments.service';
 import { PaymentOrder } from './schemas/payment-order.schema';
@@ -20,6 +21,22 @@ export class PaymentsController {
     @GetUser('id') userId: string
   ): Promise<PaymentOrder> {
     return this.paymentsService.createFromServiceOrder(accountId, serviceOrderId, new Types.ObjectId(userId));
+  }
+
+  @Post('from-contract')
+  @Roles('ADMIN')
+  async createFromContract(
+    @GetAccountId() accountId: Types.ObjectId,
+    @Query('contractId') contractId: string,
+    @GetUser('id') userId: string
+  ): Promise<PaymentOrder[]> {
+    return this.paymentsService.createFromContract(accountId, contractId, new Types.ObjectId(userId));
+  }
+
+  @Post('simulate-contract')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async simulateContractPayments(@Body() dto: SimulateContractPaymentsDto) {
+    return this.paymentsService.simulateContractPayments(dto);
   }
 
   @Get()

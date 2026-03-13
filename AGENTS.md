@@ -29,6 +29,7 @@ Guidance for humans/AI agents working in the backend project.
 - Reuse existing DTO/Schema/Service patterns.
 - Do not change API contracts unless explicitly requested.
 - Prefer fixing root cause over patching symptoms.
+- For every new schema you add, also add the remove logic to the admin service's deleteAccount method
 
 ## Database & Safety
 - Never run destructive operations on production.

@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
-class ContractServiceItemDto {
+class ContractQuoteServiceItemDto {
   @IsNotEmpty()
   @IsMongoId()
   service: string;
@@ -17,7 +17,7 @@ class ContractServiceItemDto {
   unitValue: number;
 }
 
-export class CreateContractDto {
+export class CreateContractQuoteDto {
   @IsNotEmpty()
   @IsDateString()
   startDate: string;
@@ -27,24 +27,16 @@ export class CreateContractDto {
   expireDate: string;
 
   @IsOptional()
-  @IsEnum(['pending', 'active', 'expired', 'cancelled'])
-  status?: 'pending' | 'active' | 'expired' | 'cancelled';
+  @IsEnum(['draft', 'sent', 'accepted', 'rejected'])
+  status?: 'draft' | 'sent' | 'accepted' | 'rejected';
+
+  @IsNotEmpty()
+  @IsEnum(['weekly', 'biweekly', 'monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
+  maintenanceFrequency: 'weekly' | 'biweekly' | 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
 
   @IsNotEmpty()
   @IsEnum(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
-  frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
-
-  @IsOptional()
-  @IsEnum(['weekly', 'biweekly', 'monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
-  maintenanceFrequency?: 'weekly' | 'biweekly' | 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
-
-  @IsOptional()
-  @IsEnum(['monthly', 'bimonthly', 'quarterly', 'biannual', 'annual'])
-  paymentFrequency?: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
-
-  @IsOptional()
-  @IsDateString()
-  firstPaymentDate?: string;
+  paymentFrequency: 'monthly' | 'bimonthly' | 'quarterly' | 'biannual' | 'annual';
 
   @IsNotEmpty()
   @IsString()
@@ -59,13 +51,13 @@ export class CreateContractDto {
   @IsMongoId()
   customer: string;
 
+  @IsNotEmpty()
+  @IsDateString()
+  firstPaymentDate: string;
+
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ContractServiceItemDto)
-  services?: ContractServiceItemDto[];
-
-  @IsOptional()
-  @IsMongoId()
-  contractQuote?: string;
+  @Type(() => ContractQuoteServiceItemDto)
+  services?: ContractQuoteServiceItemDto[];
 }

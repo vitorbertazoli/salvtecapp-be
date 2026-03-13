@@ -39,6 +39,16 @@ export class QuoteToServiceOrderService {
     }
 
     const updateData = { ...quoteData };
+
+    const currentCustomerId = currentQuote.customer ? currentQuote.customer.toString() : '';
+    const nextCustomerId = quoteData.customer ? quoteData.customer.toString() : '';
+    const customerChanged = !!nextCustomerId && nextCustomerId !== currentCustomerId;
+
+    // When changing customer, stale equipments from previous customer must not remain.
+    if (customerChanged && quoteData.equipments === undefined) {
+      updateData.equipments = [];
+    }
+
     if ((currentQuote.status === 'sent' || currentQuote.status === 'draft') && quoteData.status === 'rejected') {
       updateData.status = 'rejected';
     } else if (quoteData.status === 'accepted' && (currentQuote.status === 'sent' || currentQuote.status === 'draft')) {

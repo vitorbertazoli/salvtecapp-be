@@ -17,12 +17,6 @@ export class WebSocketAuthMiddleware {
       // Extract token from handshake auth or query parameters
       const token = socket.handshake.auth?.token || socket.handshake.query?.token;
 
-      console.log('WebSocket auth attempt:', {
-        hasAuthToken: !!socket.handshake.auth?.token,
-        hasQueryToken: !!socket.handshake.query?.token,
-        token: token ? 'present' : 'missing'
-      });
-
       if (!token) {
         console.log('WebSocket auth failed: No token provided');
         throw new UnauthorizedException('No token provided');
@@ -31,13 +25,9 @@ export class WebSocketAuthMiddleware {
       // Verify the JWT token using the same secret as JwtStrategy
       let payload;
       try {
-        console.log('Attempting to verify token with length:', token.length);
-        console.log('Token starts with:', token.substring(0, 20));
         // Use the same secret as JwtStrategy
         const secret = process.env.JWT_SECRET || 'your-secret-key';
-        console.log('Using JWT secret from env:', !!process.env.JWT_SECRET);
         payload = await this.jwtService.verifyAsync(token, { secret });
-        console.log('JWT verification successful, payload:', payload);
       } catch (error) {
         console.log('JWT verification error:', error);
         console.log('Error name:', error.name);
@@ -81,7 +71,6 @@ export class WebSocketAuthMiddleware {
         }
       }
 
-      console.log('WebSocket auth successful for user:', user.email);
       next();
     } catch (error) {
       console.error('WebSocket authentication failed:', error.message);

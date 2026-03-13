@@ -4,11 +4,13 @@ import { Model, Types } from 'mongoose';
 import { ContractsService } from '../src/contracts/contracts.service';
 import { Contract, ContractDocument } from '../src/contracts/schemas/contract.schema';
 import { CustomersService } from '../src/customers/customers.service';
+import { PaymentsService } from '../src/payments/payments.service';
 
 describe('ContractsService', () => {
   let service: ContractsService;
   let contractModel: jest.Mocked<Model<ContractDocument>>;
   let customersService: jest.Mocked<CustomersService>;
+  let paymentsService: jest.Mocked<PaymentsService>;
 
   const mockContractId = '507f1f77bcf86cd799439011';
   const mockAccountId = new Types.ObjectId('507f1f77bcf86cd799439012');
@@ -30,6 +32,13 @@ describe('ContractsService', () => {
     frequency: 'monthly' as const,
     terms: 'Test contract terms',
     value: 1000,
+    services: [
+      {
+        service: new Types.ObjectId('507f1f77bcf86cd799439015'),
+        quantity: 1,
+        unitValue: 1000
+      }
+    ],
     customer: mockCustomerId,
     account: mockAccountId,
     createdBy: mockUserId,
@@ -76,6 +85,10 @@ describe('ContractsService', () => {
       findByIdAndAccount: jest.fn()
     };
 
+    const mockPaymentsService = {
+      regenerateFromContract: jest.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ContractsService,
@@ -86,6 +99,10 @@ describe('ContractsService', () => {
         {
           provide: CustomersService,
           useValue: mockCustomersService
+        },
+        {
+          provide: PaymentsService,
+          useValue: mockPaymentsService
         }
       ]
     }).compile();
@@ -93,6 +110,7 @@ describe('ContractsService', () => {
     service = module.get<ContractsService>(ContractsService);
     contractModel = module.get(getModelToken(Contract.name));
     customersService = module.get(CustomersService);
+    paymentsService = module.get(PaymentsService);
   });
 
   it('should be defined', () => {
@@ -277,61 +295,119 @@ describe('ContractsService', () => {
     });
   });
 
-  describe('updateByAccount', () => {
-    it('should update contract successfully', async () => {
-      const updateData = {
-        terms: 'Updated terms',
-        customer: mockCustomerId.toString(),
-        updatedBy: mockUserId
-      };
+  describe('createChangeOrder', () => {
+    it('should create a change order successfully', async () => {
+      const contractDocument = {
+        ...mockContract,
+        changeOrders: [],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(mockContract)
+      } as any;
 
-      const updatedContract = { ...mockContract, ...updateData };
-
-      customersService.findByIdAndAccount.mockResolvedValue(mockCustomer as any);
-      contractModel.findOneAndUpdate.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(updatedContract)
+      contractModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(contractDocument)
       } as any);
 
-      const result = await service.updateByAccount(mockContractId, updateData, mockAccountId);
-
-      expect(customersService.findByIdAndAccount).toHaveBeenCalledWith(mockCustomerId.toString(), mockAccountId);
-      expect(contractModel.findOneAndUpdate).toHaveBeenCalledWith(
-        { _id: mockContractId, account: mockAccountId },
-        { ...updateData, customer: mockCustomerId },
-        { new: true }
+      await service.createChangeOrder(
+        mockContractId,
+        {
+          value: 1500,
+          terms: 'Updated contract terms'
+        } as any,
+        mockAccountId,
+        new Types.ObjectId(mockUserId),
+        'Requested value update'
       );
-      expect(result).toEqual(updatedContract);
+
+      expect(contractDocument.changeOrders).toHaveLength(1);
+      expect(contractDocument.changeOrders[0].version).toBe(1);
+      expect(contractDocument.changeOrders[0].status).toBe('pending');
+      expect(contractDocument.changeOrders[0].modifiedData.value).toBe(1500);
+      expect(contractDocument.save).toHaveBeenCalled();
     });
 
-    it('should update contract without customer change', async () => {
-      const updateData = {
-        terms: 'Updated terms',
-        updatedBy: mockUserId
-      };
+    it('should throw when no meaningful changes are provided', async () => {
+      const contractDocument = {
+        ...mockContract,
+        changeOrders: [],
+        markModified: jest.fn(),
+        save: jest.fn()
+      } as any;
 
-      const updatedContract = { ...mockContract, ...updateData };
-
-      contractModel.findOneAndUpdate.mockReturnValue({
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(updatedContract)
+      contractModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(contractDocument)
       } as any);
 
-      const result = await service.updateByAccount(mockContractId, updateData, mockAccountId);
-
-      expect(customersService.findByIdAndAccount).not.toHaveBeenCalled();
-      expect(result).toEqual(updatedContract);
+      await expect(service.createChangeOrder(mockContractId, {}, mockAccountId, new Types.ObjectId(mockUserId))).rejects.toThrow(
+        'contracts.changeOrderNoChanges'
+      );
     });
+  });
 
-    it('should throw error when customer not found', async () => {
-      const updateData = {
-        customer: mockCustomerId.toString(),
-        updatedBy: mockUserId
-      };
+  describe('approveChangeOrder', () => {
+    it('should approve change order and apply modified data', async () => {
+      const contractDocument = {
+        ...mockContract,
+        changeOrders: [
+          {
+            version: 1,
+            status: 'pending',
+            modifiedData: {
+              startDate: new Date('2024-01-01'),
+              expireDate: new Date('2024-12-31'),
+              frequency: 'monthly',
+              maintenanceFrequency: undefined,
+              paymentFrequency: 'monthly',
+              firstPaymentDate: new Date('2024-01-10'),
+              services: mockContract.services,
+              terms: 'Updated terms',
+              value: 2000
+            }
+          }
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue({ ...mockContract, _id: mockContractId })
+      } as any;
 
-      customersService.findByIdAndAccount.mockResolvedValue(null);
+      contractModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(contractDocument)
+      } as any);
 
-      await expect(service.updateByAccount(mockContractId, updateData, mockAccountId)).rejects.toThrow('contracts.customerNotFound');
+      const result = await service.approveChangeOrder(mockContractId, 1, mockAccountId, new Types.ObjectId(mockUserId));
+
+      expect(contractDocument.changeOrders[0].status).toBe('approved');
+      expect(contractDocument.value).toBe(1000);
+      expect(contractDocument.terms).toBe('Updated terms');
+      expect(contractDocument.markModified).toHaveBeenCalledWith('changeOrders');
+      expect(contractDocument.save).toHaveBeenCalled();
+      expect(paymentsService.regenerateFromContract).toHaveBeenCalledWith(mockAccountId, mockContractId, new Types.ObjectId(mockUserId));
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('rejectChangeOrder', () => {
+    it('should reject a pending change order', async () => {
+      const contractDocument = {
+        ...mockContract,
+        changeOrders: [
+          {
+            version: 1,
+            status: 'pending'
+          }
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(mockContract)
+      } as any;
+
+      contractModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(contractDocument)
+      } as any);
+
+      await service.rejectChangeOrder(mockContractId, 1, mockAccountId, new Types.ObjectId(mockUserId));
+
+      expect(contractDocument.changeOrders[0].status).toBe('rejected');
+      expect(contractDocument.markModified).toHaveBeenCalledWith('changeOrders');
+      expect(contractDocument.save).toHaveBeenCalled();
     });
   });
 

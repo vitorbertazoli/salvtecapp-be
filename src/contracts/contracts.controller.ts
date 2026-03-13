@@ -3,31 +3,21 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { PaymentsService } from '../payments/payments.service';
 import { ContractsService } from './contracts.service';
-import { CreateContractDto } from './dto/create-contract.dto';
-import { UpdateContractDto } from './dto/update-contract.dto';
+import { ApproveContractChangeOrderDto } from './dto/approve-change-order.dto';
+import { CreateContractChangeOrderDto } from './dto/create-change-order.dto';
 
 @Controller('contracts')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ContractsController {
-  constructor(private readonly contractsService: ContractsService) {}
-
-  @Post()
-  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create contracts
-  async create(@Body() dto: CreateContractDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    const contractData = {
-      ...dto,
-      account: accountId,
-      customer: new Types.ObjectId(dto.customer),
-      createdBy: new Types.ObjectId(userId),
-      updatedBy: new Types.ObjectId(userId)
-    } as any;
-
-    return this.contractsService.create(contractData);
-  }
+  constructor(
+    private readonly contractsService: ContractsService,
+    private readonly paymentsService: PaymentsService
+  ) {}
 
   @Get()
-  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create contracts
+  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can view contracts
   async findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
@@ -43,26 +33,65 @@ export class ContractsController {
   }
 
   @Get(':id')
-  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can create contracts
+  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can view contracts
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.contractsService.findByIdAndAccount(id, accountId);
   }
 
-  @Put(':id')
-  @Roles('ADMIN', 'SUPERVISOR') // ADMIN and SUPERVISOR can update contracts
-  async update(@Param('id') id: string, @Body() dto: UpdateContractDto, @GetUser('id') userId: string, @GetAccountId() accountId: Types.ObjectId) {
-    const contractData = {
-      ...dto,
-      ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
-      updatedBy: new Types.ObjectId(userId)
-    } as any;
-
-    return this.contractsService.updateByAccount(id, contractData, accountId);
+  @Get(':id/payments')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async findPayments(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
+    return this.paymentsService.findByContract(accountId, id);
   }
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete contracts
   remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
     return this.contractsService.deleteByAccount(id, accountId);
+  }
+
+  @Post(':id/change-orders')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async createChangeOrder(
+    @Param('id') id: string,
+    @Body() dto: CreateContractChangeOrderDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    const changeData = {
+      ...(dto.startDate && { startDate: new Date(dto.startDate) }),
+      ...(dto.expireDate && { expireDate: new Date(dto.expireDate) }),
+      ...(dto.frequency && { frequency: dto.frequency }),
+      ...(dto.maintenanceFrequency && { maintenanceFrequency: dto.maintenanceFrequency }),
+      ...(dto.paymentFrequency && { paymentFrequency: dto.paymentFrequency }),
+      ...(dto.firstPaymentDate && { firstPaymentDate: new Date(dto.firstPaymentDate) }),
+      ...(dto.services && {
+        services: dto.services.map((service) => ({
+          ...service,
+          service: new Types.ObjectId(service.service)
+        }))
+      }),
+      ...(dto.terms !== undefined && { terms: dto.terms }),
+      ...(dto.value !== undefined && { value: dto.value })
+    } as any;
+
+    return this.contractsService.createChangeOrder(id, changeData, accountId, new Types.ObjectId(userId), dto.description);
+  }
+
+  @Put(':id/change-orders/:version')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async approveOrRejectChangeOrder(
+    @Param('id') id: string,
+    @Param('version') version: string,
+    @Body() dto: ApproveContractChangeOrderDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    const changeOrderVersion = parseInt(version, 10);
+    if (dto.action === 'approve') {
+      return this.contractsService.approveChangeOrder(id, changeOrderVersion, accountId, new Types.ObjectId(userId));
+    }
+
+    return this.contractsService.rejectChangeOrder(id, changeOrderVersion, accountId, new Types.ObjectId(userId));
   }
 }
