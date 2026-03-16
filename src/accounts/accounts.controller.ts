@@ -29,8 +29,8 @@ export class AccountsController {
   @Get('customizations')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
   async getCustomizations(@GetAccountId() accountid: Types.ObjectId) {
-    const customizations = await this.accountsService.getCustomizations(accountid);
-    return { customizations: customizations || '' };
+    const result = await this.accountsService.getCustomizations(accountid);
+    return { customizations: result.customizations || '', replyToEmail: result.replyToEmail || '' };
   }
 
   @Get(':id')
