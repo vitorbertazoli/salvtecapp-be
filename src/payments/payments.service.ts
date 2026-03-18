@@ -127,6 +127,14 @@ export class PaymentsService {
     return totalAmount - discountAmount + taxAmount;
   }
 
+  private toCents(value: number): number {
+    return Math.round(Number(value || 0) * 100);
+  }
+
+  private hasMatchingAmounts(left: number, right: number): boolean {
+    return this.toCents(left) === this.toCents(right);
+  }
+
   private buildContractPaymentSchedule(input: ContractPaymentScheduleInput): BuiltContractPaymentSchedule {
     const startDate = new Date(input.startDate);
     const expireDate = new Date(input.expireDate);
@@ -491,7 +499,7 @@ export class PaymentsService {
     }
 
     // Update other fields
-    const allowedFields = ['paymentStatus', 'dueDate', 'invoiceNumber', 'notes', 'discountAmount', 'taxAmount'];
+    const allowedFields = ['dueDate', 'invoiceNumber', 'notes', 'discountAmount', 'taxAmount'];
     for (const field of allowedFields) {
       if (updateData[field as keyof UpdatePaymentOrderDto] !== undefined) {
         updateFields[field] = updateData[field as keyof UpdatePaymentOrderDto];
@@ -509,20 +517,15 @@ export class PaymentsService {
       throw new NotFoundException('payments.errors.paymentOrderNotFound');
     }
 
-    // Calculate total paid amount and update status if not manually set
+    // Always auto-calculate status from payment and discount totals.
     const totalPaid = updatedPaymentOrder.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
-    const adjustedTotal = updatedPaymentOrder.totalAmount - (updatedPaymentOrder.discountAmount || 0);
+    const totalPaidWithDiscount = totalPaid + (updatedPaymentOrder.discountAmount || 0);
 
-    let newStatus = updatedPaymentOrder.paymentStatus;
-    if (!updateData.paymentStatus) {
-      // Only auto-update status if not manually set
-      if (totalPaid >= adjustedTotal) {
-        newStatus = 'paid';
-      } else if (totalPaid > 0) {
-        newStatus = 'partial';
-      } else {
-        newStatus = 'pending';
-      }
+    let newStatus: 'pending' | 'partial' | 'paid' = 'pending';
+    if (this.hasMatchingAmounts(totalPaidWithDiscount, updatedPaymentOrder.totalAmount)) {
+      newStatus = 'paid';
+    } else if (totalPaidWithDiscount > 0) {
+      newStatus = 'partial';
     }
 
     // Update status if it changed

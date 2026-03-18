@@ -1,12 +1,8 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { PaymentTransactionDto } from './payment-transaction.dto';
 
 export class UpdatePaymentOrderDto {
-  @IsOptional()
-  @IsEnum(['pending', 'partial', 'paid', 'refunded'])
-  paymentStatus?: 'pending' | 'partial' | 'paid' | 'refunded';
-
   @IsOptional()
   @IsDateString()
   dueDate?: string;

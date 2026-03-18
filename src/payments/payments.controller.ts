@@ -14,7 +14,7 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post('from-service-order')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR')
   async createFromServiceOrder(
     @GetAccountId() accountId: Types.ObjectId,
     @Query('serviceOrderId') serviceOrderId: string,
@@ -24,7 +24,7 @@ export class PaymentsController {
   }
 
   @Post('from-contract')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR')
   async createFromContract(
     @GetAccountId() accountId: Types.ObjectId,
     @Query('contractId') contractId: string,
@@ -40,7 +40,7 @@ export class PaymentsController {
   }
 
   @Get()
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR')
   async findAll(
     @GetAccountId() accountId: Types.ObjectId,
     @Query('page') page: number = 1,
@@ -52,13 +52,13 @@ export class PaymentsController {
   }
 
   @Get(':id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<PaymentOrder> {
     return this.paymentsService.findOne(id, accountId);
   }
 
   @Put(':id')
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPERVISOR')
   async update(
     @Param('id') id: string,
     @GetAccountId() accountId: Types.ObjectId,

@@ -59,6 +59,7 @@ describe('PaymentsService', () => {
     }));
 
     mockPaymentOrderModel.findOne = jest.fn();
+    mockPaymentOrderModel.findOneAndUpdate = jest.fn();
     mockPaymentOrderModel.find = jest.fn();
     mockPaymentOrderModel.findOneAndDelete = jest.fn();
     mockPaymentOrderModel.deleteMany = jest.fn();
@@ -336,6 +337,125 @@ describe('PaymentsService', () => {
       expect(result.totalScheduled).toBeCloseTo(600, 2);
       expect(result.totalPaid).toBeCloseTo(400.01, 2);
       expect(result.totalRemaining).toBeCloseTo(600, 2);
+    });
+  });
+
+  describe('update', () => {
+    it('should auto-set status to paid when payments plus discount match total amount', async () => {
+      const paymentOrderId = new Types.ObjectId();
+      const existingPaymentOrder = {
+        _id: paymentOrderId,
+        account: mockAccountId,
+        totalAmount: 1000,
+        discountAmount: 100,
+        payments: [{ amount: 200 }]
+      };
+
+      const updatedPaymentOrder = {
+        ...existingPaymentOrder,
+        paymentStatus: 'pending',
+        payments: [{ amount: 200 }, { amount: 700 }],
+        save: jest.fn()
+      };
+
+      paymentOrderModel.findOne.mockReturnValue(execMock(existingPaymentOrder));
+
+      const updateQueryMock = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedPaymentOrder)
+      };
+      paymentOrderModel.findOneAndUpdate.mockReturnValue(updateQueryMock);
+
+      const result = await service.update(
+        paymentOrderId.toString(),
+        mockAccountId,
+        {
+          paymentStatus: 'pending',
+          addPayments: [{ amount: 700, paymentMethod: 'PIX' }]
+        } as any,
+        mockUserId
+      );
+
+      const updateFieldsArg = paymentOrderModel.findOneAndUpdate.mock.calls[0][1];
+      expect(updateFieldsArg.paymentStatus).toBeUndefined();
+      expect(updatedPaymentOrder.save).toHaveBeenCalled();
+      expect(result.paymentStatus).toBe('paid');
+    });
+
+    it('should auto-set status to partial when totals do not match', async () => {
+      const paymentOrderId = new Types.ObjectId();
+      const existingPaymentOrder = {
+        _id: paymentOrderId,
+        account: mockAccountId,
+        totalAmount: 1000,
+        discountAmount: 100,
+        payments: [{ amount: 200 }]
+      };
+
+      const updatedPaymentOrder = {
+        ...existingPaymentOrder,
+        paymentStatus: 'pending',
+        payments: [{ amount: 200 }, { amount: 500 }],
+        save: jest.fn()
+      };
+
+      paymentOrderModel.findOne.mockReturnValue(execMock(existingPaymentOrder));
+
+      const updateQueryMock = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedPaymentOrder)
+      };
+      paymentOrderModel.findOneAndUpdate.mockReturnValue(updateQueryMock);
+
+      const result = await service.update(
+        paymentOrderId.toString(),
+        mockAccountId,
+        {
+          paymentStatus: 'paid',
+          addPayments: [{ amount: 500, paymentMethod: 'PIX' }]
+        } as any,
+        mockUserId
+      );
+
+      expect(updatedPaymentOrder.save).toHaveBeenCalled();
+      expect(result.paymentStatus).toBe('partial');
+    });
+
+    it('should auto-set status to pending when there is no paid amount or discount', async () => {
+      const paymentOrderId = new Types.ObjectId();
+      const existingPaymentOrder = {
+        _id: paymentOrderId,
+        account: mockAccountId,
+        totalAmount: 1000,
+        discountAmount: 0,
+        payments: []
+      };
+
+      const updatedPaymentOrder = {
+        ...existingPaymentOrder,
+        paymentStatus: 'partial',
+        save: jest.fn()
+      };
+
+      paymentOrderModel.findOne.mockReturnValue(execMock(existingPaymentOrder));
+
+      const updateQueryMock = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedPaymentOrder)
+      };
+      paymentOrderModel.findOneAndUpdate.mockReturnValue(updateQueryMock);
+
+      const result = await service.update(
+        paymentOrderId.toString(),
+        mockAccountId,
+        {
+          notes: 'status recalculation check'
+        } as any,
+        mockUserId
+      );
+
+      expect(updatedPaymentOrder.save).toHaveBeenCalled();
+      expect(result.paymentStatus).toBe('pending');
     });
   });
 
