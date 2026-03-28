@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { promises as fs } from 'fs';
 import { Model, Types } from 'mongoose';
+import { join } from 'path';
 import { CustomersService } from '../customers/customers.service';
 import { PaymentsService } from '../payments/payments.service';
 import { Contract, ContractDocument } from './schemas/contract.schema';
@@ -436,6 +438,21 @@ export class ContractsService {
   }
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    const contracts = await this.contractModel.find({ account: accountId }).select('files.url').lean().exec();
+    const fileUrls = contracts.flatMap((contract) => contract.files?.map((file) => file.url) || []);
+
+    await Promise.all(
+      fileUrls
+        .filter((fileUrl): fileUrl is string => Boolean(fileUrl && fileUrl.startsWith('/uploads/')))
+        .map(async (fileUrl) => {
+          try {
+            await fs.unlink(join(process.cwd(), fileUrl));
+          } catch (error) {
+            console.error(`Failed to delete contract file ${fileUrl}:`, error);
+          }
+        })
+    );
+
     return this.contractModel.deleteMany({ account: accountId }).exec();
   }
 }

@@ -9,6 +9,18 @@ import { Customer, CustomerDocument } from './schemas/customer.schema';
 export class CustomersService {
   constructor(@InjectModel(Customer.name) private customerModel: Model<CustomerDocument>) {}
 
+  private async deleteFileIfExists(fileUrl?: string) {
+    if (!fileUrl || !fileUrl.startsWith('/uploads/')) {
+      return;
+    }
+
+    try {
+      await fs.unlink(join(process.cwd(), fileUrl));
+    } catch (error) {
+      console.error(`Failed to delete file ${fileUrl}:`, error);
+    }
+  }
+
   async countByAccount(accountId: Types.ObjectId): Promise<number> {
     return this.customerModel.countDocuments({ account: accountId }).exec();
   }
@@ -352,6 +364,15 @@ export class CustomersService {
   }
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    const customers = await this.customerModel.find({ account: accountId }).select('pictures.url equipments.pictures').lean().exec();
+
+    const fileUrls = customers.flatMap((customer) => [
+      ...(customer.pictures?.map((picture) => picture.url) || []),
+      ...(customer.equipments?.flatMap((equipment) => equipment.pictures || []) || [])
+    ]);
+
+    await Promise.all(fileUrls.map((fileUrl) => this.deleteFileIfExists(fileUrl)));
+
     return this.customerModel.deleteMany({ account: accountId }).exec();
   }
 }

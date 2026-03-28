@@ -7,6 +7,7 @@ import { Types } from 'mongoose';
 import { AccountsService } from '../src/accounts/accounts.service';
 import { AccountDocument } from '../src/accounts/schemas/account.schema';
 import { AdminService } from '../src/admin/admin.service';
+import { ContractQuotesService } from '../src/contract-quotes/contract-quotes.service';
 import { ContractsService } from '../src/contracts/contracts.service';
 import { CustomersService } from '../src/customers/customers.service';
 import { EventsService } from '../src/events/events.service';
@@ -14,6 +15,7 @@ import { ExpensesService } from '../src/expenses/expenses.service';
 import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
 import { PaymentsService } from '../src/payments/payments.service';
 import { ProductsService } from '../src/products/products.service';
+import { ProspectingService } from '../src/prospecting/prospecting.service';
 import { QuotesService } from '../src/quotes/quotes.service';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 import { ServicesService } from '../src/services/services.service';
@@ -28,6 +30,7 @@ describe('AdminService', () => {
   let customersService: jest.Mocked<CustomersService>;
   let usersService: jest.Mocked<UsersService>;
   let productsService: jest.Mocked<ProductsService>;
+  let contractQuotesService: jest.Mocked<ContractQuotesService>;
   let quotesService: jest.Mocked<QuotesService>;
   let serviceOrdersService: jest.Mocked<ServiceOrdersService>;
   let servicesService: jest.Mocked<ServicesService>;
@@ -39,6 +42,7 @@ describe('AdminService', () => {
   let expensesService: jest.Mocked<ExpensesService>;
   let vehicleUsagesService: jest.Mocked<VehicleUsagesService>;
   let vehiclesService: jest.Mocked<VehiclesService>;
+  let prospectingService: jest.Mocked<ProspectingService>;
 
   const mockAccountId = new Types.ObjectId();
   const mockAccount: AccountDocument = {
@@ -92,6 +96,10 @@ describe('AdminService', () => {
       deleteAllByAccount: jest.fn()
     };
 
+    const mockContractQuotesService = {
+      deleteAllByAccount: jest.fn()
+    };
+
     const mockServiceOrdersService = {
       deleteAllByAccount: jest.fn()
     };
@@ -132,6 +140,10 @@ describe('AdminService', () => {
       deleteAllByAccount: jest.fn()
     };
 
+    const mockProspectingService = {
+      deleteAllByAccount: jest.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
@@ -154,6 +166,10 @@ describe('AdminService', () => {
         {
           provide: QuotesService,
           useValue: mockQuotesService
+        },
+        {
+          provide: ContractQuotesService,
+          useValue: mockContractQuotesService
         },
         {
           provide: ServiceOrdersService,
@@ -194,6 +210,10 @@ describe('AdminService', () => {
         {
           provide: VehiclesService,
           useValue: mockVehiclesService
+        },
+        {
+          provide: ProspectingService,
+          useValue: mockProspectingService
         }
       ]
     }).compile();
@@ -203,6 +223,7 @@ describe('AdminService', () => {
     customersService = module.get(CustomersService);
     usersService = module.get(UsersService);
     productsService = module.get(ProductsService);
+    contractQuotesService = module.get(ContractQuotesService);
     quotesService = module.get(QuotesService);
     serviceOrdersService = module.get(ServiceOrdersService);
     servicesService = module.get(ServicesService);
@@ -214,6 +235,7 @@ describe('AdminService', () => {
     expensesService = module.get(ExpensesService);
     vehicleUsagesService = module.get(VehicleUsagesService);
     vehiclesService = module.get(VehiclesService);
+    prospectingService = module.get(ProspectingService);
   });
 
   it('should be defined', () => {
@@ -346,20 +368,23 @@ describe('AdminService', () => {
       accountsService.delete.mockResolvedValue(mockAccount);
 
       // Mock all the cascade delete methods
-      paymentsService.deleteAllByAccount.mockResolvedValue(undefined);
-      serviceOrdersService.deleteAllByAccount.mockResolvedValue(undefined);
-      expensesService.deleteAllByAccount.mockResolvedValue(undefined);
-      vehicleUsagesService.deleteAllByAccount.mockResolvedValue(undefined);
-      vehiclesService.deleteAllByAccount.mockResolvedValue(undefined);
-      quotesService.deleteAllByAccount.mockResolvedValue(undefined);
-      contractsService.deleteAllByAccount.mockResolvedValue(undefined);
-      followUpsService.deleteAllByAccount.mockResolvedValue(undefined);
-      eventsService.deleteAllByAccount.mockResolvedValue(undefined);
-      customersService.deleteAllByAccount.mockResolvedValue(undefined);
-      techniciansService.deleteAllByAccount.mockResolvedValue(undefined);
-      servicesService.deleteAllByAccount.mockResolvedValue(undefined);
-      productsService.deleteAllByAccount.mockResolvedValue(undefined);
-      usersService.deleteAllByAccount.mockResolvedValue(undefined);
+      const deleteResult = { deletedCount: 0 };
+      paymentsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      serviceOrdersService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      expensesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      vehicleUsagesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      vehiclesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      quotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      contractQuotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      contractsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      followUpsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      eventsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      customersService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      techniciansService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      servicesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      productsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      prospectingService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      usersService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
 
       const result = await service.deleteAccount(mockAccountId);
 
@@ -372,6 +397,7 @@ describe('AdminService', () => {
       expect(vehicleUsagesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(vehiclesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(quotesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(contractQuotesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(contractsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(followUpsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(eventsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
@@ -379,6 +405,7 @@ describe('AdminService', () => {
       expect(techniciansService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(servicesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(productsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(prospectingService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(usersService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(accountsService.delete).toHaveBeenCalledWith(mockAccountId);
 
@@ -405,20 +432,23 @@ describe('AdminService', () => {
       accountsService.delete.mockResolvedValue(null);
 
       // Mock cascade deletions to succeed
-      paymentsService.deleteAllByAccount.mockResolvedValue(undefined);
-      serviceOrdersService.deleteAllByAccount.mockResolvedValue(undefined);
-      expensesService.deleteAllByAccount.mockResolvedValue(undefined);
-      vehicleUsagesService.deleteAllByAccount.mockResolvedValue(undefined);
-      vehiclesService.deleteAllByAccount.mockResolvedValue(undefined);
-      quotesService.deleteAllByAccount.mockResolvedValue(undefined);
-      contractsService.deleteAllByAccount.mockResolvedValue(undefined);
-      followUpsService.deleteAllByAccount.mockResolvedValue(undefined);
-      eventsService.deleteAllByAccount.mockResolvedValue(undefined);
-      customersService.deleteAllByAccount.mockResolvedValue(undefined);
-      techniciansService.deleteAllByAccount.mockResolvedValue(undefined);
-      servicesService.deleteAllByAccount.mockResolvedValue(undefined);
-      productsService.deleteAllByAccount.mockResolvedValue(undefined);
-      usersService.deleteAllByAccount.mockResolvedValue(undefined);
+      const deleteResult = { deletedCount: 0 };
+      paymentsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      serviceOrdersService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      expensesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      vehicleUsagesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      vehiclesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      quotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      contractQuotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      contractsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      followUpsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      eventsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      customersService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      techniciansService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      servicesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      productsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      prospectingService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      usersService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
 
       await expect(service.deleteAccount(mockAccountId)).rejects.toThrow('admin.errors.failedToDeleteAccount');
     });

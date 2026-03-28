@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 
 class EquipmentDto {
   @IsNotEmpty()
@@ -107,6 +107,21 @@ export class CreateQuoteDto {
   @Min(0)
   @Max(100)
   discount?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  applyServiceTax?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  serviceTaxPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  serviceTaxAmount?: number;
 
   @IsOptional()
   @IsArray()

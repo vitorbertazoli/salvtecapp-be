@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { promises as fs } from 'fs';
 import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
+import { join } from 'path';
 import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
@@ -297,6 +299,21 @@ export class UsersService {
   }
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    const users = await this.userModel.find({ account: accountId }).select('profilePicture').lean().exec();
+
+    await Promise.all(
+      users
+        .map((user) => user.profilePicture)
+        .filter((profilePicture): profilePicture is string => Boolean(profilePicture && profilePicture.startsWith('/uploads/')))
+        .map(async (profilePicture) => {
+          try {
+            await fs.unlink(join(process.cwd(), profilePicture));
+          } catch (error) {
+            console.error(`Failed to delete profile picture ${profilePicture}:`, error);
+          }
+        })
+    );
+
     return this.userModel.deleteMany({ account: accountId }).exec();
   }
 }

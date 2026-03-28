@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { BillingInfoDto } from './billing-info.dto';
 
 export class UpdateAccountDto {
@@ -23,4 +23,10 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsString()
   customizations?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  serviceTaxPercent?: number;
 }

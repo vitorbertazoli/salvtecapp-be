@@ -42,11 +42,12 @@ export class AccountsService {
     return this.accountModel.findByIdAndDelete(id).exec();
   }
 
-  async getCustomizations(accountId: Types.ObjectId): Promise<{ customizations: string | null; replyToEmail: string | null }> {
-    const account = await this.accountModel.findById(accountId).select('customizations replyToEmail').exec();
+  async getCustomizations(accountId: Types.ObjectId): Promise<{ customizations: string | null; replyToEmail: string | null; serviceTaxPercent: number }> {
+    const account = await this.accountModel.findById(accountId).select('customizations replyToEmail serviceTaxPercent').exec();
     return {
       customizations: account?.customizations || null,
       replyToEmail: account?.replyToEmail || null,
+      serviceTaxPercent: account?.serviceTaxPercent ?? 0
     };
   }
 }

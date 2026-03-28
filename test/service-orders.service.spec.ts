@@ -55,6 +55,9 @@ describe('ServiceOrdersService', () => {
     ],
     description: 'Test service order',
     discount: 10,
+    applyServiceTax: true,
+    serviceTaxPercent: 10,
+    serviceTaxAmount: 10,
     otherDiscounts: [
       {
         description: 'Loyalty Discount',
@@ -104,6 +107,9 @@ describe('ServiceOrdersService', () => {
     ],
     description: 'Test quote description',
     discount: 10,
+    applyServiceTax: true,
+    serviceTaxPercent: 10,
+    serviceTaxAmount: 10,
     otherDiscounts: [
       {
         description: 'Loyalty Discount',
@@ -420,6 +426,87 @@ describe('ServiceOrdersService', () => {
         status: { $in: ['pending', 'scheduled', 'in_progress'] }
       });
       expect(result).toEqual(mockServiceOrderArray);
+    });
+  });
+
+  describe('createChangeOrder', () => {
+    it('should recalculate service tax when creating a change order', async () => {
+      const serviceOrderDocument = {
+        ...mockServiceOrder,
+        changeOrders: [],
+        save: jest.fn().mockResolvedValue(mockServiceOrder)
+      };
+
+      serviceOrderModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(serviceOrderDocument)
+      });
+
+      const modifiedItems = [
+        {
+          type: 'service' as const,
+          itemId: new Types.ObjectId(),
+          name: 'AC Maintenance',
+          quantity: 2,
+          unitValue: 100,
+          totalValue: 200
+        },
+        {
+          type: 'product' as const,
+          itemId: new Types.ObjectId(),
+          name: 'Filter',
+          quantity: 1,
+          unitValue: 50,
+          totalValue: 50
+        }
+      ];
+
+      await service.createChangeOrder(mockServiceOrder._id.toString(), modifiedItems as any, mockAccountId, mockUserId, 'Updated work', 10, true, 10, [
+        { description: 'Manual discount', amount: 5 }
+      ]);
+
+      expect(serviceOrderDocument.changeOrders[0]).toMatchObject({
+        applyServiceTax: true,
+        serviceTaxPercent: 10,
+        serviceTaxAmount: 20,
+        subtotal: 250,
+        totalValue: 240
+      });
+    });
+  });
+
+  describe('approveChangeOrder', () => {
+    it('should copy service tax fields from the approved change order', async () => {
+      const serviceOrderDocument = {
+        ...mockServiceOrder,
+        changeOrders: [
+          {
+            version: 1,
+            modifiedItems: mockServiceOrder.items,
+            modifiedEquipments: mockServiceOrder.equipments,
+            description: 'Repriced order',
+            subtotal: 200,
+            totalValue: 190,
+            discount: 10,
+            applyServiceTax: true,
+            serviceTaxPercent: 10,
+            serviceTaxAmount: 20,
+            otherDiscounts: [],
+            status: 'pending'
+          }
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(mockServiceOrder)
+      };
+
+      serviceOrderModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(serviceOrderDocument)
+      });
+
+      await service.approveChangeOrder(mockServiceOrder._id.toString(), 1, mockAccountId, mockUserId);
+
+      expect(serviceOrderDocument.applyServiceTax).toBe(true);
+      expect(serviceOrderDocument.serviceTaxPercent).toBe(10);
+      expect(serviceOrderDocument.serviceTaxAmount).toBe(20);
     });
   });
 });

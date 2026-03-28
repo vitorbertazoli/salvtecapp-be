@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { Quote, QuoteDocument } from '../quotes/schemas/quote.schema';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from '../service-orders/schemas/service-order.schema';
+import { calculateServiceOrderTotals } from '../service-orders/utils/service-order-totals';
 
 @Injectable()
 export class QuoteToServiceOrderService {
@@ -125,10 +126,15 @@ export class QuoteToServiceOrderService {
     }
 
     // Calculate totals
-    const subtotal = items.reduce((sum, item) => sum + item.totalValue, 0);
-    const discountAmount = subtotal * ((quote.discount || 0) / 100);
-    const otherDiscountsTotal = (quote.otherDiscounts || []).reduce((sum, od) => sum + od.amount, 0);
-    const totalValue = subtotal - discountAmount - otherDiscountsTotal;
+    const applyServiceTax = quote.applyServiceTax ?? false;
+    const serviceTaxPercent = quote.serviceTaxPercent ?? 0;
+    const { subtotal, serviceTaxAmount, totalValue } = calculateServiceOrderTotals({
+      items,
+      discount: quote.discount || 0,
+      otherDiscounts: quote.otherDiscounts || [],
+      applyServiceTax,
+      serviceTaxPercent
+    });
 
     // Generate order number
     const year = new Date().getFullYear();
@@ -145,6 +151,9 @@ export class QuoteToServiceOrderService {
       items,
       description: quote.description,
       discount: quote.discount || 0,
+      applyServiceTax,
+      serviceTaxPercent,
+      serviceTaxAmount,
       otherDiscounts: quote.otherDiscounts || [],
       subtotal,
       totalValue,

@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateChangeOrderDto {
   @IsArray()
@@ -20,6 +20,16 @@ export class CreateChangeOrderDto {
   @IsNumber()
   @Min(0)
   discount?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  applyServiceTax?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  serviceTaxPercent?: number;
 
   @IsOptional()
   @IsArray()

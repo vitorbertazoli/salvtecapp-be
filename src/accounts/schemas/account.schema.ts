@@ -52,6 +52,9 @@ export class Account {
 
   @Prop()
   customizations?: string;
+
+  @Prop({ min: 0, max: 100, default: 0 })
+  serviceTaxPercent?: number;
 }
 
 export interface IAccount {
@@ -70,6 +73,7 @@ export interface IAccount {
     cvv?: string;
   };
   customizations?: string;
+  serviceTaxPercent?: number;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

@@ -53,6 +53,15 @@ export class ChangeOrder {
   @Prop({ min: 0, max: 100 })
   discount?: number;
 
+  @Prop({ default: false })
+  applyServiceTax?: boolean;
+
+  @Prop({ min: 0, max: 100, default: 0 })
+  serviceTaxPercent?: number;
+
+  @Prop({ min: 0, default: 0 })
+  serviceTaxAmount?: number;
+
   @Prop({
     type: [
       {
@@ -132,6 +141,15 @@ export class ServiceOrder {
 
   @Prop({ min: 0, max: 100 })
   discount?: number;
+
+  @Prop({ default: false })
+  applyServiceTax?: boolean;
+
+  @Prop({ min: 0, max: 100, default: 0 })
+  serviceTaxPercent?: number;
+
+  @Prop({ min: 0, default: 0 })
+  serviceTaxAmount?: number;
 
   @Prop({
     type: [

@@ -66,6 +66,15 @@ export class Quote {
   @Prop({ min: 0, max: 100 })
   discount?: number;
 
+  @Prop({ default: true })
+  applyServiceTax?: boolean;
+
+  @Prop({ min: 0, max: 100, default: 0 })
+  serviceTaxPercent?: number;
+
+  @Prop({ min: 0, default: 0 })
+  serviceTaxAmount?: number;
+
   @Prop({
     type: [
       {
@@ -130,6 +139,9 @@ export interface IQuote {
   totalValue: number;
   description?: string;
   discount?: number;
+  applyServiceTax?: boolean;
+  serviceTaxPercent?: number;
+  serviceTaxAmount?: number;
   otherDiscounts?: {
     description: string;
     amount: number;

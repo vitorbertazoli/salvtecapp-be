@@ -437,6 +437,13 @@ describe('UsersService', () => {
 
   describe('deleteAllByAccount', () => {
     it('should delete all users by account', async () => {
+      userModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue([])
+          })
+        })
+      } as any);
       const mockQuery = {
         exec: jest.fn().mockResolvedValue({ deletedCount: 5 })
       };

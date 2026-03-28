@@ -150,6 +150,10 @@ describe('QuotesController', () => {
             product: new Types.ObjectId(mockProductId.toString())
           }
         ],
+        applyServiceTax: true,
+        serviceTaxPercent: 0,
+        serviceTaxAmount: 0,
+        totalValue: 200,
         status: 'draft',
         issuedAt: expect.any(Date),
         createdBy: mockUserId,
@@ -175,6 +179,10 @@ describe('QuotesController', () => {
         ...createQuoteDto,
         account: mockAccountId,
         customer: new Types.ObjectId(mockCustomerId.toString()),
+        applyServiceTax: true,
+        serviceTaxPercent: 0,
+        serviceTaxAmount: 0,
+        totalValue: 0,
         status: 'draft',
         issuedAt: expect.any(Date),
         createdBy: mockUserId,
@@ -185,7 +193,7 @@ describe('QuotesController', () => {
 
       const result = await controller.create(createQuoteDto, mockAccountId, mockUserId);
 
-      expect(mockQuotesService.create).toHaveBeenCalledWith(expectedQuoteData);
+      expect(mockQuotesService.create).toHaveBeenLastCalledWith(expectedQuoteData);
       expect(result).toEqual(mockQuote);
     });
   });

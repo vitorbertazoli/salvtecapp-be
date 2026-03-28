@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { promises as fs } from 'fs';
 import { Types } from 'mongoose';
+import { join } from 'path';
 import { AccountsService } from '../accounts/accounts.service';
 import { AccountDocument } from '../accounts/schemas/account.schema';
+import { ContractQuotesService } from '../contract-quotes/contract-quotes.service';
 import { ContractsService } from '../contracts/contracts.service';
 import { CustomersService } from '../customers/customers.service';
 import { EventsService } from '../events/events.service';
@@ -9,6 +12,7 @@ import { ExpensesService } from '../expenses/expenses.service';
 import { FollowUpsService } from '../follow-ups/follow-ups.service';
 import { PaymentsService } from '../payments/payments.service';
 import { ProductsService } from '../products/products.service';
+import { ProspectingService } from '../prospecting/prospecting.service';
 import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
 import { ServicesService } from '../services/services.service';
@@ -24,6 +28,7 @@ export class AdminService {
     private customersService: CustomersService,
     private usersService: UsersService,
     private productsService: ProductsService,
+    private contractQuotesService: ContractQuotesService,
     private quotesService: QuotesService,
     private serviceOrdersService: ServiceOrdersService,
     private servicesService: ServicesService,
@@ -34,8 +39,21 @@ export class AdminService {
     private paymentsService: PaymentsService,
     private expensesService: ExpensesService,
     private vehicleUsagesService: VehicleUsagesService,
-    private vehiclesService: VehiclesService
+    private vehiclesService: VehiclesService,
+    private prospectingService: ProspectingService
   ) {}
+
+  private normalizeAccountId(accountId: Types.ObjectId | string): Types.ObjectId {
+    if (accountId instanceof Types.ObjectId) {
+      return accountId;
+    }
+
+    if (!Types.ObjectId.isValid(accountId)) {
+      throw new NotFoundException('admin.errors.accountNotFound');
+    }
+
+    return new Types.ObjectId(accountId);
+  }
 
   async getAllAccounts(
     page: number = 1,
@@ -185,61 +203,77 @@ export class AdminService {
     };
   }
 
-  async deleteAccount(accountId: Types.ObjectId) {
+  async deleteAccount(accountId: Types.ObjectId | string) {
+    const normalizedAccountId = this.normalizeAccountId(accountId);
+
     // First verify the account exists
-    const account = await this.accountsService.findOne(accountId);
+    const account = await this.accountsService.findOne(normalizedAccountId);
     if (!account) {
       throw new NotFoundException('admin.errors.accountNotFound');
     }
 
     // Perform cascade deletion in dependency-safe order
     // Delete payment orders first (they reference service orders)
-    await this.paymentsService.deleteAllByAccount(accountId);
+    await this.paymentsService.deleteAllByAccount(normalizedAccountId);
 
     // Delete service orders (they reference customers, services, technicians)
-    await this.serviceOrdersService.deleteAllByAccount(accountId);
+    await this.serviceOrdersService.deleteAllByAccount(normalizedAccountId);
 
     // Delete expenses
-    await this.expensesService.deleteAllByAccount(accountId);
+    await this.expensesService.deleteAllByAccount(normalizedAccountId);
 
     // Delete vehicle usages first (they reference vehicles and technicians)
-    await this.vehicleUsagesService.deleteAllByAccount(accountId);
+    await this.vehicleUsagesService.deleteAllByAccount(normalizedAccountId);
 
     // Delete vehicles
-    await this.vehiclesService.deleteAllByAccount(accountId);
+    await this.vehiclesService.deleteAllByAccount(normalizedAccountId);
 
     // Delete quotes (they reference customers, services)
-    await this.quotesService.deleteAllByAccount(accountId);
+    await this.quotesService.deleteAllByAccount(normalizedAccountId);
+
+    // Delete contract quotes before contracts/customers they reference
+    await this.contractQuotesService.deleteAllByAccount(normalizedAccountId);
 
     // Delete contracts (they reference customers)
-    await this.contractsService.deleteAllByAccount(accountId);
+    await this.contractsService.deleteAllByAccount(normalizedAccountId);
 
     // Delete follow-ups (they reference customers)
-    await this.followUpsService.deleteAllByAccount(accountId);
+    await this.followUpsService.deleteAllByAccount(normalizedAccountId);
 
     // Delete events (they reference customers, technicians)
-    await this.eventsService.deleteAllByAccount(accountId);
+    await this.eventsService.deleteAllByAccount(normalizedAccountId);
 
     // Delete customers (they reference technicians and addresses)
-    await this.customersService.deleteAllByAccount(accountId);
+    await this.customersService.deleteAllByAccount(normalizedAccountId);
 
     // Delete technicians
-    await this.techniciansService.deleteAllByAccount(accountId);
+    await this.techniciansService.deleteAllByAccount(normalizedAccountId);
 
     // Delete services
-    await this.servicesService.deleteAllByAccount(accountId);
+    await this.servicesService.deleteAllByAccount(normalizedAccountId);
 
     // Delete products
-    await this.productsService.deleteAllByAccount(accountId);
+    await this.productsService.deleteAllByAccount(normalizedAccountId);
+
+    // Delete prospecting data
+    await this.prospectingService.deleteAllByAccount(normalizedAccountId);
 
     // Delete users
-    await this.usersService.deleteAllByAccount(accountId);
+    await this.usersService.deleteAllByAccount(normalizedAccountId);
 
     // Finally delete the account itself
-    const deletedAccount = (await this.accountsService.delete(accountId)) as AccountDocument;
+    const deletedAccount = (await this.accountsService.delete(normalizedAccountId)) as AccountDocument;
 
     if (!deletedAccount) {
       throw new BadRequestException('admin.errors.failedToDeleteAccount');
+    }
+
+    if (deletedAccount.logoUrl?.startsWith('/uploads/')) {
+      try {
+        await fs.unlink(join(process.cwd(), deletedAccount.logoUrl));
+      } catch (error) {
+        console.error(`Failed to delete account logo ${deletedAccount.logoUrl}:`, error);
+      }
     }
 
     return {

@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 
 class ServiceOrderItemDto {
   @IsNotEmpty()
@@ -86,6 +86,21 @@ export class CreateServiceOrderDto {
   @Min(0)
   @Min(0, { message: 'Discount cannot exceed 100%' })
   discount?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  applyServiceTax?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  serviceTaxPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  serviceTaxAmount?: number;
 
   @IsNotEmpty()
   @IsNumber()

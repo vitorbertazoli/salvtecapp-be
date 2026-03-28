@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { GetAccountId } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminService } from './admin.service';
@@ -36,10 +37,11 @@ export class AdminController {
   }
 
   @Delete('accounts/:id')
-  async deleteAccount(@Param('id') accountId: Types.ObjectId, @GetAccountId() currentUserAccount: string) {
-    if (currentUserAccount === accountId.toString()) {
+  async deleteAccount(@Param('id', ParseObjectIdPipe) accountId: Types.ObjectId, @GetAccountId() currentUserAccount: Types.ObjectId) {
+    if (currentUserAccount.toString() === accountId.toString()) {
       throw new BadRequestException('admin.errors.cannotDeleteOwnAccount');
     }
+
     return this.adminService.deleteAccount(accountId);
   }
 }

@@ -132,6 +132,11 @@ export class ProspectingService {
     return callLog;
   }
 
+  async deleteAllByAccount(accountId: Types.ObjectId) {
+    await this.prospectCallLogModel.deleteMany({ account: accountId }).exec();
+    return this.prospectBusinessModel.deleteMany({ account: accountId }).exec();
+  }
+
   private async ensureBusinessExists(id: string, accountId: Types.ObjectId) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException('prospecting.errors.businessNotFound');

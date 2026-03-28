@@ -437,6 +437,13 @@ describe('ContractsService', () => {
   describe('deleteAllByAccount', () => {
     it('should delete all contracts for account', async () => {
       const mockDeleteResult = { deletedCount: 5 };
+      contractModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue([])
+          })
+        })
+      } as any);
       contractModel.deleteMany.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockDeleteResult)
       } as any);

@@ -270,6 +270,21 @@ export class ContractQuotesService {
   }
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
+    const contractQuotes = await this.contractQuoteModel.find({ account: accountId }).select('files.url').lean().exec();
+    const fileUrls = contractQuotes.flatMap((contractQuote) => contractQuote.files?.map((file) => file.url) || []);
+
+    await Promise.all(
+      fileUrls
+        .filter((fileUrl): fileUrl is string => Boolean(fileUrl && fileUrl.startsWith('/uploads/')))
+        .map(async (fileUrl) => {
+          try {
+            await fs.unlink(join(process.cwd(), fileUrl));
+          } catch (error) {
+            console.error(`Failed to delete contract quote file ${fileUrl}:`, error);
+          }
+        })
+    );
+
     return this.contractQuoteModel.deleteMany({ account: accountId }).exec();
   }
 

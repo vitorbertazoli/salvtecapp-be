@@ -103,6 +103,8 @@ export class ServiceOrdersController {
       new Types.ObjectId(userId),
       dto.description,
       dto.discount,
+      dto.applyServiceTax,
+      dto.serviceTaxPercent,
       dto.otherDiscounts,
       dto.equipments
     );

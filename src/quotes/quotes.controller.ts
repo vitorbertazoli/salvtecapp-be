@@ -8,6 +8,29 @@ import { CreateQuoteDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { QuotesService } from './quotes.service';
 
+const roundCurrency = (value: number) => Math.ceil(Math.max(0, value) * 100) / 100;
+
+const calculateQuoteTotals = (dto: {
+  services?: { quantity?: number; unitValue?: number }[];
+  products?: { quantity?: number; unitValue?: number }[];
+  discount?: number;
+  otherDiscounts?: { amount?: number }[];
+  applyServiceTax?: boolean;
+  serviceTaxPercent?: number;
+}) => {
+  const servicesTotal = (dto.services || []).reduce((sum, service) => sum + (service.quantity || 0) * (service.unitValue || 0), 0);
+  const productsTotal = (dto.products || []).reduce((sum, product) => sum + (product.quantity || 0) * (product.unitValue || 0), 0);
+  const subtotal = servicesTotal + productsTotal;
+  const serviceTaxAmount = dto.applyServiceTax && (dto.serviceTaxPercent || 0) > 0 ? roundCurrency((servicesTotal * (dto.serviceTaxPercent || 0)) / 100) : 0;
+  const discountValue = dto.discount ? (subtotal * dto.discount) / 100 : 0;
+  const otherDiscountsTotal = (dto.otherDiscounts || []).reduce((sum, discount) => sum + (discount.amount || 0), 0);
+
+  return {
+    serviceTaxAmount,
+    totalValue: roundCurrency(subtotal + serviceTaxAmount - discountValue - otherDiscountsTotal)
+  };
+};
+
 @Controller('quotes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class QuotesController {
@@ -19,6 +42,7 @@ export class QuotesController {
   @Post()
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can create quotes
   async create(@Body() dto: CreateQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const { serviceTaxAmount, totalValue } = calculateQuoteTotals(dto);
     const quoteData = {
       ...dto,
       account: accountId,
@@ -35,6 +59,10 @@ export class QuotesController {
           product: new Types.ObjectId(product.product)
         }))
       }),
+      applyServiceTax: dto.applyServiceTax ?? true,
+      serviceTaxPercent: dto.serviceTaxPercent ?? 0,
+      serviceTaxAmount,
+      totalValue,
       status: 'draft',
       issuedAt: new Date(),
       createdBy: new Types.ObjectId(userId),
@@ -68,6 +96,14 @@ export class QuotesController {
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN') // Multiple roles can update quotes
   async update(@Param('id') id: string, @Body() dto: UpdateQuoteDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    const nextApplyServiceTax = dto.applyServiceTax ?? false;
+    const nextServiceTaxPercent = dto.serviceTaxPercent ?? 0;
+    const { serviceTaxAmount, totalValue } = calculateQuoteTotals({
+      ...dto,
+      applyServiceTax: nextApplyServiceTax,
+      serviceTaxPercent: nextServiceTaxPercent
+    });
+
     const quoteData = {
       ...dto,
       ...(dto.customer && { customer: new Types.ObjectId(dto.customer) }),
@@ -83,6 +119,16 @@ export class QuotesController {
           ...(product.product && { product: new Types.ObjectId(product.product) })
         }))
       }),
+      ...(dto.applyServiceTax !== undefined && { applyServiceTax: nextApplyServiceTax }),
+      ...(dto.serviceTaxPercent !== undefined && { serviceTaxPercent: nextServiceTaxPercent }),
+      ...(dto.applyServiceTax !== undefined ||
+      dto.serviceTaxPercent !== undefined ||
+      dto.services ||
+      dto.products ||
+      dto.discount !== undefined ||
+      dto.otherDiscounts
+        ? { serviceTaxAmount, totalValue }
+        : {}),
       updatedBy: new Types.ObjectId(userId)
     } as any;
 

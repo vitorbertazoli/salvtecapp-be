@@ -273,7 +273,6 @@ export class QuotesService {
     };
 
     const formatDate = (date: Date) => {
-      console.log(date);
       return new Intl.DateTimeFormat('pt-BR', {
         year: 'numeric',
         month: '2-digit',
@@ -287,16 +286,11 @@ export class QuotesService {
     const createdBy = quote.createdBy;
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:5173');
 
-    // Calculate subtotal before discounts
-    let subtotal = quote.totalValue;
-    if (quote.discount) {
-      subtotal = subtotal / (1 - quote.discount / 100);
-    }
-    if (quote.otherDiscounts) {
-      quote.otherDiscounts.forEach((discount: any) => {
-        subtotal += discount.amount;
-      });
-    }
+    const servicesTotal = (quote.services || []).reduce((sum: number, serviceItem: any) => sum + serviceItem.quantity * serviceItem.unitValue, 0);
+    const productsTotal = (quote.products || []).reduce((sum: number, productItem: any) => sum + productItem.quantity * productItem.unitValue, 0);
+    const subtotal = servicesTotal + productsTotal;
+    const serviceTaxAmount = quote.applyServiceTax ? quote.serviceTaxAmount || 0 : 0;
+    const discountAmount = quote.discount ? (subtotal * quote.discount) / 100 : 0;
 
     const html = `
 <!DOCTYPE html>
@@ -754,11 +748,22 @@ export class QuotesService {
                 </tr>
 
                 ${
+                  serviceTaxAmount > 0
+                    ? `
+                <tr>
+                    <td style="padding: 8px 0; font-size: 16px; border-bottom: 1px solid #dee2e6;">Imposto sobre servi${'ç'}os (${quote.serviceTaxPercent || 0}%):</td>
+                    <td style="padding: 8px 0; font-size: 16px; text-align: right; border-bottom: 1px solid #dee2e6;">${formatCurrency(serviceTaxAmount)}</td>
+                </tr>
+                `
+                    : ''
+                }
+
+                ${
                   quote.discount
                     ? `
                 <tr>
                     <td style="padding: 8px 0; font-size: 16px; border-bottom: 1px solid #dee2e6;">Desconto (${quote.discount}%):</td>
-                    <td style="padding: 8px 0; font-size: 16px; text-align: right; border-bottom: 1px solid #dee2e6;">-${formatCurrency((subtotal * quote.discount) / 100)}</td>
+                    <td style="padding: 8px 0; font-size: 16px; text-align: right; border-bottom: 1px solid #dee2e6;">-${formatCurrency(discountAmount)}</td>
                 </tr>
                 `
                     : ''

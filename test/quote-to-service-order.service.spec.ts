@@ -36,22 +36,22 @@ describe('QuoteToServiceOrderService', () => {
     ],
     services: [
       {
-        service: mockServiceId,
-        product: mockProductId,
+        service: { _id: mockServiceId, name: 'Test Service' },
         quantity: 1,
-        unitPrice: 100.0,
-        totalPrice: 100.0
+        unitValue: 100.0
       }
     ],
     products: [
       {
-        product: mockProductId,
+        product: { _id: mockProductId, name: 'Test Product' },
         quantity: 1,
-        unitPrice: 100.0,
-        totalPrice: 100.0
+        unitValue: 100.0
       }
     ],
     description: 'Test quote',
+    applyServiceTax: true,
+    serviceTaxPercent: 10,
+    serviceTaxAmount: 10,
     totalValue: 200.0,
     status: 'draft' as const,
     validUntil: new Date('2024-12-31'),
@@ -80,6 +80,9 @@ describe('QuoteToServiceOrderService', () => {
       }
     ],
     description: 'Test service order',
+    applyServiceTax: true,
+    serviceTaxPercent: 10,
+    serviceTaxAmount: 10,
     subtotal: 100.0,
     totalValue: 100.0,
     issuedAt: new Date(),
@@ -264,6 +267,10 @@ describe('QuoteToServiceOrderService', () => {
           quote: mockQuoteId,
           account: mockAccountId,
           customer: mockCustomerId,
+          applyServiceTax: true,
+          serviceTaxPercent: 10,
+          serviceTaxAmount: 10,
+          totalValue: 210,
           status: 'pending',
           priority: 'normal',
           createdBy: mockUserId,

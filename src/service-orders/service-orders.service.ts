@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from './schemas/service-order.schema';
+import { calculateServiceOrderTotals } from './utils/service-order-totals';
 
 @Injectable()
 export class ServiceOrdersService {
@@ -135,6 +136,9 @@ export class ServiceOrdersService {
           items: 1,
           description: 1,
           discount: 1,
+          applyServiceTax: 1,
+          serviceTaxPercent: 1,
+          serviceTaxAmount: 1,
           subtotal: 1,
           totalValue: 1,
           issuedAt: 1,
@@ -230,6 +234,8 @@ export class ServiceOrdersService {
     userId: Types.ObjectId,
     description?: string,
     discount?: number,
+    applyServiceTax?: boolean,
+    serviceTaxPercent?: number,
     otherDiscounts?: { description: string; amount: number }[],
     equipments?: any[]
   ): Promise<ServiceOrder> {
@@ -242,10 +248,15 @@ export class ServiceOrdersService {
     const version = (serviceOrder.changeOrders?.length || 0) + 1;
 
     // Calculate totals for modified items
-    const subtotal = modifiedItems.reduce((sum, item) => sum + item.totalValue, 0);
-    const discountAmount = subtotal * ((discount || 0) / 100);
-    const otherDiscountsTotal = (otherDiscounts || []).reduce((sum, od) => sum + od.amount, 0);
-    const totalValue = subtotal - discountAmount - otherDiscountsTotal;
+    const nextApplyServiceTax = applyServiceTax ?? serviceOrder.applyServiceTax ?? false;
+    const nextServiceTaxPercent = serviceTaxPercent ?? serviceOrder.serviceTaxPercent ?? 0;
+    const { subtotal, serviceTaxAmount, totalValue } = calculateServiceOrderTotals({
+      items: modifiedItems,
+      discount: discount || 0,
+      otherDiscounts: otherDiscounts || [],
+      applyServiceTax: nextApplyServiceTax,
+      serviceTaxPercent: nextServiceTaxPercent
+    });
 
     const changeOrder = {
       version,
@@ -255,6 +266,9 @@ export class ServiceOrdersService {
       modifiedEquipments: equipments || [],
       description,
       discount: discount || 0,
+      applyServiceTax: nextApplyServiceTax,
+      serviceTaxPercent: nextServiceTaxPercent,
+      serviceTaxAmount,
       otherDiscounts: otherDiscounts || [],
       subtotal,
       totalValue,
@@ -297,6 +311,9 @@ export class ServiceOrdersService {
     serviceOrder.subtotal = changeOrder.subtotal;
     serviceOrder.totalValue = changeOrder.totalValue;
     serviceOrder.discount = changeOrder.discount;
+    serviceOrder.applyServiceTax = changeOrder.applyServiceTax;
+    serviceOrder.serviceTaxPercent = changeOrder.serviceTaxPercent;
+    serviceOrder.serviceTaxAmount = changeOrder.serviceTaxAmount;
     serviceOrder.otherDiscounts = changeOrder.otherDiscounts;
     serviceOrder.equipments = changeOrder.modifiedEquipments || [];
     serviceOrder.updatedBy = userId;

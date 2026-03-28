@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccountsModule } from '../accounts/accounts.module';
+import { ContractQuotesModule } from '../contract-quotes/contract-quotes.module';
 import { ContractsModule } from '../contracts/contracts.module';
 import { CustomersModule } from '../customers/customers.module';
 import { EventsModule } from '../events/events.module';
@@ -7,6 +8,7 @@ import { ExpensesModule } from '../expenses/expenses.module';
 import { FollowUpsModule } from '../follow-ups/follow-ups.module';
 import { PaymentsModule } from '../payments/payments.module';
 import { ProductsModule } from '../products/products.module';
+import { ProspectingModule } from '../prospecting/prospecting.module';
 import { QuotesModule } from '../quotes/quotes.module';
 import { ServiceOrdersModule } from '../service-orders/service-orders.module';
 import { ServicesModule } from '../services/services.module';
@@ -21,12 +23,14 @@ import { MasterAdminGuard } from './guards/master-admin.guard';
 @Module({
   imports: [
     AccountsModule,
+    ContractQuotesModule,
     ContractsModule,
     CustomersModule,
     ExpensesModule,
     UsersModule,
     ProductsModule,
     PaymentsModule,
+    ProspectingModule,
     QuotesModule,
     ServiceOrdersModule,
     ServicesModule,
