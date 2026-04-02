@@ -19,6 +19,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ProductsModule } from './products/products.module';
 import { ProspectingModule } from './prospecting/prospecting.module';
 import { QuotesModule } from './quotes/quotes.module';
+import { ReportsModule } from './reports/reports.module';
 import { RolesModule } from './roles/roles.module';
 import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
@@ -73,7 +74,8 @@ import { WebsocketModule } from './websocket/websocket.module';
     VehicleUsagesModule,
     WebsocketModule,
     WeatherModule,
-    ProspectingModule
+    ProspectingModule,
+    ReportsModule
   ],
   controllers: [AppController],
   providers: []
