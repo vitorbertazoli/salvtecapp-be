@@ -1,17 +1,24 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateProspectCallDto } from './dto/create-prospect-call.dto';
+import { ProspectCallReportQueryDto } from './dto/prospect-call-report-query.dto';
 import { ProspectStatusesDto } from './dto/prospect-statuses.dto';
 import { UpsertProspectBusinessDto } from './dto/upsert-prospect-business.dto';
-import { ProspectingService } from './prospecting.service';
+import { ProspectCallReportResponse, ProspectingService } from './prospecting.service';
 
 @Controller('prospecting')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProspectingController {
   constructor(private readonly prospectingService: ProspectingService) {}
+
+  @Get('reports/calls')
+  @Roles('ADMIN')
+  getCallReport(@Query() query: ProspectCallReportQueryDto, @GetAccountId() accountId: Types.ObjectId): Promise<ProspectCallReportResponse> {
+    return this.prospectingService.getCallReport(accountId, query.timezone);
+  }
 
   @Post('businesses/upsert')
   @Roles('ADMIN', 'SUPERVISOR') // Only ADMIN and SUPERVISOR can upsert businesses

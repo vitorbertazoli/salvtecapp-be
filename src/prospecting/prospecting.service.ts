@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { CreateProspectCallDto } from './dto/create-prospect-call.dto';
 import { UpsertProspectBusinessDto } from './dto/upsert-prospect-business.dto';
 import { ProspectBusiness, ProspectBusinessDocument } from './schemas/prospect-business.schema';
@@ -10,6 +10,34 @@ const DEFAULT_COOLDOWN_DAYS = 7;
 const NOT_INTERESTED_BLOCK_DAYS = 90;
 const MAX_CALLS_IN_WINDOW = 3;
 const MAX_CALLS_WINDOW_DAYS = 30;
+const DAILY_REPORT_LIMIT = 14;
+const WEEKLY_REPORT_LIMIT = 12;
+const MONTHLY_REPORT_LIMIT = 12;
+
+type ReportUnit = 'day' | 'week' | 'month';
+
+export interface ProspectCallReportBucket {
+  periodStart: Date;
+  totalCalls: number;
+  uniqueBusinesses: number;
+}
+
+export interface ProspectCallReportSummary extends Partial<ProspectCallReportBucket> {
+  totalCalls: number;
+  uniqueBusinesses: number;
+}
+
+export interface ProspectCallReportResponse {
+  timezone: string;
+  summary: {
+    day: ProspectCallReportSummary;
+    week: ProspectCallReportSummary;
+    month: ProspectCallReportSummary;
+  };
+  daily: ProspectCallReportBucket[];
+  weekly: ProspectCallReportBucket[];
+  monthly: ProspectCallReportBucket[];
+}
 
 @Injectable()
 export class ProspectingService {
@@ -75,6 +103,43 @@ export class ProspectingService {
       .sort({ calledAt: -1 })
       .populate('calledBy', 'firstName lastName email')
       .lean();
+  }
+
+  async getCallReport(accountId: Types.ObjectId, timezone?: string): Promise<ProspectCallReportResponse> {
+    const resolvedTimezone = this.resolveTimezone(timezone);
+
+    const [report] = await this.prospectCallLogModel.aggregate<{
+      daily: ProspectCallReportBucket[];
+      weekly: ProspectCallReportBucket[];
+      monthly: ProspectCallReportBucket[];
+      daySummary: ProspectCallReportSummary[];
+      weekSummary: ProspectCallReportSummary[];
+      monthSummary: ProspectCallReportSummary[];
+    }>([
+      { $match: { account: accountId } },
+      {
+        $facet: {
+          daily: this.buildBucketPipeline('day', resolvedTimezone, DAILY_REPORT_LIMIT),
+          weekly: this.buildBucketPipeline('week', resolvedTimezone, WEEKLY_REPORT_LIMIT),
+          monthly: this.buildBucketPipeline('month', resolvedTimezone, MONTHLY_REPORT_LIMIT),
+          daySummary: this.buildSummaryPipeline('day', resolvedTimezone),
+          weekSummary: this.buildSummaryPipeline('week', resolvedTimezone),
+          monthSummary: this.buildSummaryPipeline('month', resolvedTimezone)
+        }
+      }
+    ]);
+
+    return {
+      timezone: resolvedTimezone,
+      summary: {
+        day: report?.daySummary?.[0] ?? { totalCalls: 0, uniqueBusinesses: 0 },
+        week: report?.weekSummary?.[0] ?? { totalCalls: 0, uniqueBusinesses: 0 },
+        month: report?.monthSummary?.[0] ?? { totalCalls: 0, uniqueBusinesses: 0 }
+      },
+      daily: report?.daily ?? [],
+      weekly: report?.weekly ?? [],
+      monthly: report?.monthly ?? []
+    };
   }
 
   async createCallLog(businessId: string, dto: CreateProspectCallDto, accountId: Types.ObjectId, userId: string) {
@@ -149,5 +214,77 @@ export class ProspectingService {
     }
 
     return business;
+  }
+
+  private buildBucketPipeline(unit: ReportUnit, timezone: string, limit: number): PipelineStage.FacetPipelineStage[] {
+    return [
+      {
+        $project: {
+          periodStart: { $dateTrunc: { date: '$calledAt', unit, timezone } },
+          prospectBusiness: 1
+        }
+      },
+      {
+        $group: {
+          _id: '$periodStart',
+          totalCalls: { $sum: 1 },
+          uniqueBusinessesSet: { $addToSet: '$prospectBusiness' }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          periodStart: '$_id',
+          totalCalls: 1,
+          uniqueBusinesses: { $size: '$uniqueBusinessesSet' }
+        }
+      },
+      { $sort: { periodStart: -1 } },
+      { $limit: limit }
+    ];
+  }
+
+  private buildSummaryPipeline(unit: ReportUnit, timezone: string): PipelineStage.FacetPipelineStage[] {
+    return [
+      {
+        $project: {
+          periodStart: { $dateTrunc: { date: '$calledAt', unit, timezone } },
+          currentPeriodStart: { $dateTrunc: { date: '$$NOW', unit, timezone } },
+          prospectBusiness: 1
+        }
+      },
+      {
+        $match: {
+          $expr: { $eq: ['$periodStart', '$currentPeriodStart'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$currentPeriodStart',
+          totalCalls: { $sum: 1 },
+          uniqueBusinessesSet: { $addToSet: '$prospectBusiness' }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          periodStart: '$_id',
+          totalCalls: 1,
+          uniqueBusinesses: { $size: '$uniqueBusinessesSet' }
+        }
+      }
+    ];
+  }
+
+  private resolveTimezone(timezone?: string) {
+    if (!timezone) {
+      return 'UTC';
+    }
+
+    try {
+      return new Intl.DateTimeFormat('en-US', { timeZone: timezone }).resolvedOptions().timeZone;
+    } catch {
+      throw new BadRequestException('prospecting.errors.invalidTimezone');
+    }
   }
 }
