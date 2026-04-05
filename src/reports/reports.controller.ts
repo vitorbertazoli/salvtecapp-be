@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetMonthlyBalanceReportDto } from './dto/get-monthly-balance-report.dto';
+import { GetSoldItemsReportDto } from './dto/get-sold-items-report.dto';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
@@ -24,5 +25,21 @@ export class ReportsController {
     }
 
     return this.reportsService.getMonthlyBalance(accountId, query);
+  }
+
+  @Get('sold-items')
+  async getSoldItems(
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser() user: { roles?: string[]; isMasterAdmin?: boolean },
+    @Query() query: GetSoldItemsReportDto
+  ) {
+    const isAdmin = user.roles?.includes('ADMIN');
+    const isMasterAdmin = !!user.isMasterAdmin;
+
+    if (!isAdmin && !isMasterAdmin) {
+      throw new ForbiddenException('auth.errors.accessDenied');
+    }
+
+    return this.reportsService.getSoldItemsByMonth(accountId, query);
   }
 }
