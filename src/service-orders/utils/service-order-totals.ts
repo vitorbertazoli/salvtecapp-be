@@ -32,8 +32,7 @@ export const calculateServiceOrderTotals = ({
     .filter((item) => item.type === 'product')
     .reduce((sum, item) => sum + (item.totalValue ?? (item.quantity || 0) * (item.unitValue || 0)), 0);
   const subtotal = roundCurrency(servicesTotal + productsTotal);
-  const serviceTaxAmount =
-    applyServiceTax && (serviceTaxPercent || 0) > 0 ? roundCurrency((servicesTotal * (serviceTaxPercent || 0)) / 100) : 0;
+  const serviceTaxAmount = applyServiceTax && (serviceTaxPercent || 0) > 0 ? roundCurrency((servicesTotal * (serviceTaxPercent || 0)) / 100) : 0;
   const discountAmount = discount ? (subtotal * discount) / 100 : 0;
   const otherDiscountsTotal = (otherDiscounts || []).reduce((sum, item) => sum + (item.amount || 0), 0);
   const totalValue = roundCurrency(subtotal + serviceTaxAmount - discountAmount - otherDiscountsTotal);
