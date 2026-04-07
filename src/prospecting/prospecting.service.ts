@@ -16,6 +16,30 @@ const MONTHLY_REPORT_LIMIT = 12;
 
 type ReportUnit = 'day' | 'week' | 'month';
 
+interface ProspectCallReportDetailUser {
+  _id?: Types.ObjectId;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+export interface ProspectCallReportDetail {
+  _id: Types.ObjectId;
+  calledAt: Date;
+  outcome: ProspectCallLog['outcome'];
+  notes?: string;
+  callbackDate?: Date;
+  businessId: Types.ObjectId;
+  businessName?: string;
+  calledBy?: ProspectCallReportDetailUser;
+}
+
+export interface ProspectCallReportDetailsResponse {
+  timezone: string;
+  period: ReportUnit;
+  calls: ProspectCallReportDetail[];
+}
+
 export interface ProspectCallReportBucket {
   periodStart: Date;
   totalCalls: number;
@@ -139,6 +163,66 @@ export class ProspectingService {
       daily: report?.daily ?? [],
       weekly: report?.weekly ?? [],
       monthly: report?.monthly ?? []
+    };
+  }
+
+  async getCallReportDetails(accountId: Types.ObjectId, period: ReportUnit, timezone?: string): Promise<ProspectCallReportDetailsResponse> {
+    const resolvedTimezone = this.resolveTimezone(timezone);
+
+    const calls = await this.prospectCallLogModel.aggregate<ProspectCallReportDetail>([
+      { $match: { account: accountId } },
+      {
+        $addFields: {
+          periodStart: { $dateTrunc: { date: '$calledAt', unit: period, timezone: resolvedTimezone } },
+          currentPeriodStart: { $dateTrunc: { date: '$$NOW', unit: period, timezone: resolvedTimezone } }
+        }
+      },
+      {
+        $match: {
+          $expr: { $eq: ['$periodStart', '$currentPeriodStart'] }
+        }
+      },
+      { $sort: { calledAt: -1 } },
+      {
+        $lookup: {
+          from: 'prospectbusinesses',
+          localField: 'prospectBusiness',
+          foreignField: '_id',
+          as: 'business'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'calledBy',
+          foreignField: '_id',
+          as: 'caller'
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          calledAt: 1,
+          outcome: 1,
+          notes: 1,
+          callbackDate: 1,
+          businessId: '$prospectBusiness',
+          businessName: { $arrayElemAt: ['$business.name', 0] },
+          calledBy: {
+            _id: { $arrayElemAt: ['$caller._id', 0] },
+            firstName: { $arrayElemAt: ['$caller.firstName', 0] },
+            lastName: { $arrayElemAt: ['$caller.lastName', 0] },
+            email: { $arrayElemAt: ['$caller.email', 0] }
+          }
+        }
+      },
+      { $limit: 500 }
+    ]);
+
+    return {
+      timezone: resolvedTimezone,
+      period,
+      calls
     };
   }
 

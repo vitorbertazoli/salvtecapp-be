@@ -4,6 +4,7 @@ import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateProspectCallDto } from './dto/create-prospect-call.dto';
+import { ProspectCallReportDetailsQueryDto } from './dto/prospect-call-report-details-query.dto';
 import { ProspectCallReportQueryDto } from './dto/prospect-call-report-query.dto';
 import { ProspectStatusesDto } from './dto/prospect-statuses.dto';
 import { UpsertProspectBusinessDto } from './dto/upsert-prospect-business.dto';
@@ -18,6 +19,12 @@ export class ProspectingController {
   @Roles('ADMIN')
   getCallReport(@Query() query: ProspectCallReportQueryDto, @GetAccountId() accountId: Types.ObjectId): Promise<ProspectCallReportResponse> {
     return this.prospectingService.getCallReport(accountId, query.timezone);
+  }
+
+  @Get('reports/calls/details')
+  @Roles('ADMIN')
+  getCallReportDetails(@Query() query: ProspectCallReportDetailsQueryDto, @GetAccountId() accountId: Types.ObjectId) {
+    return this.prospectingService.getCallReportDetails(accountId, query.period, query.timezone);
   }
 
   @Post('businesses/upsert')
