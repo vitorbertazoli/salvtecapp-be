@@ -262,7 +262,7 @@ describe('TechniciansController', () => {
 
       const result = await controller.findAll('2', '20', 'João Silva', 'active', mockAccountId);
 
-      expect(mockTechniciansService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, 'João Silva', 'active');
+      expect(mockTechniciansService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, 'João Silva', ['active']);
       expect(result).toEqual(mockResult);
     });
 

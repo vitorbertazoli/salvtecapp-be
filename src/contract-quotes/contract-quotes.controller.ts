@@ -63,8 +63,19 @@ export class ContractQuotesController {
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
+    const statuses = status
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
 
-    return this.contractQuotesService.findByAccount(accountId, pageNum, limitNum, search, status || undefined, customerId || undefined);
+    return this.contractQuotesService.findByAccount(
+      accountId,
+      pageNum,
+      limitNum,
+      search,
+      statuses.length > 0 ? statuses : undefined,
+      customerId || undefined
+    );
   }
 
   @Get(':id')

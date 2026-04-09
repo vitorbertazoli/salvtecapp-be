@@ -74,7 +74,7 @@ export class CustomersService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string
+    statuses?: string[]
   ): Promise<{
     customers: Customer[];
     total: number;
@@ -103,8 +103,8 @@ export class CustomersService {
         ...(Types.ObjectId.isValid(search) ? [{ _id: search }] : [])
       ];
     }
-    if (status) {
-      searchQuery.status = status;
+    if (statuses && statuses.length > 0) {
+      searchQuery.status = { $in: statuses };
     }
 
     const [customers, total] = await Promise.all([

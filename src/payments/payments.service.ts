@@ -379,14 +379,15 @@ export class PaymentsService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status: string = ''
+    statuses: string[] = []
   ): Promise<{ data: PaymentOrder[]; total: number }> {
     const skip = (page - 1) * limit;
 
     // Build match conditions
     const matchConditions: any = { account: accountId };
-    if (status && ['pending', 'partial', 'paid', 'refunded'].includes(status)) {
-      matchConditions.paymentStatus = status;
+    const allowedStatuses = statuses.filter((status) => ['pending', 'partial', 'paid', 'refunded'].includes(status));
+    if (allowedStatuses.length > 0) {
+      matchConditions.paymentStatus = { $in: allowedStatuses };
     }
 
     // Build aggregation pipeline

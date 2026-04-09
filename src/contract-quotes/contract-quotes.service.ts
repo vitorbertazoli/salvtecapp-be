@@ -11,15 +11,15 @@ import { CustomersService } from '../customers/customers.service';
 import { PaymentsService } from '../payments/payments.service';
 import { EmailService } from '../utils/email.service';
 import {
-  escapeHtml,
-  formatCurrencyBRL,
-  formatDatePtBr,
-  formatMultilineText,
-  renderAccountInformationSection,
-  renderCompanyHeader,
-  renderCustomerInformationSection,
-  renderServicesTableSection,
-  resolvePublicAssetUrl
+    escapeHtml,
+    formatCurrencyBRL,
+    formatDatePtBr,
+    formatMultilineText,
+    renderAccountInformationSection,
+    renderCompanyHeader,
+    renderCustomerInformationSection,
+    renderServicesTableSection,
+    resolvePublicAssetUrl
 } from '../utils/quote-email-template.utils';
 import { AppGateway } from '../websocket/app.gateway';
 import { ApproveContractQuoteDto } from './dto/approve-contract-quote.dto';
@@ -103,7 +103,7 @@ export class ContractQuotesService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string,
+    statuses?: string[],
     customerId?: string
   ): Promise<{
     contractQuotes: ContractQuotes[];
@@ -115,8 +115,8 @@ export class ContractQuotesService {
     const skip = (page - 1) * limit;
 
     const matchConditions: any = { account: accountId };
-    if (status) {
-      matchConditions.status = status;
+    if (statuses && statuses.length > 0) {
+      matchConditions.status = { $in: statuses };
     }
     if (customerId && Types.ObjectId.isValid(customerId)) {
       matchConditions.customer = new Types.ObjectId(customerId);

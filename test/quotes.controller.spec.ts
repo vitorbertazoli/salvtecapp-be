@@ -259,7 +259,7 @@ describe('QuotesController', () => {
 
       const result = await controller.findAll('1', '10', '', 'sent', mockAccountId);
 
-      expect(mockQuotesService.findByAccount).toHaveBeenCalledWith(mockAccountId, 1, 10, '', 'sent', undefined);
+      expect(mockQuotesService.findByAccount).toHaveBeenCalledWith(mockAccountId, 1, 10, '', ['sent'], undefined);
       expect(result).toEqual(mockResult);
     });
   });

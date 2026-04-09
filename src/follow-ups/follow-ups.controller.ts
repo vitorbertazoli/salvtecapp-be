@@ -40,11 +40,24 @@ export class FollowUpsController {
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 50;
+    const statuses = status
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
 
     const startDateObj = startDate ? new Date(startDate) : undefined;
     const endDateObj = endDate ? new Date(endDate) : undefined;
 
-    return this.followUpsService.findByAccount(accountId, pageNum, limitNum, search, status || undefined, customerId || undefined, startDateObj, endDateObj);
+    return this.followUpsService.findByAccount(
+      accountId,
+      pageNum,
+      limitNum,
+      search,
+      statuses.length > 0 ? statuses : undefined,
+      customerId || undefined,
+      startDateObj,
+      endDateObj
+    );
   }
 
   @Get(':id')

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FollowUpsController } from '../src/follow-ups/follow-ups.controller';
-import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
+import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
-import { Types } from 'mongoose';
+import { FollowUpsController } from '../src/follow-ups/follow-ups.controller';
+import { FollowUpsService } from '../src/follow-ups/follow-ups.service';
 
 describe('FollowUpsController', () => {
   let controller: FollowUpsController;
@@ -126,7 +126,7 @@ describe('FollowUpsController', () => {
         1,
         50,
         'search term',
-        'pending',
+        ['pending'],
         mockCustomerId.toString(),
         new Date('2024-01-01'),
         new Date('2024-01-31')

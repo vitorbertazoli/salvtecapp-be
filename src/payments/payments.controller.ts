@@ -48,7 +48,12 @@ export class PaymentsController {
     @Query('search') search: string = '',
     @Query('status') status: string = ''
   ): Promise<{ data: PaymentOrder[]; total: number }> {
-    return this.paymentsService.findAll(accountId, page, limit, search, status);
+    const statuses = status
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    return this.paymentsService.findAll(accountId, page, limit, search, statuses);
   }
 
   @Get(':id')

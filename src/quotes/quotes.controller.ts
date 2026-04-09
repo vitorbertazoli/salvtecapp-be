@@ -83,9 +83,13 @@ export class QuotesController {
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
+    const statuses = status
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
 
     // All authenticated users can see quotes in their account
-    return this.quotesService.findByAccount(accountId, pageNum, limitNum, search, status || undefined, customerId);
+    return this.quotesService.findByAccount(accountId, pageNum, limitNum, search, statuses.length > 0 ? statuses : undefined, customerId);
   }
 
   @Get(':id')
@@ -139,6 +143,12 @@ export class QuotesController {
   @Roles('ADMIN', 'SUPERVISOR')
   async send(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
     return this.quotesService.sendQuote(id, accountId, new Types.ObjectId(userId));
+  }
+
+  @Patch(':id/mark-as-sent')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async markAsSent(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    return this.quotesService.markAsSent(id, accountId, new Types.ObjectId(userId));
   }
 
   @Patch(':id')

@@ -90,7 +90,7 @@ export class TechniciansService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string
+    statuses?: string[]
   ): Promise<{
     technicians: Technician[];
     total: number;
@@ -191,9 +191,9 @@ export class TechniciansService {
     }
 
     // Add status filter if provided
-    if (status) {
+    if (statuses && statuses.length > 0) {
       pipeline.push({
-        $match: { 'user.status': status }
+        $match: { 'user.status': { $in: statuses } }
       });
     }
 

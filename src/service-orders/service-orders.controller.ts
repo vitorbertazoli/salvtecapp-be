@@ -3,12 +3,12 @@ import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { ApproveChangeOrderDto } from './dto/approve-change-order.dto';
 import { CreateChangeOrderDto } from './dto/create-change-order.dto';
 import { CreateFromQuoteDto } from './dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
-import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrdersService } from './service-orders.service';
 
 @Controller('service-orders')
@@ -48,8 +48,12 @@ export class ServiceOrdersController {
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
+    const statuses = status
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
 
-    return this.serviceOrdersService.findByAccount(accountId, pageNum, limitNum, search, status || undefined, customerId);
+    return this.serviceOrdersService.findByAccount(accountId, pageNum, limitNum, search, statuses.length > 0 ? statuses : undefined, customerId);
   }
 
   @Get('by-customer/:customerId')

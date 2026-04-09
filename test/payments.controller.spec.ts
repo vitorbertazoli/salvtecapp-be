@@ -166,7 +166,7 @@ describe('PaymentsController', () => {
 
       const result = await controller.findAll(mockAccountId);
 
-      expect(mockPaymentsService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', '');
+      expect(mockPaymentsService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', []);
       expect(result).toEqual(mockResult);
     });
 
@@ -176,7 +176,7 @@ describe('PaymentsController', () => {
 
       const result = await controller.findAll(mockAccountId, 2, 20, 'search term', 'paid');
 
-      expect(mockPaymentsService.findAll).toHaveBeenCalledWith(mockAccountId, 2, 20, 'search term', 'paid');
+      expect(mockPaymentsService.findAll).toHaveBeenCalledWith(mockAccountId, 2, 20, 'search term', ['paid']);
       expect(result).toEqual(mockResult);
     });
 
@@ -186,7 +186,7 @@ describe('PaymentsController', () => {
 
       const result = await controller.findAll(mockAccountId, undefined, undefined, '', '');
 
-      expect(mockPaymentsService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', '');
+      expect(mockPaymentsService.findAll).toHaveBeenCalledWith(mockAccountId, 1, 10, '', []);
       expect(result).toEqual(mockResult);
     });
   });

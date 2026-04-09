@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import * as crypto from 'crypto';
@@ -40,7 +40,7 @@ export class QuotesService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string,
+    statuses?: string[],
     customerId?: string
   ): Promise<{
     quotes: Quote[];
@@ -53,8 +53,8 @@ export class QuotesService {
 
     // Build match conditions
     const matchConditions: any = { account: accountId };
-    if (status) {
-      matchConditions.status = status;
+    if (statuses && statuses.length > 0) {
+      matchConditions.status = { $in: statuses };
     }
     if (customerId) {
       matchConditions.customer = new Types.ObjectId(customerId);
@@ -130,6 +130,22 @@ export class QuotesService {
 
   async deleteAllByAccount(accountId: Types.ObjectId): Promise<any> {
     return this.quoteModel.deleteMany({ account: accountId }).exec();
+  }
+
+  async markAsSent(id: string, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<Quote> {
+    const quote = await this.quoteModel.findOne({ _id: id, account: accountId }).exec();
+
+    if (!quote) {
+      throw new NotFoundException('quotes.errors.quoteNotFound');
+    }
+
+    if (quote.status !== 'draft') {
+      throw new BadRequestException('quotes.errors.invalidQuoteStatus');
+    }
+
+    return this.quoteModel
+      .findOneAndUpdate({ _id: id, account: accountId }, { status: 'sent', updatedBy: userId }, { new: true })
+      .exec() as Promise<Quote>;
   }
 
   async sendQuote(id: string, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<{ success: boolean; message: string }> {

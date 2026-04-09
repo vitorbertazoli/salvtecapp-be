@@ -113,7 +113,7 @@ describe('ContractsController', () => {
 
       const result = await controller.findAll('2', '20', search, status, mockAccountId);
 
-      expect(contractsService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, search, status);
+      expect(contractsService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, search, [status]);
       expect(result).toEqual(mockPaginatedResult);
     });
 

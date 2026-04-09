@@ -55,9 +55,13 @@ export class CustomersController {
   ) {
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
+    const statuses = status
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
 
     // All authenticated users can see customers in their account
-    return this.customersService.findByAccount(accountId, pageNum, limitNum, search, status || undefined);
+    return this.customersService.findByAccount(accountId, pageNum, limitNum, search, statuses.length > 0 ? statuses : undefined);
   }
 
   @Get(':id')

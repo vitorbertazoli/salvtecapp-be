@@ -215,7 +215,7 @@ describe('CustomersService', () => {
         exec: jest.fn().mockResolvedValue(mockCount)
       } as any);
 
-      const result = await service.findByAccount(mockAccountId, 1, 10, 'test', 'active');
+      const result = await service.findByAccount(mockAccountId, 1, 10, 'test', ['active']);
 
       expect(customerModel.find).toHaveBeenCalledWith({
         account: mockAccountId,
@@ -233,7 +233,7 @@ describe('CustomersService', () => {
           { 'address.state': { $regex: 'test', $options: 'i' } },
           { 'address.zipCode': { $regex: 'test', $options: 'i' } }
         ],
-        status: 'active'
+        status: { $in: ['active'] }
       });
       expect(result).toEqual({
         customers: mockCustomers,

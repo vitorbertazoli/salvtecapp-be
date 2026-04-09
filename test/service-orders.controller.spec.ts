@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../src/auth/guards/roles.guard';
+import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { CreateFromQuoteDto } from '../src/service-orders/dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from '../src/service-orders/dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from '../src/service-orders/dto/update-service-order.dto';
-import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrdersController } from '../src/service-orders/service-orders.controller';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 
@@ -192,7 +192,7 @@ describe('ServiceOrdersController', () => {
 
       const result = await controller.findAll('2', '20', 'search term', 'pending', mockAccountId, mockCustomerId.toString());
 
-      expect(mockServiceOrdersService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, 'search term', 'pending', mockCustomerId.toString());
+      expect(mockServiceOrdersService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, 'search term', ['pending'], mockCustomerId.toString());
       expect(result).toEqual(mockResult);
     });
 

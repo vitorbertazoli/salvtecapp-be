@@ -190,7 +190,7 @@ export class ContractsService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string
+    statuses?: string[]
   ): Promise<{
     contracts: Contract[];
     total: number;
@@ -231,8 +231,8 @@ export class ContractsService {
     }
 
     // Add status filter if provided
-    if (status) {
-      pipeline.push({ $match: { status } });
+    if (statuses && statuses.length > 0) {
+      pipeline.push({ $match: { status: { $in: statuses } } });
     }
 
     // Add sorting and pagination
@@ -267,8 +267,8 @@ export class ContractsService {
       });
     }
 
-    if (status) {
-      countPipeline.push({ $match: { status } });
+    if (statuses && statuses.length > 0) {
+      countPipeline.push({ $match: { status: { $in: statuses } } });
     }
 
     countPipeline.push({ $count: 'total' });

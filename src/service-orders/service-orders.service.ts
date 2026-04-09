@@ -32,7 +32,7 @@ export class ServiceOrdersService {
     page: number = 1,
     limit: number = 10,
     search: string = '',
-    status?: string,
+    statuses?: string[],
     customerId?: string
   ): Promise<{
     serviceOrders: ServiceOrder[];
@@ -45,8 +45,8 @@ export class ServiceOrdersService {
 
     // Build match conditions
     const matchConditions: any = { account: accountId };
-    if (status) {
-      matchConditions.status = status;
+    if (statuses && statuses.length > 0) {
+      matchConditions.status = { $in: statuses };
     }
     if (customerId) {
       matchConditions.customer = new Types.ObjectId(customerId);

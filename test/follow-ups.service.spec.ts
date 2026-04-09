@@ -217,11 +217,11 @@ describe('FollowUpsService', () => {
         exec: jest.fn().mockResolvedValue(1)
       });
 
-      const result = await service.findByAccount(mockAccountId, 1, 10, '', 'pending');
+      const result = await service.findByAccount(mockAccountId, 1, 10, '', ['pending']);
 
       expect(followUpModel.countDocuments).toHaveBeenCalledWith({
         account: mockAccountId,
-        status: 'pending'
+        status: { $in: ['pending'] }
       });
       expect(result).toEqual({
         followUps: mockAggregateResult,

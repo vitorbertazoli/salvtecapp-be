@@ -295,7 +295,7 @@ describe('CustomersController', () => {
 
       const result = await controller.findAll('2', '20', search, status, mockAccountId);
 
-      expect(customersService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, search, status);
+      expect(customersService.findByAccount).toHaveBeenCalledWith(mockAccountId, 2, 20, search, [status]);
       expect(result).toEqual(mockPaginatedResult);
     });
 
