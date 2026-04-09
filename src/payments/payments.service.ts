@@ -414,7 +414,17 @@ export class PaymentsService {
           as: 'customer'
         }
       },
-      { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } }
+      { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
+      // Join with service orders collection
+      {
+        $lookup: {
+          from: 'serviceorders',
+          localField: 'serviceOrder',
+          foreignField: '_id',
+          as: 'serviceOrder'
+        }
+      },
+      { $unwind: { path: '$serviceOrder', preserveNullAndEmptyArrays: true } }
     ];
 
     // Add search filter if search term is provided
@@ -425,7 +435,8 @@ export class PaymentsService {
             { invoiceNumber: { $regex: search, $options: 'i' } },
             { notes: { $regex: search, $options: 'i' } },
             { 'customer.name': { $regex: search, $options: 'i' } },
-            { 'customer.email': { $regex: search, $options: 'i' } }
+            { 'customer.email': { $regex: search, $options: 'i' } },
+            { 'serviceOrder.orderNumber': { $regex: search, $options: 'i' } }
           ]
         }
       });
