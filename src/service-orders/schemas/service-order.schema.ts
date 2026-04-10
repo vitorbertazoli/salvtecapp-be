@@ -102,6 +102,32 @@ export class ChangeOrder {
   createdAt: Date;
 }
 
+export class WorkSession {
+  @Prop({ required: true })
+  startedAt: Date;
+
+  @Prop({ required: true })
+  endedAt: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'Technician', required: true })
+  technician: Types.ObjectId;
+
+  @Prop()
+  notes?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  updatedBy: Types.ObjectId;
+
+  @Prop({ required: true, default: Date.now })
+  createdAt: Date;
+
+  @Prop({ required: true, default: Date.now })
+  updatedAt: Date;
+}
+
 @Schema({ timestamps: true })
 export class ServiceOrder {
   @Prop({ required: true, unique: true })
@@ -135,6 +161,9 @@ export class ServiceOrder {
 
   @Prop({ type: [ChangeOrder], default: [] })
   changeOrders: ChangeOrder[];
+
+  @Prop({ type: [WorkSession], default: [] })
+  workSessions: WorkSession[];
 
   @Prop()
   description?: string;
@@ -170,6 +199,9 @@ export class ServiceOrder {
 
   @Prop({ required: true, min: 0 })
   totalValue: number;
+
+  @Prop({ min: 0, default: 0 })
+  totalElapsedHours: number;
 
   @Prop({ required: true, default: Date.now })
   issuedAt: Date;

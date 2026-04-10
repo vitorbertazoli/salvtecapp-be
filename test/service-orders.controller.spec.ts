@@ -5,7 +5,9 @@ import { RolesGuard } from '../src/auth/guards/roles.guard';
 import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { CreateFromQuoteDto } from '../src/service-orders/dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from '../src/service-orders/dto/create-service-order.dto';
+import { CreateWorkSessionDto } from '../src/service-orders/dto/create-work-session.dto';
 import { UpdateServiceOrderDto } from '../src/service-orders/dto/update-service-order.dto';
+import { UpdateWorkSessionDto } from '../src/service-orders/dto/update-work-session.dto';
 import { ServiceOrdersController } from '../src/service-orders/service-orders.controller';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 
@@ -76,7 +78,10 @@ describe('ServiceOrdersController', () => {
     findByCustomerAndAccount: jest.fn(),
     findByIdAndAccount: jest.fn(),
     updateByAccount: jest.fn(),
-    deleteByAccount: jest.fn()
+    deleteByAccount: jest.fn(),
+    createWorkSession: jest.fn(),
+    updateWorkSession: jest.fn(),
+    deleteWorkSession: jest.fn()
   };
 
   const mockQuoteToServiceOrderService = {
@@ -269,6 +274,74 @@ describe('ServiceOrdersController', () => {
       const result = await controller.delete(mockServiceOrder._id.toString(), mockAccountId);
 
       expect(mockServiceOrdersService.deleteByAccount).toHaveBeenCalledWith(mockServiceOrder._id.toString(), mockAccountId);
+      expect(result).toEqual(mockServiceOrder);
+    });
+  });
+
+  describe('work sessions', () => {
+    it('should create a work session for a service order', async () => {
+      const dto: CreateWorkSessionDto = {
+        startedAt: '2026-04-10T08:00:00.000Z',
+        endedAt: '2026-04-10T10:00:00.000Z',
+        notes: 'Execution'
+      };
+
+      mockServiceOrdersService.createWorkSession.mockResolvedValue(mockServiceOrder);
+      const result = await controller.createWorkSession(mockServiceOrder._id.toString(), dto, mockAccountId, mockUserId.toString());
+
+      expect(mockServiceOrdersService.createWorkSession).toHaveBeenCalledWith(
+        mockServiceOrder._id.toString(),
+        dto,
+        mockAccountId,
+        expect.any(Types.ObjectId)
+      );
+      expect(result).toEqual(mockServiceOrder);
+    });
+
+    it('should update a work session for a service order', async () => {
+      const sessionId = new Types.ObjectId().toString();
+      const dto: UpdateWorkSessionDto = {
+        notes: 'Updated note'
+      };
+
+      mockServiceOrdersService.updateWorkSession.mockResolvedValue(mockServiceOrder);
+      const result = await controller.updateWorkSession(mockServiceOrder._id.toString(), sessionId, dto, mockAccountId, mockUserId.toString());
+
+      expect(mockServiceOrdersService.updateWorkSession).toHaveBeenCalledWith(
+        mockServiceOrder._id.toString(),
+        sessionId,
+        dto,
+        mockAccountId,
+        expect.any(Types.ObjectId)
+      );
+      expect(result).toEqual(mockServiceOrder);
+    });
+
+    it('should delete a work session for a service order', async () => {
+      const sessionId = new Types.ObjectId().toString();
+
+      mockServiceOrdersService.deleteWorkSession.mockResolvedValue(mockServiceOrder);
+      const result = await controller.deleteWorkSession(
+        mockServiceOrder._id.toString(),
+        sessionId,
+        undefined,
+        undefined,
+        undefined,
+        mockAccountId,
+        mockUserId.toString()
+      );
+
+      expect(mockServiceOrdersService.deleteWorkSession).toHaveBeenCalledWith(
+        mockServiceOrder._id.toString(),
+        sessionId,
+        mockAccountId,
+        expect.any(Types.ObjectId),
+        {
+          startedAt: undefined,
+          endedAt: undefined,
+          technicianId: undefined
+        }
+      );
       expect(result).toEqual(mockServiceOrder);
     });
   });

@@ -3,6 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 import { QuoteToServiceOrderService } from '../quote-to-service-order/quote-to-service-order.service';
+import { Technician, TechnicianDocument } from '../technicians/schemas/technician.schema';
+import { User, UserDocument } from '../users/schemas/user.schema';
+import { CreateWorkSessionDto } from './dto/create-work-session.dto';
+import { UpdateWorkSessionDto } from './dto/update-work-session.dto';
 import { ServiceOrder, ServiceOrderDocument, ServiceOrderItem } from './schemas/service-order.schema';
 import { calculateServiceOrderTotals } from './utils/service-order-totals';
 
@@ -10,8 +14,175 @@ import { calculateServiceOrderTotals } from './utils/service-order-totals';
 export class ServiceOrdersService {
   constructor(
     @InjectModel(ServiceOrder.name) private serviceOrderModel: Model<ServiceOrderDocument>,
+    @InjectModel(Technician.name) private technicianModel: Model<TechnicianDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private quoteToServiceOrderService: QuoteToServiceOrderService
   ) {}
+
+  private roundHours(value: number): number {
+    return Math.round(Math.max(0, value) * 100) / 100;
+  }
+
+  private getSessionDurationHours(startedAt: Date, endedAt: Date): number {
+    return this.roundHours((endedAt.getTime() - startedAt.getTime()) / (1000 * 60 * 60));
+  }
+
+  private validateSessionDates(startedAt: Date, endedAt: Date) {
+    if (endedAt <= startedAt) {
+      throw new BadRequestException('serviceOrders.errors.invalidWorkSessionRange');
+    }
+  }
+
+  private ensureNoOverlap(serviceOrder: ServiceOrderDocument, technicianId: Types.ObjectId, startedAt: Date, endedAt: Date, skipSessionId?: string) {
+    const workSessions = serviceOrder.workSessions || [];
+    const hasOverlap = workSessions.some((session) => {
+      const sessionId = (session as any)._id?.toString();
+      if (skipSessionId && sessionId === skipSessionId) {
+        return false;
+      }
+
+      if (session.technician.toString() !== technicianId.toString()) {
+        return false;
+      }
+
+      const existingStart = new Date(session.startedAt);
+      const existingEnd = new Date(session.endedAt);
+      return startedAt < existingEnd && endedAt > existingStart;
+    });
+
+    if (hasOverlap) {
+      throw new BadRequestException('serviceOrders.errors.workSessionOverlap');
+    }
+  }
+
+  private recomputeExecutionFields(serviceOrder: ServiceOrderDocument) {
+    const workSessions = serviceOrder.workSessions || [];
+    if (workSessions.length === 0) {
+      serviceOrder.totalElapsedHours = 0;
+      serviceOrder.startedAt = undefined;
+      serviceOrder.completedAt = undefined;
+      return;
+    }
+
+    const sorted = [...workSessions].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
+    const total = sorted.reduce((sum, session) => {
+      return sum + this.getSessionDurationHours(new Date(session.startedAt), new Date(session.endedAt));
+    }, 0);
+
+    serviceOrder.startedAt = new Date(sorted[0].startedAt);
+    serviceOrder.completedAt = new Date(sorted[sorted.length - 1].endedAt);
+    serviceOrder.totalElapsedHours = this.roundHours(total);
+  }
+
+  private async enrichWorkSessionTechnicians(baseServiceOrder: any) {
+    const workSessions = baseServiceOrder.workSessions || [];
+    const technicianIds = [
+      ...new Set(
+        workSessions
+          .map((session: any) => {
+            const technician = session?.technician;
+            if (!technician) {
+              return undefined;
+            }
+
+            if (typeof technician === 'string') {
+              return technician;
+            }
+
+            return technician._id?.toString?.();
+          })
+          .filter(Boolean)
+      )
+    ];
+
+    if (technicianIds.length === 0) {
+      return baseServiceOrder;
+    }
+
+    const technicians = await this.technicianModel
+      .find({ _id: { $in: technicianIds } })
+      .lean()
+      .exec();
+    const userIds = technicians.map((technician: any) => technician.user?.toString?.()).filter(Boolean);
+    const users =
+      userIds.length > 0
+        ? await this.userModel
+            .find({ _id: { $in: userIds } })
+            .lean()
+            .exec()
+        : [];
+    const usersById = new Map(users.map((user: any) => [user._id.toString(), user]));
+    const techniciansById = new Map(
+      technicians.map((technician: any) => {
+        const user = technician.user ? usersById.get(technician.user.toString()) : undefined;
+        const name = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+
+        return [
+          technician._id.toString(),
+          {
+            _id: technician._id,
+            name: name || technician._id.toString(),
+            email: user?.email,
+            phoneNumber: user?.phoneNumber
+          }
+        ];
+      })
+    );
+
+    return {
+      ...baseServiceOrder,
+      workSessions: workSessions.map((session: any) => {
+        const technician = session?.technician;
+        const technicianId = typeof technician === 'string' ? technician : technician?._id?.toString?.();
+        const resolvedTechnician = technicianId ? techniciansById.get(technicianId) : undefined;
+
+        return {
+          ...session,
+          technician: resolvedTechnician || technician
+        };
+      })
+    };
+  }
+
+  private async mapServiceOrderForResponse(serviceOrder: ServiceOrderDocument | null) {
+    if (!serviceOrder) {
+      return null;
+    }
+
+    const rawServiceOrder = (serviceOrder as any).toObject ? (serviceOrder as any).toObject() : serviceOrder;
+    const baseServiceOrder = await this.enrichWorkSessionTechnicians(rawServiceOrder);
+
+    const workSessions = (baseServiceOrder.workSessions || []).map((session: any) => {
+      const normalizedSession = session.toObject?.() ?? session;
+      const technician = normalizedSession.technician;
+      const technicianUser = technician?.user;
+      const technicianName = technicianUser ? `${technicianUser.firstName || ''} ${technicianUser.lastName || ''}`.trim() : technician?.name;
+
+      return {
+        ...normalizedSession,
+        technician:
+          technician && typeof technician === 'object'
+            ? {
+                _id: technician._id,
+                name: technicianName || technician._id?.toString?.() || '-',
+                email: technicianUser?.email,
+                phoneNumber: technicianUser?.phoneNumber
+              }
+            : technician,
+        durationHours: this.getSessionDurationHours(new Date(session.startedAt), new Date(session.endedAt))
+      };
+    });
+
+    const sortedSessions = workSessions.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime());
+
+    return {
+      ...baseServiceOrder,
+      workSessions: sortedSessions,
+      totalElapsedHours: this.roundHours(
+        sortedSessions.reduce((sum, session) => sum + this.getSessionDurationHours(new Date(session.startedAt), new Date(session.endedAt)), 0)
+      )
+    };
+  }
 
   async create(serviceOrderData: Partial<ServiceOrder>): Promise<ServiceOrder> {
     // Generate order number if not provided
@@ -183,11 +354,12 @@ export class ServiceOrdersService {
       .populate('customer', 'name email phoneNumbers address id')
       .populate('quote', 'quoteId')
       .populate('assignedTechnician', 'name email phoneNumber id')
+      .populate({ path: 'workSessions.technician', populate: { path: 'user', select: 'firstName lastName email phoneNumber' } })
       .populate('items.service', 'name')
       .populate('items.product', 'name')
       .exec();
 
-    return serviceOrder;
+    return await this.mapServiceOrderForResponse(serviceOrder);
   }
 
   async updateByAccount(id: string, serviceOrderData: Partial<ServiceOrder>, accountId: Types.ObjectId): Promise<ServiceOrder | null> {
@@ -350,5 +522,133 @@ export class ServiceOrdersService {
     serviceOrder.markModified('changeOrders');
 
     return serviceOrder.save();
+  }
+
+  async createWorkSession(serviceOrderId: string, dto: CreateWorkSessionDto, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<ServiceOrder> {
+    const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
+    if (!serviceOrder) {
+      throw new NotFoundException('serviceOrders.errors.notFound');
+    }
+
+    const technicianId = dto.technician ? new Types.ObjectId(dto.technician) : serviceOrder.assignedTechnician;
+    if (!technicianId) {
+      throw new BadRequestException('serviceOrders.errors.workSessionTechnicianRequired');
+    }
+
+    const startedAt = new Date(dto.startedAt);
+    const endedAt = new Date(dto.endedAt);
+    this.validateSessionDates(startedAt, endedAt);
+    this.ensureNoOverlap(serviceOrder, technicianId, startedAt, endedAt);
+
+    serviceOrder.workSessions = serviceOrder.workSessions || [];
+    serviceOrder.workSessions.push({
+      startedAt,
+      endedAt,
+      technician: technicianId,
+      notes: dto.notes,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any);
+
+    this.recomputeExecutionFields(serviceOrder);
+    serviceOrder.updatedBy = userId;
+    serviceOrder.markModified('workSessions');
+
+    await serviceOrder.save();
+    const populatedServiceOrder = await this.findByIdAndAccount(serviceOrderId, accountId);
+    return populatedServiceOrder as any;
+  }
+
+  async updateWorkSession(
+    serviceOrderId: string,
+    sessionId: string,
+    dto: UpdateWorkSessionDto,
+    accountId: Types.ObjectId,
+    userId: Types.ObjectId
+  ): Promise<ServiceOrder> {
+    const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
+    if (!serviceOrder) {
+      throw new NotFoundException('serviceOrders.errors.notFound');
+    }
+
+    const targetSession = (serviceOrder.workSessions || []).find((session) => (session as any)._id?.toString() === sessionId);
+    if (!targetSession) {
+      throw new NotFoundException('serviceOrders.errors.workSessionNotFound');
+    }
+
+    const startedAt = dto.startedAt ? new Date(dto.startedAt) : new Date(targetSession.startedAt);
+    const endedAt = dto.endedAt ? new Date(dto.endedAt) : new Date(targetSession.endedAt);
+    const technicianId = dto.technician ? new Types.ObjectId(dto.technician) : targetSession.technician;
+
+    this.validateSessionDates(startedAt, endedAt);
+    this.ensureNoOverlap(serviceOrder, technicianId, startedAt, endedAt, sessionId);
+
+    targetSession.startedAt = startedAt;
+    targetSession.endedAt = endedAt;
+    targetSession.technician = technicianId;
+    targetSession.notes = dto.notes ?? targetSession.notes;
+    targetSession.updatedBy = userId;
+    targetSession.updatedAt = new Date();
+
+    this.recomputeExecutionFields(serviceOrder);
+    serviceOrder.updatedBy = userId;
+    serviceOrder.markModified('workSessions');
+
+    await serviceOrder.save();
+    const populatedServiceOrder = await this.findByIdAndAccount(serviceOrderId, accountId);
+    return populatedServiceOrder as any;
+  }
+
+  async deleteWorkSession(
+    serviceOrderId: string,
+    sessionId: string,
+    accountId: Types.ObjectId,
+    userId: Types.ObjectId,
+    legacyMatch?: {
+      startedAt?: string;
+      endedAt?: string;
+      technicianId?: string;
+    }
+  ): Promise<ServiceOrder> {
+    const serviceOrder = await this.serviceOrderModel.findOne({ _id: serviceOrderId, account: accountId }).exec();
+    if (!serviceOrder) {
+      throw new NotFoundException('serviceOrders.errors.notFound');
+    }
+
+    const workSessions = serviceOrder.workSessions || [];
+    const previousLength = workSessions.length;
+    serviceOrder.workSessions = workSessions.filter((session) => (session as any)._id?.toString() !== sessionId);
+
+    if (serviceOrder.workSessions.length === previousLength && legacyMatch?.startedAt && legacyMatch?.endedAt) {
+      const startedAtMs = new Date(legacyMatch.startedAt).getTime();
+      const endedAtMs = new Date(legacyMatch.endedAt).getTime();
+      const technicianId = legacyMatch.technicianId;
+
+      const matchIndex = workSessions.findIndex((session) => {
+        const sessionStartedAtMs = new Date(session.startedAt).getTime();
+        const sessionEndedAtMs = new Date(session.endedAt).getTime();
+        const technicianMatches = technicianId ? session.technician?.toString() === technicianId : true;
+
+        return technicianMatches && sessionStartedAtMs === startedAtMs && sessionEndedAtMs === endedAtMs;
+      });
+
+      if (matchIndex >= 0) {
+        serviceOrder.workSessions = workSessions.filter((_, index) => index !== matchIndex);
+      }
+    }
+
+    if (serviceOrder.workSessions.length === previousLength) {
+      throw new NotFoundException('serviceOrders.errors.workSessionNotFound');
+    }
+
+    this.recomputeExecutionFields(serviceOrder);
+    serviceOrder.updatedBy = userId;
+    serviceOrder.markModified('workSessions');
+
+    await serviceOrder.save();
+    const populatedServiceOrder = await this.findByIdAndAccount(serviceOrderId, accountId);
+    return populatedServiceOrder as any;
   }
 }

@@ -4,6 +4,8 @@ import { Types } from 'mongoose';
 import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { ServiceOrder } from '../src/service-orders/schemas/service-order.schema';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
+import { Technician } from '../src/technicians/schemas/technician.schema';
+import { User } from '../src/users/schemas/user.schema';
 
 // Mock bcrypt
 jest.mock('bcrypt', () => ({
@@ -13,12 +15,15 @@ jest.mock('bcrypt', () => ({
 describe('ServiceOrdersService', () => {
   let service: ServiceOrdersService;
   let serviceOrderModel: any;
+  let technicianModel: any;
+  let userModel: any;
   let quoteToServiceOrderService: any;
 
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
   const mockQuoteId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
+  const mockTechnicianId = new Types.ObjectId();
 
   const mockServiceOrder = {
     _id: new Types.ObjectId(),
@@ -147,6 +152,20 @@ describe('ServiceOrdersService', () => {
     mockServiceOrderModel.deleteMany = jest.fn();
     mockServiceOrderModel.aggregate = jest.fn();
 
+    const mockTechnicianModel = {
+      find: jest.fn().mockReturnValue({
+        lean: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([])
+      })
+    };
+
+    const mockUserModel = {
+      find: jest.fn().mockReturnValue({
+        lean: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([])
+      })
+    };
+
     const mockQuoteToServiceOrderService = {};
 
     const module: TestingModule = await Test.createTestingModule({
@@ -157,6 +176,14 @@ describe('ServiceOrdersService', () => {
           useValue: mockServiceOrderModel
         },
         {
+          provide: getModelToken(Technician.name),
+          useValue: mockTechnicianModel
+        },
+        {
+          provide: getModelToken(User.name),
+          useValue: mockUserModel
+        },
+        {
           provide: QuoteToServiceOrderService,
           useValue: mockQuoteToServiceOrderService
         }
@@ -165,6 +192,8 @@ describe('ServiceOrdersService', () => {
 
     service = module.get<ServiceOrdersService>(ServiceOrdersService);
     serviceOrderModel = module.get(getModelToken(ServiceOrder.name));
+    technicianModel = module.get(getModelToken(Technician.name));
+    userModel = module.get(getModelToken(User.name));
     quoteToServiceOrderService = module.get(QuoteToServiceOrderService);
   });
 
@@ -315,7 +344,11 @@ describe('ServiceOrdersService', () => {
         _id: mockServiceOrder._id.toString(),
         account: mockAccountId
       });
-      expect(result).toEqual(mockServiceOrder);
+      expect(result).toMatchObject({
+        ...mockServiceOrder,
+        totalElapsedHours: 0,
+        workSessions: []
+      });
     });
 
     it('should return null when service order not found', async () => {
@@ -507,6 +540,82 @@ describe('ServiceOrdersService', () => {
       expect(serviceOrderDocument.applyServiceTax).toBe(true);
       expect(serviceOrderDocument.serviceTaxPercent).toBe(10);
       expect(serviceOrderDocument.serviceTaxAmount).toBe(20);
+    });
+  });
+
+  describe('createWorkSession', () => {
+    it('should create a work session and recompute total elapsed hours', async () => {
+      const serviceOrderDocument = {
+        ...mockServiceOrder,
+        assignedTechnician: mockTechnicianId,
+        workSessions: [],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(mockServiceOrder)
+      };
+
+      serviceOrderModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(serviceOrderDocument)
+      });
+
+      jest.spyOn(service, 'findByIdAndAccount').mockResolvedValue({
+        ...mockServiceOrder,
+        workSessions: [],
+        totalElapsedHours: 2
+      } as any);
+
+      const result = await service.createWorkSession(
+        mockServiceOrder._id.toString(),
+        {
+          startedAt: '2026-04-10T08:00:00.000Z',
+          endedAt: '2026-04-10T10:00:00.000Z',
+          notes: 'On-site execution'
+        },
+        mockAccountId,
+        mockUserId
+      );
+
+      expect(serviceOrderDocument.workSessions).toHaveLength(1);
+      expect(serviceOrderDocument.totalElapsedHours).toBe(2);
+      expect(result).toMatchObject({ totalElapsedHours: 2 });
+    });
+
+    it('should block overlapping sessions for the same technician', async () => {
+      const serviceOrderDocument = {
+        ...mockServiceOrder,
+        assignedTechnician: mockTechnicianId,
+        workSessions: [
+          {
+            _id: new Types.ObjectId(),
+            startedAt: new Date('2026-04-10T08:00:00.000Z'),
+            endedAt: new Date('2026-04-10T10:00:00.000Z'),
+            technician: mockTechnicianId,
+            notes: 'Morning block',
+            createdBy: mockUserId,
+            updatedBy: mockUserId,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ],
+        markModified: jest.fn(),
+        save: jest.fn().mockResolvedValue(mockServiceOrder)
+      };
+
+      serviceOrderModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(serviceOrderDocument)
+      });
+
+      await expect(
+        service.createWorkSession(
+          mockServiceOrder._id.toString(),
+          {
+            startedAt: '2026-04-10T09:00:00.000Z',
+            endedAt: '2026-04-10T11:00:00.000Z',
+            notes: 'Overlapping block'
+          },
+          mockAccountId,
+          mockUserId
+        )
+      ).rejects.toThrow('serviceOrders.errors.workSessionOverlap');
     });
   });
 });

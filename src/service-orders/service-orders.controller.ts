@@ -8,7 +8,9 @@ import { ApproveChangeOrderDto } from './dto/approve-change-order.dto';
 import { CreateChangeOrderDto } from './dto/create-change-order.dto';
 import { CreateFromQuoteDto } from './dto/create-from-quote.dto';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
+import { CreateWorkSessionDto } from './dto/create-work-session.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
+import { UpdateWorkSessionDto } from './dto/update-work-session.dto';
 import { ServiceOrdersService } from './service-orders.service';
 
 @Controller('service-orders')
@@ -129,5 +131,46 @@ export class ServiceOrdersController {
     } else {
       return this.serviceOrdersService.rejectChangeOrder(id, changeOrderVersion, accountId, new Types.ObjectId(userId));
     }
+  }
+
+  @Post(':id/work-sessions')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
+  async createWorkSession(
+    @Param('id') id: string,
+    @Body() dto: CreateWorkSessionDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    return this.serviceOrdersService.createWorkSession(id, dto, accountId, new Types.ObjectId(userId));
+  }
+
+  @Put(':id/work-sessions/:sessionId')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
+  async updateWorkSession(
+    @Param('id') id: string,
+    @Param('sessionId') sessionId: string,
+    @Body() dto: UpdateWorkSessionDto,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    return this.serviceOrdersService.updateWorkSession(id, sessionId, dto, accountId, new Types.ObjectId(userId));
+  }
+
+  @Delete(':id/work-sessions/:sessionId')
+  @Roles('ADMIN', 'SUPERVISOR', 'TECHNICIAN')
+  async deleteWorkSession(
+    @Param('id') id: string,
+    @Param('sessionId') sessionId: string,
+    @Query('startedAt') startedAt: string | undefined,
+    @Query('endedAt') endedAt: string | undefined,
+    @Query('technicianId') technicianId: string | undefined,
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string
+  ) {
+    return this.serviceOrdersService.deleteWorkSession(id, sessionId, accountId, new Types.ObjectId(userId), {
+      startedAt,
+      endedAt,
+      technicianId
+    });
   }
 }
