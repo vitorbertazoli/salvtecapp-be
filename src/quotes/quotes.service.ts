@@ -143,9 +143,7 @@ export class QuotesService {
       throw new BadRequestException('quotes.errors.invalidQuoteStatus');
     }
 
-    return this.quoteModel
-      .findOneAndUpdate({ _id: id, account: accountId }, { status: 'sent', updatedBy: userId }, { new: true })
-      .exec() as Promise<Quote>;
+    return this.quoteModel.findOneAndUpdate({ _id: id, account: accountId }, { status: 'sent', updatedBy: userId }, { new: true }).exec() as Promise<Quote>;
   }
 
   async sendQuote(id: string, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<{ success: boolean; message: string }> {
@@ -156,8 +154,8 @@ export class QuotesService {
       .findOne(query)
       .populate('account', 'name logoUrl customizations replyToEmail')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
-      .populate('services.service', 'name description')
-      .populate('products.product', 'name description maker model sku')
+      .populate('services.service', 'name description value')
+      .populate('products.product', 'name description maker model sku value')
       .populate('createdBy', 'firstName lastName')
       .exec();
 
@@ -209,8 +207,8 @@ export class QuotesService {
       })
       .populate('account', 'name')
       .populate('customer', 'name email')
-      .populate('services.service', 'name description')
-      .populate('products.product', 'name description maker model sku')
+      .populate('services.service', 'name description value')
+      .populate('products.product', 'name description maker model sku value')
       .exec();
 
     if (!quote) {
@@ -268,8 +266,8 @@ export class QuotesService {
       })
       .populate('account', 'name')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
-      .populate('services.service', 'name description')
-      .populate('products.product', 'name description maker model sku')
+      .populate('services.service', 'name description value')
+      .populate('products.product', 'name description maker model sku value')
       .populate('createdBy', 'firstName lastName')
       .exec();
 

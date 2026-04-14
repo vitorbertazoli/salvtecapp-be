@@ -18,8 +18,8 @@ export class QuoteToServiceOrderService {
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
       .populate('customer', 'name email id')
-      .populate('services.service', 'name')
-      .populate('products.product', 'name')
+      .populate('services.service', 'name description')
+      .populate('products.product', 'name description maker model sku')
       .exec();
 
     return quote;
@@ -66,6 +66,8 @@ export class QuoteToServiceOrderService {
       .findOneAndUpdate(query, updateData, { new: true })
       .populate('account', 'name id')
       .populate('customer', 'name email id')
+      .populate('services.service', 'name description')
+      .populate('products.product', 'name description maker model sku')
       .exec();
 
     return updatedQuote;
