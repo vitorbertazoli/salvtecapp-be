@@ -155,7 +155,7 @@ export class QuotesService {
       .populate('account', 'name logoUrl customizations replyToEmail')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
       .populate('services.service', 'name description value')
-      .populate('products.product', 'name description maker model sku value')
+      .populate('products.product', 'name description maker model sku unit value')
       .populate('createdBy', 'firstName lastName')
       .exec();
 
@@ -208,7 +208,7 @@ export class QuotesService {
       .populate('account', 'name')
       .populate('customer', 'name email')
       .populate('services.service', 'name description value')
-      .populate('products.product', 'name description maker model sku value')
+      .populate('products.product', 'name description maker model sku unit value')
       .exec();
 
     if (!quote) {
@@ -267,7 +267,7 @@ export class QuotesService {
       .populate('account', 'name')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
       .populate('services.service', 'name description value')
-      .populate('products.product', 'name description maker model sku value')
+      .populate('products.product', 'name description maker model sku unit value')
       .populate('createdBy', 'firstName lastName')
       .exec();
 
@@ -714,6 +714,7 @@ export class QuotesService {
                         <th>Fabricante</th>
                         <th>Modelo</th>
                         <th>SKU</th>
+                        <th>Unidade</th>
                         <th>Quantidade</th>
                         <th>Valor Unitário</th>
                         <th>Total</th>
@@ -729,6 +730,7 @@ export class QuotesService {
                             <td>${productItem.product?.maker || '-'}</td>
                             <td>${productItem.product?.model || '-'}</td>
                             <td>${productItem.product?.sku || '-'}</td>
+                            <td>${productItem.product?.unit || '-'}</td>
                             <td>${productItem.quantity}</td>
                             <td>${formatCurrency(productItem.unitValue)}</td>
                             <td>${formatCurrency(productItem.quantity * productItem.unitValue)}</td>

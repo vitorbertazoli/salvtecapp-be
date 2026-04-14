@@ -25,4 +25,8 @@ export class UpdateProductDto {
   @IsOptional()
   @IsString()
   sku?: string;
+
+  @IsOptional()
+  @IsString()
+  unit?: string;
 }

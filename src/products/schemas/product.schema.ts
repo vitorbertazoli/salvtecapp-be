@@ -23,6 +23,9 @@ export class Product {
   @Prop()
   sku?: string;
 
+  @Prop()
+  unit?: string;
+
   @Prop({
     type: Types.ObjectId,
     ref: 'Account',
@@ -45,6 +48,7 @@ export interface IProduct {
   model?: string;
   value: number;
   sku?: string;
+  unit?: string;
   account: Types.ObjectId;
   createdBy: string | Types.ObjectId;
   updatedBy: string | Types.ObjectId;

@@ -25,4 +25,8 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   sku?: string;
+
+  @IsOptional()
+  @IsString()
+  unit?: string;
 }

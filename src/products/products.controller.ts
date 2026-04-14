@@ -45,10 +45,17 @@ export class ProductsController {
   @Put(':id')
   @Roles('ADMIN', 'SUPERVISOR') // Only users with ADMIN or SUPERVISOR role can update products
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
-    const productData = {
-      ...updateProductDto,
-      updatedBy: new Types.ObjectId(userId)
-    };
+    // Filter out undefined values to ensure only provided fields are updated
+    const productData = Object.entries(updateProductDto).reduce(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {} as Record<string, any>
+    );
+    productData.updatedBy = new Types.ObjectId(userId);
     return this.productsService.update(id, productData, accountId);
   }
 

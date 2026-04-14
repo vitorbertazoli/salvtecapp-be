@@ -19,7 +19,7 @@ export class QuoteToServiceOrderService {
       .populate('account', 'name id')
       .populate('customer', 'name email id')
       .populate('services.service', 'name description')
-      .populate('products.product', 'name description maker model sku')
+      .populate('products.product', 'name description maker model sku unit')
       .exec();
 
     return quote;
@@ -67,7 +67,7 @@ export class QuoteToServiceOrderService {
       .populate('account', 'name id')
       .populate('customer', 'name email id')
       .populate('services.service', 'name description')
-      .populate('products.product', 'name description maker model sku')
+      .populate('products.product', 'name description maker model sku unit')
       .exec();
 
     return updatedQuote;
