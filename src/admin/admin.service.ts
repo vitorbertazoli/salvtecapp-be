@@ -17,6 +17,7 @@ import { QuotesService } from '../quotes/quotes.service';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
 import { ServicesService } from '../services/services.service';
 import { TechniciansService } from '../technicians/technicians.service';
+import { TimekeepingService } from '../timekeeping/timekeeping.service';
 import { UsersService } from '../users/users.service';
 import { VehicleUsagesService } from '../vehicle-usages/vehicle-usages.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -33,6 +34,7 @@ export class AdminService {
     private serviceOrdersService: ServiceOrdersService,
     private servicesService: ServicesService,
     private techniciansService: TechniciansService,
+    private timekeepingService: TimekeepingService,
     private eventsService: EventsService,
     private followUpsService: FollowUpsService,
     private contractsService: ContractsService,
@@ -242,6 +244,9 @@ export class AdminService {
 
     // Delete events (they reference customers, technicians)
     await this.eventsService.deleteAllByAccount(normalizedAccountId);
+
+    // Delete timekeeping entries
+    await this.timekeepingService.deleteAllByAccount(normalizedAccountId);
 
     // Delete customers (they reference technicians and addresses)
     await this.customersService.deleteAllByAccount(normalizedAccountId);

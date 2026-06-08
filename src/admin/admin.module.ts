@@ -13,6 +13,7 @@ import { QuotesModule } from '../quotes/quotes.module';
 import { ServiceOrdersModule } from '../service-orders/service-orders.module';
 import { ServicesModule } from '../services/services.module';
 import { TechniciansModule } from '../technicians/technicians.module';
+import { TimekeepingModule } from '../timekeeping/timekeeping.module';
 import { UsersModule } from '../users/users.module';
 import { VehicleUsagesModule } from '../vehicle-usages/vehicle-usages.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
@@ -34,6 +35,7 @@ import { MasterAdminGuard } from './guards/master-admin.guard';
     QuotesModule,
     ServiceOrdersModule,
     ServicesModule,
+    TimekeepingModule,
     TechniciansModule,
     EventsModule,
     FollowUpsModule,

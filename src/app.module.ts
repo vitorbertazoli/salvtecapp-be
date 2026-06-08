@@ -25,6 +25,7 @@ import { RolesModule } from './roles/roles.module';
 import { ServiceOrdersModule } from './service-orders/service-orders.module';
 import { ServicesModule } from './services/services.module';
 import { TechniciansModule } from './technicians/technicians.module';
+import { TimekeepingModule } from './timekeeping/timekeeping.module';
 import { UsersModule } from './users/users.module';
 import { EmailModule } from './utils/email.module';
 import { VehicleUsagesModule } from './vehicle-usages/vehicle-usages.module';
@@ -60,6 +61,7 @@ import { WebsocketModule } from './websocket/websocket.module';
     RolesModule,
     ServicesModule,
     ProductsModule,
+    TimekeepingModule,
     TechniciansModule,
     CustomersModule,
     QuotesModule,
