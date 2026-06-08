@@ -42,6 +42,7 @@ export class EventsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('customerId') customerId?: string,
+    @Query('serviceOrderId') serviceOrderId?: string,
     @Query('status') status?: string,
     @GetUser('roles') roles?: string[]
   ) {
@@ -52,6 +53,7 @@ export class EventsController {
       endDate,
       technicianId: isAdmin ? undefined : technicianId,
       customerId,
+      serviceOrderId,
       status
     });
   }

@@ -361,6 +361,7 @@ export class EventsService {
       endDate?: string;
       technicianId?: string;
       customerId?: string;
+      serviceOrderId?: string;
       status?: string;
     }
   ): Promise<Event[]> {
@@ -379,6 +380,10 @@ export class EventsService {
 
     if (filters?.customerId) {
       query.customer = new Types.ObjectId(filters.customerId);
+    }
+
+    if (filters?.serviceOrderId) {
+      query.serviceOrder = new Types.ObjectId(filters.serviceOrderId);
     }
 
     if (filters?.status) {
