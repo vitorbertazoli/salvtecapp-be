@@ -151,6 +151,7 @@ export class FollowUpsService {
     const followUp = await this.followUpModel
       .findOne({ _id: id, account: accountId })
       .populate('customer', 'name email phoneNumbers')
+      .populate('createdBy', 'firstName lastName')
       .populate('account', 'name')
       .exec();
 
