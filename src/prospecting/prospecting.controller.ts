@@ -24,7 +24,7 @@ export class ProspectingController {
   @Get('reports/calls/details')
   @Roles('ADMIN')
   getCallReportDetails(@Query() query: ProspectCallReportDetailsQueryDto, @GetAccountId() accountId: Types.ObjectId) {
-    return this.prospectingService.getCallReportDetails(accountId, query.period, query.timezone);
+    return this.prospectingService.getCallReportDetails(accountId, query.period, query.timezone, query.periodStart);
   }
 
   @Post('businesses/upsert')

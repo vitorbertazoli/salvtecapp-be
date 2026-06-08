@@ -1,8 +1,12 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsIn, IsOptional, IsString } from 'class-validator';
 
 export class ProspectCallReportDetailsQueryDto {
-  @IsIn(['day', 'week', 'month'])
-  period: 'day' | 'week' | 'month';
+  @IsIn(['day', 'week', 'month', 'all'])
+  period: 'day' | 'week' | 'month' | 'all';
+
+  @IsOptional()
+  @IsDateString()
+  periodStart?: string;
 
   @IsOptional()
   @IsString()

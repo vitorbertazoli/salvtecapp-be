@@ -15,6 +15,7 @@ const WEEKLY_REPORT_LIMIT = 12;
 const MONTHLY_REPORT_LIMIT = 12;
 
 type ReportUnit = 'day' | 'week' | 'month';
+type ReportDetailsUnit = ReportUnit | 'all';
 
 interface ProspectCallReportDetailUser {
   _id?: Types.ObjectId;
@@ -34,10 +35,24 @@ export interface ProspectCallReportDetail {
   calledBy?: ProspectCallReportDetailUser;
 }
 
+export interface ProspectCallReportBusinessDetail {
+  businessId: Types.ObjectId;
+  businessName?: string;
+  phone?: string;
+  address?: string;
+  totalCalls: number;
+  lastOutcome?: ProspectCallLog['outcome'];
+  lastCalledAt?: Date;
+  lastCallAt?: Date;
+  nextAllowedCallAt?: Date;
+  doNotCallUntil?: Date;
+}
+
 export interface ProspectCallReportDetailsResponse {
   timezone: string;
-  period: ReportUnit;
+  period: ReportDetailsUnit;
   calls: ProspectCallReportDetail[];
+  businesses: ProspectCallReportBusinessDetail[];
 }
 
 export interface ProspectCallReportBucket {
@@ -166,63 +181,153 @@ export class ProspectingService {
     };
   }
 
-  async getCallReportDetails(accountId: Types.ObjectId, period: ReportUnit, timezone?: string): Promise<ProspectCallReportDetailsResponse> {
+  async getCallReportDetails(
+    accountId: Types.ObjectId,
+    period: ReportDetailsUnit,
+    timezone?: string,
+    periodStart?: string
+  ): Promise<ProspectCallReportDetailsResponse> {
     const resolvedTimezone = this.resolveTimezone(timezone);
+    const requestedPeriodStart = periodStart ? new Date(periodStart) : null;
 
-    const calls = await this.prospectCallLogModel.aggregate<ProspectCallReportDetail>([
-      { $match: { account: accountId } },
-      {
-        $addFields: {
-          periodStart: { $dateTrunc: { date: '$calledAt', unit: period, timezone: resolvedTimezone } },
-          currentPeriodStart: { $dateTrunc: { date: '$$NOW', unit: period, timezone: resolvedTimezone } }
-        }
-      },
-      {
-        $match: {
-          $expr: { $eq: ['$periodStart', '$currentPeriodStart'] }
-        }
-      },
-      { $sort: { calledAt: -1 } },
-      {
-        $lookup: {
-          from: 'prospectbusinesses',
-          localField: 'prospectBusiness',
-          foreignField: '_id',
-          as: 'business'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'calledBy',
-          foreignField: '_id',
-          as: 'caller'
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          calledAt: 1,
-          outcome: 1,
-          notes: 1,
-          callbackDate: 1,
-          businessId: '$prospectBusiness',
-          businessName: { $arrayElemAt: ['$business.name', 0] },
-          calledBy: {
-            _id: { $arrayElemAt: ['$caller._id', 0] },
-            firstName: { $arrayElemAt: ['$caller.firstName', 0] },
-            lastName: { $arrayElemAt: ['$caller.lastName', 0] },
-            email: { $arrayElemAt: ['$caller.email', 0] }
+    if (requestedPeriodStart && Number.isNaN(requestedPeriodStart.getTime())) {
+      throw new BadRequestException('prospecting.errors.invalidPeriodStart');
+    }
+
+    const addPeriodStartStage: PipelineStage[] =
+      period === 'all'
+        ? []
+        : [
+            {
+              $addFields: {
+                periodStart: { $dateTrunc: { date: '$calledAt', unit: period, timezone: resolvedTimezone } }
+              }
+            }
+          ];
+
+    const periodFilterStages: PipelineStage[] =
+      period === 'all'
+        ? []
+        : requestedPeriodStart
+          ? [
+              {
+                $match: {
+                  $expr: { $eq: ['$periodStart', requestedPeriodStart] }
+                }
+              }
+            ]
+          : [
+              {
+                $addFields: {
+                  currentPeriodStart: { $dateTrunc: { date: '$$NOW', unit: period, timezone: resolvedTimezone } }
+                }
+              },
+              {
+                $match: {
+                  $expr: { $eq: ['$periodStart', '$currentPeriodStart'] }
+                }
+              }
+            ];
+
+    const [calls, businesses] = await Promise.all([
+      this.prospectCallLogModel.aggregate<ProspectCallReportDetail>([
+        { $match: { account: accountId } },
+        ...addPeriodStartStage,
+        ...periodFilterStages,
+        { $sort: { calledAt: -1 } },
+        {
+          $lookup: {
+            from: 'prospectbusinesses',
+            localField: 'prospectBusiness',
+            foreignField: '_id',
+            as: 'business'
           }
-        }
-      },
-      { $limit: 500 }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'calledBy',
+            foreignField: '_id',
+            as: 'caller'
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            calledAt: 1,
+            outcome: 1,
+            notes: 1,
+            callbackDate: 1,
+            businessId: '$prospectBusiness',
+            businessName: { $arrayElemAt: ['$business.name', 0] },
+            calledBy: {
+              _id: { $arrayElemAt: ['$caller._id', 0] },
+              firstName: { $arrayElemAt: ['$caller.firstName', 0] },
+              lastName: { $arrayElemAt: ['$caller.lastName', 0] },
+              email: { $arrayElemAt: ['$caller.email', 0] }
+            }
+          }
+        },
+        { $limit: 500 }
+      ]),
+      this.prospectCallLogModel.aggregate<ProspectCallReportBusinessDetail>([
+        { $match: { account: accountId } },
+        ...addPeriodStartStage,
+        ...periodFilterStages,
+        { $sort: { calledAt: -1 } },
+        {
+          $lookup: {
+            from: 'prospectbusinesses',
+            localField: 'prospectBusiness',
+            foreignField: '_id',
+            as: 'business'
+          }
+        },
+        {
+          $unwind: {
+            path: '$business',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $group: {
+            _id: '$prospectBusiness',
+            businessName: { $first: '$business.name' },
+            phone: { $first: '$business.phone' },
+            address: { $first: '$business.address' },
+            totalCalls: { $sum: 1 },
+            lastOutcome: { $first: '$outcome' },
+            lastCalledAt: { $first: '$calledAt' },
+            lastCallAt: { $first: '$business.lastCallAt' },
+            nextAllowedCallAt: { $first: '$business.nextAllowedCallAt' },
+            doNotCallUntil: { $first: '$business.doNotCallUntil' }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            businessId: '$_id',
+            businessName: 1,
+            phone: 1,
+            address: 1,
+            totalCalls: 1,
+            lastOutcome: 1,
+            lastCalledAt: 1,
+            lastCallAt: 1,
+            nextAllowedCallAt: 1,
+            doNotCallUntil: 1
+          }
+        },
+        { $sort: { lastCalledAt: -1, businessName: 1 } },
+        { $limit: 500 }
+      ])
     ]);
 
     return {
       timezone: resolvedTimezone,
       period,
-      calls
+      calls,
+      businesses
     };
   }
 
