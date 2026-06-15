@@ -61,11 +61,11 @@ export class EventsController {
   @Get('/paginated')
   async findAllPaginated(
     @GetAccountId() accountId: Types.ObjectId,
-    @GetUser('page') page: string,
+    @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('customer') customerId?: string
   ) {
-    return this.eventsService.findAllPaginated(accountId, page, limit, customerId);
+    return this.eventsService.findAllPaginated(accountId, page ?? '1', limit, customerId);
   }
 
   @Get(':id')
