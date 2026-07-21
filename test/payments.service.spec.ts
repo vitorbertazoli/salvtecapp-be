@@ -341,6 +341,95 @@ describe('PaymentsService', () => {
   });
 
   describe('update', () => {
+    it('should unset discountAmount when update payload sets it to zero', async () => {
+      const paymentOrderId = new Types.ObjectId();
+      const existingPaymentOrder = {
+        _id: paymentOrderId,
+        account: mockAccountId,
+        totalAmount: 1000,
+        discountAmount: 100,
+        payments: []
+      };
+
+      const updatedPaymentOrder = {
+        ...existingPaymentOrder,
+        discountAmount: undefined,
+        paymentStatus: 'pending',
+        save: jest.fn()
+      };
+
+      paymentOrderModel.findOne.mockReturnValue(execMock(existingPaymentOrder));
+
+      const updateQueryMock = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedPaymentOrder)
+      };
+      paymentOrderModel.findOneAndUpdate.mockReturnValue(updateQueryMock);
+
+      await service.update(
+        paymentOrderId.toString(),
+        mockAccountId,
+        {
+          discountAmount: 0
+        },
+        mockUserId
+      );
+
+      expect(paymentOrderModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: paymentOrderId.toString(), account: mockAccountId },
+        expect.objectContaining({
+          updatedBy: mockUserId,
+          $unset: { discountAmount: 1 }
+        }),
+        { new: true }
+      );
+    });
+
+    it('should unset discountAmount when update payload omits it', async () => {
+      const paymentOrderId = new Types.ObjectId();
+      const existingPaymentOrder = {
+        _id: paymentOrderId,
+        account: mockAccountId,
+        totalAmount: 1000,
+        discountAmount: 100,
+        payments: []
+      };
+
+      const updatedPaymentOrder = {
+        ...existingPaymentOrder,
+        discountAmount: undefined,
+        paymentStatus: 'pending',
+        save: jest.fn()
+      };
+
+      paymentOrderModel.findOne.mockReturnValue(execMock(existingPaymentOrder));
+
+      const updateQueryMock = {
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedPaymentOrder)
+      };
+      paymentOrderModel.findOneAndUpdate.mockReturnValue(updateQueryMock);
+
+      await service.update(
+        paymentOrderId.toString(),
+        mockAccountId,
+        {
+          notes: 'remove discount'
+        },
+        mockUserId
+      );
+
+      expect(paymentOrderModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: paymentOrderId.toString(), account: mockAccountId },
+        expect.objectContaining({
+          updatedBy: mockUserId,
+          notes: 'remove discount',
+          $unset: { discountAmount: 1 }
+        }),
+        { new: true }
+      );
+    });
+
     it('should auto-set status to paid when payments plus discount match total amount', async () => {
       const paymentOrderId = new Types.ObjectId();
       const existingPaymentOrder = {

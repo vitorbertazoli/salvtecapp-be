@@ -513,6 +513,14 @@ export class PaymentsService {
     // Update other fields
     const allowedFields = ['dueDate', 'invoiceNumber', 'notes', 'discountAmount', 'taxAmount'];
     for (const field of allowedFields) {
+      if (field === 'discountAmount') {
+        const discountAmount = updateData.discountAmount;
+        if (discountAmount === undefined || discountAmount === 0) {
+          updateFields.$unset = { ...(updateFields.$unset || {}), discountAmount: 1 };
+          continue;
+        }
+      }
+
       if (updateData[field as keyof UpdatePaymentOrderDto] !== undefined) {
         updateFields[field] = updateData[field as keyof UpdatePaymentOrderDto];
       }

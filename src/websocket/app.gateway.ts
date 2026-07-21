@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
 import {
-  ConnectedSocket,
-  MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer
+    ConnectedSocket,
+    MessageBody,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnGatewayInit,
+    SubscribeMessage,
+    WebSocketGateway,
+    WebSocketServer
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { WebSocketAuthMiddleware } from './websocket-auth.middleware';
@@ -108,6 +108,14 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
       this.server.to(user.socketId).emit(event, data);
     });
     this.logger.log(`Broadcasted ${event} to ${accountUsers.length} users in account ${accountId}`);
+  }
+
+  broadcastToUser(accountId: string, userId: string, event: string, data: any): void {
+    const userSockets = this.getConnectedUsersByAccount(accountId).filter((user) => user.userId === userId);
+    userSockets.forEach((user) => {
+      this.server.to(user.socketId).emit(event, data);
+    });
+    this.logger.log(`Broadcasted ${event} to ${userSockets.length} sockets for user ${userId} in account ${accountId}`);
   }
 
   broadcastToRole(accountId: string, role: string, event: string, data: any): void {

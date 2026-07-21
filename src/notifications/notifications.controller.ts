@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { GetAccountId, GetUser, Roles } from '../auth/decorators';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -10,6 +10,27 @@ import { NotificationsService } from './notifications.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
+  @Get()
+  async listMyNotifications(
+    @GetAccountId() accountId: Types.ObjectId,
+    @GetUser('id') userId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('unreadOnly') unreadOnly?: string
+  ) {
+    return this.notificationsService.listForUser(accountId, userId, page, limit, unreadOnly === 'true');
+  }
+
+  @Patch(':id/read')
+  async markAsRead(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    return this.notificationsService.markAsRead(accountId, userId, id);
+  }
+
+  @Post('read-all')
+  async markAllAsRead(@GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    return this.notificationsService.markAllAsRead(accountId, userId);
+  }
 
   @Get('follow-ups/summary')
   @Roles('ADMIN', 'SUPERVISOR')
