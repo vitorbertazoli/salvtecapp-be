@@ -475,6 +475,19 @@ export class PaymentsService {
     return paymentOrder;
   }
 
+  async findByServiceOrder(serviceOrderId: string, accountId: Types.ObjectId): Promise<PaymentOrder[]> {
+    if (!Types.ObjectId.isValid(serviceOrderId)) {
+      throw new BadRequestException('payments.errors.serviceOrderNotFound');
+    }
+
+    return this.paymentOrderModel
+      .find({ serviceOrder: new Types.ObjectId(serviceOrderId), account: accountId })
+      .populate('customer', 'name email')
+      .populate('serviceOrder', 'orderNumber description totalValue completedAt status')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async remove(id: string, accountId: Types.ObjectId): Promise<void> {
     const result = await this.paymentOrderModel.findOneAndDelete({ _id: id, account: accountId }).exec();
     if (!result) {

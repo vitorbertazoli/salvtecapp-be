@@ -56,6 +56,15 @@ export class PaymentsController {
     return this.paymentsService.findAll(accountId, page, limit, search, statuses);
   }
 
+  @Get('service-order/:serviceOrderId')
+  @Roles('ADMIN', 'SUPERVISOR')
+  async findByServiceOrder(
+    @Param('serviceOrderId') serviceOrderId: string,
+    @GetAccountId() accountId: Types.ObjectId
+  ): Promise<PaymentOrder[]> {
+    return this.paymentsService.findByServiceOrder(serviceOrderId, accountId);
+  }
+
   @Get(':id')
   @Roles('ADMIN', 'SUPERVISOR')
   async findOne(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId): Promise<PaymentOrder> {
