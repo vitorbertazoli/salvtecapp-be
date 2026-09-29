@@ -9,6 +9,7 @@ import { AccountDocument } from '../src/accounts/schemas/account.schema';
 import { AdminService } from '../src/admin/admin.service';
 import { ContractQuotesService } from '../src/contract-quotes/contract-quotes.service';
 import { ContractsService } from '../src/contracts/contracts.service';
+import { CustomerVehiclesService } from '../src/customer-vehicles/customer-vehicles.service';
 import { CustomersService } from '../src/customers/customers.service';
 import { EventsService } from '../src/events/events.service';
 import { ExpensesService } from '../src/expenses/expenses.service';
@@ -20,6 +21,7 @@ import { QuotesService } from '../src/quotes/quotes.service';
 import { ServiceOrdersService } from '../src/service-orders/service-orders.service';
 import { ServicesService } from '../src/services/services.service';
 import { TechniciansService } from '../src/technicians/technicians.service';
+import { TimekeepingService } from '../src/timekeeping/timekeeping.service';
 import { UsersService } from '../src/users/users.service';
 import { VehicleUsagesService } from '../src/vehicle-usages/vehicle-usages.service';
 import { VehiclesService } from '../src/vehicles/vehicles.service';
@@ -42,6 +44,7 @@ describe('AdminService', () => {
   let expensesService: jest.Mocked<ExpensesService>;
   let vehicleUsagesService: jest.Mocked<VehicleUsagesService>;
   let vehiclesService: jest.Mocked<VehiclesService>;
+  let customerVehiclesService: jest.Mocked<CustomerVehiclesService>;
   let prospectingService: jest.Mocked<ProspectingService>;
 
   const mockAccountId = new Types.ObjectId();
@@ -112,6 +115,10 @@ describe('AdminService', () => {
       deleteAllByAccount: jest.fn()
     };
 
+    const mockTimekeepingService = {
+      deleteAllByAccount: jest.fn()
+    };
+
     const mockEventsService = {
       deleteAllByAccount: jest.fn()
     };
@@ -137,6 +144,10 @@ describe('AdminService', () => {
     };
 
     const mockVehiclesService = {
+      deleteAllByAccount: jest.fn()
+    };
+
+    const mockCustomerVehiclesService = {
       deleteAllByAccount: jest.fn()
     };
 
@@ -184,6 +195,10 @@ describe('AdminService', () => {
           useValue: mockTechniciansService
         },
         {
+          provide: TimekeepingService,
+          useValue: mockTimekeepingService
+        },
+        {
           provide: EventsService,
           useValue: mockEventsService
         },
@@ -212,6 +227,10 @@ describe('AdminService', () => {
           useValue: mockVehiclesService
         },
         {
+          provide: CustomerVehiclesService,
+          useValue: mockCustomerVehiclesService
+        },
+        {
           provide: ProspectingService,
           useValue: mockProspectingService
         }
@@ -235,6 +254,7 @@ describe('AdminService', () => {
     expensesService = module.get(ExpensesService);
     vehicleUsagesService = module.get(VehicleUsagesService);
     vehiclesService = module.get(VehiclesService);
+    customerVehiclesService = module.get(CustomerVehiclesService);
     prospectingService = module.get(ProspectingService);
   });
 
@@ -374,6 +394,7 @@ describe('AdminService', () => {
       expensesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       vehicleUsagesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       vehiclesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      customerVehiclesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       quotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       contractQuotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       contractsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
@@ -396,6 +417,7 @@ describe('AdminService', () => {
       expect(expensesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(vehicleUsagesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(vehiclesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
+      expect(customerVehiclesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(quotesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(contractQuotesService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
       expect(contractsService.deleteAllByAccount).toHaveBeenCalledWith(mockAccountId);
@@ -438,6 +460,7 @@ describe('AdminService', () => {
       expensesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       vehicleUsagesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       vehiclesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
+      customerVehiclesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       quotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       contractQuotesService.deleteAllByAccount.mockResolvedValue(deleteResult as any);
       contractsService.deleteAllByAccount.mockResolvedValue(deleteResult as any);

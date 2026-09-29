@@ -2,14 +2,22 @@ import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
+import { CustomerVehiclesService } from '../src/customer-vehicles/customer-vehicles.service';
+import { CustomersService } from '../src/customers/customers.service';
+import { ProductsService } from '../src/products/products.service';
 import { QuoteToServiceOrderService } from '../src/quote-to-service-order/quote-to-service-order.service';
 import { Quote } from '../src/quotes/schemas/quote.schema';
 import { ServiceOrder } from '../src/service-orders/schemas/service-order.schema';
+import { ServicesService } from '../src/services/services.service';
 
 describe('QuoteToServiceOrderService', () => {
   let service: QuoteToServiceOrderService;
   let quoteModel: any;
   let serviceOrderModel: any;
+  let customersService: any;
+  let customerVehiclesService: any;
+  let servicesService: any;
+  let productsService: any;
 
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
@@ -135,6 +143,11 @@ describe('QuoteToServiceOrderService', () => {
       exec: jest.fn().mockResolvedValue(null)
     });
 
+    customersService = { findByIdAndAccount: jest.fn().mockResolvedValue({ _id: mockCustomerId }) };
+    customerVehiclesService = { findByIdAndAccount: jest.fn().mockResolvedValue(null) };
+    servicesService = { findOne: jest.fn().mockResolvedValue({ applicability: 'home' }) };
+    productsService = { findOne: jest.fn().mockResolvedValue({ applicability: 'home' }) };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         QuoteToServiceOrderService,
@@ -145,7 +158,11 @@ describe('QuoteToServiceOrderService', () => {
         {
           provide: getModelToken(ServiceOrder.name),
           useValue: mockServiceOrderModel
-        }
+        },
+        { provide: CustomersService, useValue: customersService },
+        { provide: CustomerVehiclesService, useValue: customerVehiclesService },
+        { provide: ServicesService, useValue: servicesService },
+        { provide: ProductsService, useValue: productsService }
       ]
     }).compile();
 
@@ -156,6 +173,53 @@ describe('QuoteToServiceOrderService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('validateQuoteData', () => {
+    it('rejects a customer outside the current account', async () => {
+      customersService.findByIdAndAccount.mockResolvedValue(null);
+
+      await expect(service.validateQuoteData({ customer: mockCustomerId } as any, mockAccountId)).rejects.toThrow('quotes.errors.customerNotFound');
+    });
+
+    it('rejects a saved vehicle linked to a different customer', async () => {
+      customerVehiclesService.findByIdAndAccount.mockResolvedValue({ customer: new Types.ObjectId() });
+
+      await expect(
+        service.validateQuoteData(
+          { quoteType: 'auto', customer: mockCustomerId, customerVehicle: new Types.ObjectId() } as any,
+          mockAccountId
+        )
+      ).rejects.toThrow('quotes.errors.customerVehicleNotFound');
+    });
+
+    it('rejects catalog items that do not apply to the quote type', async () => {
+      servicesService.findOne.mockResolvedValue({ applicability: 'auto' });
+
+      await expect(
+        service.validateQuoteData(
+          { quoteType: 'home', customer: mockCustomerId, services: [{ service: mockServiceId }] } as any,
+          mockAccountId
+        )
+      ).rejects.toThrow('quotes.errors.invalidServiceForQuoteType');
+    });
+
+    it('accepts both-applicability catalog items on auto quotes', async () => {
+      servicesService.findOne.mockResolvedValue({ applicability: 'both' });
+      productsService.findOne.mockResolvedValue({ applicability: 'both' });
+
+      await expect(
+        service.validateQuoteData(
+          {
+            quoteType: 'auto',
+            customer: mockCustomerId,
+            services: [{ service: mockServiceId }],
+            products: [{ product: mockProductId }]
+          } as any,
+          mockAccountId
+        )
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe('updateByAccount', () => {
@@ -285,6 +349,34 @@ describe('QuoteToServiceOrderService', () => {
           customer: mockCustomerId,
           status: 'pending',
           priority: 'normal'
+        })
+      );
+    });
+
+    it('copies auto vehicle details from the quote into the service order', async () => {
+      const customerVehicleId = new Types.ObjectId();
+      const vehicleDetails = {
+        make: 'Honda',
+        model: 'Civic',
+        year: 2022,
+        odometer: 45000,
+        observations: 'Airflow weak at idle'
+      };
+      jest.spyOn(service, 'findByIdAndAccount').mockResolvedValue({
+        ...mockQuote,
+        quoteType: 'auto',
+        customerVehicle: customerVehicleId,
+        vehicleDetails
+      } as any);
+      jest.spyOn(service, 'updateByAccount').mockResolvedValue(mockQuote as any);
+
+      await service.createFromQuote(mockQuoteId.toString(), 'normal', mockAccountId, mockUserId);
+
+      expect(serviceOrderModel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          quoteType: 'auto',
+          customerVehicle: customerVehicleId,
+          vehicleDetails
         })
       );
     });

@@ -212,6 +212,32 @@ describe('AccountsService', () => {
       expect(result).toEqual(updatedAccount);
     });
 
+    it('maps legacy customization updates to home customizations', async () => {
+      const updateData = { customizations: 'Home warranty terms' };
+      accountModel.findByIdAndUpdate.mockReturnValue({ exec: jest.fn().mockResolvedValue(mockAccount) } as any);
+
+      await service.update(mockAccountId.toString(), updateData);
+
+      expect(accountModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        mockAccountId.toString(),
+        { customizations: 'Home warranty terms', customizationsHome: 'Home warranty terms' },
+        { new: true }
+      );
+    });
+
+    it('keeps the legacy customization alias synchronized with home updates', async () => {
+      const updateData = { customizationsHome: 'Updated home terms', customizationsAuto: 'Auto terms' };
+      accountModel.findByIdAndUpdate.mockReturnValue({ exec: jest.fn().mockResolvedValue(mockAccount) } as any);
+
+      await service.update(mockAccountId.toString(), updateData);
+
+      expect(accountModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        mockAccountId.toString(),
+        { ...updateData, customizations: 'Updated home terms' },
+        { new: true }
+      );
+    });
+
     it('should return null if account not found', async () => {
       const updateData = { status: 'active' as const };
       accountModel.findByIdAndUpdate.mockReturnValue({
@@ -246,6 +272,38 @@ describe('AccountsService', () => {
 
       expect(accountModel.findByIdAndDelete).toHaveBeenCalledWith(mockAccountId);
       expect(result).toBeNull();
+    });
+  });
+
+  describe('getCustomizations', () => {
+    it('returns separate values and uses the legacy field as home fallback', async () => {
+      const legacyOnlyAccount = { customizations: 'Legacy terms', customizationsAuto: 'Auto terms', serviceTaxPercent: 7 };
+      const exec = jest.fn().mockResolvedValue(legacyOnlyAccount);
+      const select = jest.fn().mockReturnValue({ exec });
+      accountModel.findById.mockReturnValue({ select } as any);
+
+      const result = await service.getCustomizations(mockAccountId);
+
+      expect(accountModel.findById).toHaveBeenCalledWith(mockAccountId);
+      expect(select).toHaveBeenCalledWith('customizations customizationsHome customizationsAuto replyToEmail serviceTaxPercent');
+      expect(result).toEqual({
+        customizations: 'Legacy terms',
+        customizationsHome: 'Legacy terms',
+        customizationsAuto: 'Auto terms',
+        replyToEmail: null,
+        serviceTaxPercent: 7
+      });
+    });
+
+    it('prefers explicit home customization over the legacy field', async () => {
+      const accountWithHome = { customizations: 'Legacy', customizationsHome: 'Home terms', customizationsAuto: null };
+      accountModel.findById.mockReturnValue({ select: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(accountWithHome) }) } as any);
+
+      await expect(service.getCustomizations(mockAccountId)).resolves.toMatchObject({
+        customizations: 'Home terms',
+        customizationsHome: 'Home terms',
+        customizationsAuto: null
+      });
     });
   });
 });

@@ -139,6 +139,29 @@ export class ServiceOrder {
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
   customer: Types.ObjectId;
 
+  @Prop({ type: String, enum: ['home', 'auto'], default: 'home' })
+  quoteType?: 'home' | 'auto';
+
+  @Prop({ type: Types.ObjectId, ref: 'CustomerVehicle' })
+  customerVehicle?: Types.ObjectId;
+
+  @Prop({
+    type: {
+      make: String,
+      model: String,
+      year: Number,
+      odometer: Number,
+      observations: String
+    }
+  })
+  vehicleDetails?: {
+    make?: string;
+    model?: string;
+    year?: number;
+    odometer?: number;
+    observations?: string;
+  };
+
   @Prop({
     type: [
       {

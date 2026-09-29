@@ -303,6 +303,9 @@ export class ServiceOrdersService {
           'assignedTechnician.phoneNumber': 1,
           'assignedTechnician.id': 1,
           orderNumber: 1,
+          quoteType: 1,
+          customerVehicle: 1,
+          vehicleDetails: 1,
           equipments: 1,
           items: 1,
           description: 1,
@@ -352,6 +355,7 @@ export class ServiceOrdersService {
       .findOne({ _id: id, account: accountId })
       .populate('account', 'name id')
       .populate('customer', 'name email phoneNumbers address id')
+      .populate('customerVehicle', 'make model year')
       .populate('quote', 'quoteId')
       .populate('assignedTechnician', 'name email phoneNumber id')
       .populate({ path: 'workSessions.technician', populate: { path: 'user', select: 'firstName lastName email phoneNumber' } })

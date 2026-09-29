@@ -9,6 +9,7 @@ import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { ContractQuotesModule } from './contract-quotes/contract-quotes.module';
 import { ContractsModule } from './contracts/contracts.module';
+import { CustomerVehiclesModule } from './customer-vehicles/customer-vehicles.module';
 import { CustomersModule } from './customers/customers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { EquipmentTypeModule } from './equipmentType/equipment-type.module';
@@ -64,6 +65,7 @@ import { WebsocketModule } from './websocket/websocket.module';
     TimekeepingModule,
     TechniciansModule,
     CustomersModule,
+    CustomerVehiclesModule,
     QuotesModule,
     EquipmentTypeModule,
     ServiceOrdersModule,

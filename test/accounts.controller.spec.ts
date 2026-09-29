@@ -39,7 +39,8 @@ describe('AccountsController', () => {
   beforeEach(async () => {
     const mockAccountsService = {
       findOne: jest.fn(),
-      update: jest.fn()
+      update: jest.fn(),
+      getCustomizations: jest.fn()
     };
 
     const mockUsersService = {
@@ -85,6 +86,26 @@ describe('AccountsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getCustomizations', () => {
+    it('returns separate home and auto customization fields', async () => {
+      accountsService.getCustomizations.mockResolvedValue({
+        customizations: 'Home terms',
+        customizationsHome: 'Home terms',
+        customizationsAuto: 'Auto terms',
+        replyToEmail: 'reply@example.com',
+        serviceTaxPercent: 5
+      });
+
+      await expect(controller.getCustomizations(mockAccountId)).resolves.toEqual({
+        customizations: 'Home terms',
+        customizationsHome: 'Home terms',
+        customizationsAuto: 'Auto terms',
+        replyToEmail: 'reply@example.com',
+        serviceTaxPercent: 5
+      });
+    });
   });
 
   describe('findById', () => {

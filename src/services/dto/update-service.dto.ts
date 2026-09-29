@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateServiceDto {
   @IsOptional()
@@ -13,4 +13,8 @@ export class UpdateServiceDto {
   @IsNumber()
   @Min(0)
   value?: number;
+
+  @IsOptional()
+  @IsEnum(['home', 'auto', 'both'])
+  applicability?: 'home' | 'auto' | 'both';
 }

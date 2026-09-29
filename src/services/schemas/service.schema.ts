@@ -14,6 +14,9 @@ export class Service {
   @Prop({ required: true })
   value: number;
 
+  @Prop({ type: String, enum: ['home', 'auto', 'both'], default: 'home' })
+  applicability?: 'home' | 'auto' | 'both';
+
   @Prop({
     type: Types.ObjectId,
     ref: 'Account',
@@ -33,6 +36,7 @@ export interface IService {
   name: string;
   description?: string;
   value: number;
+  applicability?: 'home' | 'auto' | 'both';
   account: Types.ObjectId;
   createdBy: string | Types.ObjectId;
   updatedBy: string | Types.ObjectId;

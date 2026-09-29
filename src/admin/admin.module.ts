@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AccountsModule } from '../accounts/accounts.module';
 import { ContractQuotesModule } from '../contract-quotes/contract-quotes.module';
 import { ContractsModule } from '../contracts/contracts.module';
+import { CustomerVehiclesModule } from '../customer-vehicles/customer-vehicles.module';
 import { CustomersModule } from '../customers/customers.module';
 import { EventsModule } from '../events/events.module';
 import { ExpensesModule } from '../expenses/expenses.module';
@@ -27,6 +28,7 @@ import { MasterAdminGuard } from './guards/master-admin.guard';
     ContractQuotesModule,
     ContractsModule,
     CustomersModule,
+    CustomerVehiclesModule,
     ExpensesModule,
     UsersModule,
     ProductsModule,

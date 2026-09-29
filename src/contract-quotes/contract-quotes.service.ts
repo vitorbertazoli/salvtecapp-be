@@ -291,7 +291,7 @@ export class ContractQuotesService {
   async sendContractQuote(id: string, accountId: Types.ObjectId, userId: Types.ObjectId): Promise<{ success: boolean; message: string }> {
     const contractQuote = await this.contractQuoteModel
       .findOne({ _id: id, account: accountId })
-      .populate('account', 'name logoUrl customizations replyToEmail email phoneNumbers phoneNumber')
+      .populate('account', 'name logoUrl customizations customizationsHome replyToEmail email phoneNumbers phoneNumber')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
       .populate('services.service', 'name description')
       .populate('createdBy', 'firstName lastName')
@@ -694,7 +694,8 @@ export class ContractQuotesService {
     `
         : '';
 
-    const accountCustomizationsHtml = account.customizations ? await marked(account.customizations) : '';
+    const homeCustomizations = account.customizationsHome ?? account.customizations;
+    const accountCustomizationsHtml = homeCustomizations ? await marked(homeCustomizations) : '';
     const customizationsSection = accountCustomizationsHtml
       ? `
     <div class="section">

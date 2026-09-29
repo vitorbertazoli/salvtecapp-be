@@ -47,11 +47,14 @@ export class PublicQuotesController {
     // Return formatted quote data for the frontend
     return {
       id: quote._id,
+      quoteType: quote.quoteType || 'home',
       description: quote.description,
       customer: quote.customer,
       services,
       products,
       equipments: quote.equipments || [],
+      customerVehicle: quote.customerVehicle,
+      vehicleDetails: quote.vehicleDetails,
       totalValue: quote.totalValue,
       discount: quote.discount,
       otherDiscounts: quote.otherDiscounts || [],

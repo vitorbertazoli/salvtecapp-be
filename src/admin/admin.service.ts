@@ -6,6 +6,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { AccountDocument } from '../accounts/schemas/account.schema';
 import { ContractQuotesService } from '../contract-quotes/contract-quotes.service';
 import { ContractsService } from '../contracts/contracts.service';
+import { CustomerVehiclesService } from '../customer-vehicles/customer-vehicles.service';
 import { CustomersService } from '../customers/customers.service';
 import { EventsService } from '../events/events.service';
 import { ExpensesService } from '../expenses/expenses.service';
@@ -42,6 +43,7 @@ export class AdminService {
     private expensesService: ExpensesService,
     private vehicleUsagesService: VehicleUsagesService,
     private vehiclesService: VehiclesService,
+    private customerVehiclesService: CustomerVehiclesService,
     private prospectingService: ProspectingService
   ) {}
 
@@ -229,6 +231,9 @@ export class AdminService {
 
     // Delete vehicles
     await this.vehiclesService.deleteAllByAccount(normalizedAccountId);
+
+    // Delete customer-owned vehicle records before customers
+    await this.customerVehiclesService.deleteAllByAccount(normalizedAccountId);
 
     // Delete quotes (they reference customers, services)
     await this.quotesService.deleteAllByAccount(normalizedAccountId);

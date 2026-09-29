@@ -21,7 +21,8 @@ export class ServicesService {
     accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
-    search: string = ''
+    search: string = '',
+    applicability?: 'home' | 'auto'
   ): Promise<{
     services: Service[];
     total: number;
@@ -35,6 +36,13 @@ export class ServicesService {
     const searchQuery: any = { account: accountId };
     if (search) {
       searchQuery.$or = [{ name: { $regex: search, $options: 'i' } }, { description: { $regex: search, $options: 'i' } }];
+    }
+    if (applicability === 'home') {
+      searchQuery.$and = [
+        { $or: [{ applicability: 'home' }, { applicability: { $exists: false } }, { applicability: null }] }
+      ];
+    } else if (applicability === 'auto') {
+      searchQuery.applicability = { $in: ['auto', 'both'] };
     }
 
     const [services, total] = await Promise.all([

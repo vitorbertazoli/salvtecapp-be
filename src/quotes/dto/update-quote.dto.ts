@@ -74,10 +74,47 @@ class OtherDiscountDto {
   amount?: number;
 }
 
+class QuoteVehicleDetailsDto {
+  @IsOptional()
+  @IsString()
+  make?: string;
+
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1886)
+  year?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  odometer?: number;
+
+  @IsOptional()
+  @IsString()
+  observations?: string;
+}
+
 export class UpdateQuoteDto {
+  @IsOptional()
+  @IsEnum(['home', 'auto'])
+  quoteType?: 'home' | 'auto';
+
   @IsOptional()
   @IsMongoId()
   customer?: string;
+
+  @IsOptional()
+  @IsMongoId()
+  customerVehicle?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => QuoteVehicleDetailsDto)
+  vehicleDetails?: QuoteVehicleDetailsDto;
 
   @IsOptional()
   @IsArray()

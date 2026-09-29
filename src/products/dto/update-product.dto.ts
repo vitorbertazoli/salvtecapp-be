@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateProductDto {
   @IsOptional()
@@ -29,4 +29,8 @@ export class UpdateProductDto {
   @IsOptional()
   @IsString()
   unit?: string;
+
+  @IsOptional()
+  @IsEnum(['home', 'auto', 'both'])
+  applicability?: 'home' | 'auto' | 'both';
 }

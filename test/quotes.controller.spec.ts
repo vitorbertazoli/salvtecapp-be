@@ -79,6 +79,7 @@ describe('QuotesController', () => {
   };
 
   const mockQuoteToServiceOrderService = {
+    validateQuoteData: jest.fn().mockResolvedValue(undefined),
     findByIdAndAccount: jest.fn(),
     updateByAccount: jest.fn(),
     createFromQuote: jest.fn()
@@ -137,6 +138,7 @@ describe('QuotesController', () => {
       const expectedQuoteData = {
         ...createQuoteDto,
         account: mockAccountId,
+        quoteType: 'home',
         customer: new Types.ObjectId(mockCustomerId.toString()),
         services: [
           {
@@ -178,6 +180,7 @@ describe('QuotesController', () => {
       const expectedQuoteData = {
         ...createQuoteDto,
         account: mockAccountId,
+        quoteType: 'home',
         customer: new Types.ObjectId(mockCustomerId.toString()),
         applyServiceTax: true,
         serviceTaxPercent: 0,

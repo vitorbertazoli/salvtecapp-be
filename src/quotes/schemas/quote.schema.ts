@@ -5,6 +5,14 @@ import { Equipment, ICustomer } from 'src/customers/schemas/customer.schema';
 
 export type QuoteDocument = Quote & Document;
 
+export class QuoteVehicleDetails {
+  make?: string;
+  model?: string;
+  year?: number;
+  odometer?: number;
+  observations?: string;
+}
+
 @Schema({ timestamps: true })
 export class Quote {
   @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
@@ -12,6 +20,15 @@ export class Quote {
 
   @Prop({ type: Types.ObjectId, ref: 'Customer', required: true })
   customer: Types.ObjectId;
+
+  @Prop({ type: String, enum: ['home', 'auto'], default: 'home' })
+  quoteType?: 'home' | 'auto';
+
+  @Prop({ type: Types.ObjectId, ref: 'CustomerVehicle' })
+  customerVehicle?: Types.ObjectId;
+
+  @Prop({ type: Object })
+  vehicleDetails?: QuoteVehicleDetails;
 
   @Prop({
     type: [
@@ -125,6 +142,9 @@ export interface IQuote {
   id: string;
   account: string | IAccount;
   customer: string | ICustomer;
+  quoteType?: 'home' | 'auto';
+  customerVehicle?: string | Types.ObjectId;
+  vehicleDetails?: QuoteVehicleDetails;
   equipments?: Equipment[];
   services?: {
     service: string;

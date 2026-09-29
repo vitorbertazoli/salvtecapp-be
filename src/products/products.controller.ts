@@ -29,12 +29,13 @@ export class ProductsController {
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
     @Query('search') search: string = '',
+    @Query('applicability') applicability: 'home' | 'auto' | undefined,
     @GetAccountId() accountId: Types.ObjectId
   ) {
     // Always filter by the user's account from JWT token
     const pageNum = parseInt(page, 10) || 1;
     const limitNum = parseInt(limit, 10) || 10;
-    return this.productsService.findByAccount(accountId, pageNum, limitNum, search);
+    return this.productsService.findByAccount(accountId, pageNum, limitNum, search, applicability === 'home' || applicability === 'auto' ? applicability : undefined);
   }
 
   @Get(':id')

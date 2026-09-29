@@ -53,6 +53,12 @@ export class Account {
   @Prop()
   customizations?: string;
 
+  @Prop()
+  customizationsHome?: string;
+
+  @Prop()
+  customizationsAuto?: string;
+
   @Prop({ min: 0, max: 100, default: 0 })
   serviceTaxPercent?: number;
 }
@@ -73,6 +79,8 @@ export interface IAccount {
     cvv?: string;
   };
   customizations?: string;
+  customizationsHome?: string;
+  customizationsAuto?: string;
   serviceTaxPercent?: number;
 }
 

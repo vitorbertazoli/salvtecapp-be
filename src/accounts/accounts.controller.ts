@@ -32,6 +32,8 @@ export class AccountsController {
     const result = await this.accountsService.getCustomizations(accountid);
     return {
       customizations: result.customizations || '',
+      customizationsHome: result.customizationsHome || '',
+      customizationsAuto: result.customizationsAuto || '',
       replyToEmail: result.replyToEmail || '',
       serviceTaxPercent: result.serviceTaxPercent ?? 0
     };

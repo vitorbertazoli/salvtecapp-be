@@ -17,6 +17,7 @@ describe('QuotesService', () => {
   let service: QuotesService;
   let quoteModel: any;
   let emailService: any;
+  let accountsService: any;
 
   const mockAccountId = new Types.ObjectId();
   const mockCustomerId = new Types.ObjectId();
@@ -150,6 +151,7 @@ describe('QuotesService', () => {
     service = module.get<QuotesService>(QuotesService);
     quoteModel = module.get(getModelToken(Quote.name));
     emailService = module.get(EmailService);
+    accountsService = module.get(AccountsService);
   });
 
   it('should be defined', () => {
@@ -180,6 +182,36 @@ describe('QuotesService', () => {
         createdBy: mockUserId,
         updatedBy: mockUserId
       });
+    });
+
+    it('snapshots auto customizations for auto quotes', async () => {
+      accountsService.findOne.mockResolvedValue({
+        customizations: 'Legacy home terms',
+        customizationsHome: 'Home terms',
+        customizationsAuto: 'Auto terms'
+      });
+      const quoteData = {
+        account: mockAccountId,
+        quoteType: 'auto' as const,
+        customer: mockCustomerId,
+        totalValue: 0
+      };
+
+      await service.create(quoteData);
+
+      expect(quoteModel).toHaveBeenCalledWith(expect.objectContaining({
+        ...quoteData,
+        accountCustomizations: 'Auto terms'
+      }));
+    });
+
+    it('uses legacy customizations as the home snapshot when explicit home terms are absent', async () => {
+      accountsService.findOne.mockResolvedValue({ customizations: 'Legacy home terms' });
+      const quoteData = { account: mockAccountId, quoteType: 'home' as const, customer: mockCustomerId, totalValue: 0 };
+
+      await service.create(quoteData);
+
+      expect(quoteModel).toHaveBeenCalledWith(expect.objectContaining({ accountCustomizations: 'Legacy home terms' }));
     });
   });
 
@@ -309,7 +341,8 @@ describe('QuotesService', () => {
     it('should send a quote successfully', async () => {
       const mockPopulatedQuote = {
         ...mockQuote,
-        account: { name: 'Test Account' },
+        quoteType: 'auto',
+        account: { name: 'Test Account', customizationsHome: 'HOME-ONLY', customizationsAuto: 'AUTO-ONLY' },
         customer: { name: 'Test Customer', email: 'test@example.com' },
         services: [{ service: { name: 'Test Service' }, quantity: 1, unitValue: 100 }],
         products: [{ product: { name: 'Test Product', maker: 'Test Maker', model: 'Test Model' }, quantity: 2, unitValue: 50 }]
@@ -329,6 +362,9 @@ describe('QuotesService', () => {
         account: mockAccountId
       });
       expect(emailService.sendEmail).toHaveBeenCalled();
+      const sentEmail = emailService.sendEmail.mock.calls[0][0];
+      expect(sentEmail.html).toContain('<p>AUTO-ONLY</p>');
+      expect(sentEmail.html).not.toContain('<p>HOME-ONLY</p>');
       expect(quoteModel.findOneAndUpdate).toHaveBeenCalledWith(
         { _id: mockQuote._id.toString(), account: mockAccountId },
         expect.objectContaining({

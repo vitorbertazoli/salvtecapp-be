@@ -25,6 +25,14 @@ export class UpdateAccountDto {
   customizations?: string;
 
   @IsOptional()
+  @IsString()
+  customizationsHome?: string;
+
+  @IsOptional()
+  @IsString()
+  customizationsAuto?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(100)

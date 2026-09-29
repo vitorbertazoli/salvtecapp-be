@@ -26,7 +26,10 @@ export class QuotesService {
     if (quoteData.account) {
       const account = await this.accountsService.findOne(quoteData.account);
       if (account) {
-        quoteData.accountCustomizations = account.customizations;
+        quoteData.accountCustomizations =
+          quoteData.quoteType === 'auto'
+            ? account.customizationsAuto
+            : (account.customizationsHome ?? account.customizations);
       }
     }
 
@@ -152,8 +155,9 @@ export class QuotesService {
     // Find the quote with all populated data
     const quote = await this.quoteModel
       .findOne(query)
-      .populate('account', 'name logoUrl customizations replyToEmail')
+      .populate('account', 'name logoUrl customizations customizationsHome customizationsAuto replyToEmail')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
+      .populate('customerVehicle', 'make model year')
       .populate('services.service', 'name description value')
       .populate('products.product', 'name description maker model sku unit value')
       .populate('createdBy', 'firstName lastName')
@@ -207,6 +211,7 @@ export class QuotesService {
       })
       .populate('account', 'name')
       .populate('customer', 'name email')
+      .populate('customerVehicle', 'make model year')
       .populate('services.service', 'name description value')
       .populate('products.product', 'name description maker model sku unit value')
       .exec();
@@ -266,6 +271,7 @@ export class QuotesService {
       })
       .populate('account', 'name')
       .populate('customer', 'name email phoneNumbers address type cpf cnpj contactName')
+      .populate('customerVehicle', 'make model year')
       .populate('services.service', 'name description value')
       .populate('products.product', 'name description maker model sku unit value')
       .populate('createdBy', 'firstName lastName')
@@ -279,6 +285,8 @@ export class QuotesService {
   }
 
   private async generateQuoteEmailHtml(quote: any, approvalToken?: string): Promise<string> {
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] || character);
     const formatCurrency = (value: number) => {
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -630,6 +638,19 @@ export class QuotesService {
         </div>
 
         ${
+          quote.quoteType === 'auto'
+            ? `
+        <div class="section">
+            <h3 class="section-title">Veiculo</h3>
+            <div class="info-item"><span class="info-label">Marca/Modelo/Ano:</span> ${escapeHtml(quote.vehicleDetails?.make || '-')} ${escapeHtml(quote.vehicleDetails?.model || '')} ${escapeHtml(quote.vehicleDetails?.year || '')}</div>
+            ${quote.vehicleDetails?.odometer !== undefined ? `<div class="info-item"><span class="info-label">Odometro:</span> ${escapeHtml(quote.vehicleDetails.odometer)} km</div>` : ''}
+            ${quote.vehicleDetails?.observations ? `<div class="info-item"><span class="info-label">Observacoes:</span> ${escapeHtml(quote.vehicleDetails.observations)}</div>` : ''}
+        </div>
+        `
+            : ''
+        }
+
+        ${
           quote.equipments && quote.equipments.length > 0
             ? `
         <div class="section">
@@ -810,12 +831,16 @@ export class QuotesService {
         </div>
 
         ${
-          quote.account?.customizations
+          quote.accountCustomizations ??
+          (quote.quoteType === 'auto' ? quote.account?.customizationsAuto : (quote.account?.customizationsHome ?? quote.account?.customizations))
             ? `
         <div class="section">
             <h3 class="section-title">Condições:</h3>
             <div class="markdown-content" style="background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 10px 0;">
-                ${await marked(quote.account.customizations)}
+                ${await marked(
+                  quote.accountCustomizations ??
+                    (quote.quoteType === 'auto' ? quote.account?.customizationsAuto : (quote.account?.customizationsHome ?? quote.account?.customizations))
+                )}
             </div>
         </div>
         `

@@ -35,17 +35,36 @@ export class AccountsService {
   }
 
   async update(id: string, accountData: Partial<Account>): Promise<Account | null> {
-    return this.accountModel.findByIdAndUpdate(id, accountData, { new: true }).exec();
+    const updateData = { ...accountData };
+    if (updateData.customizationsHome !== undefined) {
+      updateData.customizations = updateData.customizationsHome;
+    } else if (updateData.customizations !== undefined) {
+      updateData.customizationsHome = updateData.customizations;
+    }
+
+    return this.accountModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 
   async delete(id: Types.ObjectId): Promise<Account | null> {
     return this.accountModel.findByIdAndDelete(id).exec();
   }
 
-  async getCustomizations(accountId: Types.ObjectId): Promise<{ customizations: string | null; replyToEmail: string | null; serviceTaxPercent: number }> {
-    const account = await this.accountModel.findById(accountId).select('customizations replyToEmail serviceTaxPercent').exec();
+  async getCustomizations(accountId: Types.ObjectId): Promise<{
+    customizations: string | null;
+    customizationsHome: string | null;
+    customizationsAuto: string | null;
+    replyToEmail: string | null;
+    serviceTaxPercent: number;
+  }> {
+    const account = await this.accountModel
+      .findById(accountId)
+      .select('customizations customizationsHome customizationsAuto replyToEmail serviceTaxPercent')
+      .exec();
+    const customizationsHome = account?.customizationsHome ?? account?.customizations ?? null;
     return {
-      customizations: account?.customizations || null,
+      customizations: customizationsHome,
+      customizationsHome,
+      customizationsAuto: account?.customizationsAuto || null,
       replyToEmail: account?.replyToEmail || null,
       serviceTaxPercent: account?.serviceTaxPercent ?? 0
     };

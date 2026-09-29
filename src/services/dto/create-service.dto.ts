@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateServiceDto {
   @IsNotEmpty()
@@ -13,4 +13,8 @@ export class CreateServiceDto {
   @IsNumber()
   @Min(0)
   value: number;
+
+  @IsOptional()
+  @IsEnum(['home', 'auto', 'both'])
+  applicability?: 'home' | 'auto' | 'both';
 }

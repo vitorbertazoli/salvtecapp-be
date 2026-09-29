@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateProductDto {
   @IsNotEmpty()
@@ -29,4 +29,8 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   unit?: string;
+
+  @IsOptional()
+  @IsEnum(['home', 'auto', 'both'])
+  applicability?: 'home' | 'auto' | 'both';
 }

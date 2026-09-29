@@ -21,7 +21,8 @@ export class ProductsService {
     accountId: Types.ObjectId,
     page: number = 1,
     limit: number = 10,
-    search: string = ''
+    search: string = '',
+    applicability?: 'home' | 'auto'
   ): Promise<{
     products: Product[];
     total: number;
@@ -41,6 +42,11 @@ export class ProductsService {
         { model: { $regex: search, $options: 'i' } },
         { sku: { $regex: search, $options: 'i' } }
       ];
+    }
+    if (applicability === 'home') {
+      searchQuery.$and = [{ $or: [{ applicability: 'home' }, { applicability: { $exists: false } }, { applicability: null }] }];
+    } else if (applicability === 'auto') {
+      searchQuery.applicability = { $in: ['auto', 'both'] };
     }
 
     const [products, total] = await Promise.all([

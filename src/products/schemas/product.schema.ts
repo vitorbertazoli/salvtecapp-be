@@ -20,6 +20,9 @@ export class Product {
   @Prop({ required: true })
   value: number;
 
+  @Prop({ type: String, enum: ['home', 'auto', 'both'], default: 'home' })
+  applicability?: 'home' | 'auto' | 'both';
+
   @Prop()
   sku?: string;
 
@@ -47,6 +50,7 @@ export interface IProduct {
   maker?: string;
   model?: string;
   value: number;
+  applicability?: 'home' | 'auto' | 'both';
   sku?: string;
   unit?: string;
   account: Types.ObjectId;

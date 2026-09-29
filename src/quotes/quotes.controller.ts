@@ -46,7 +46,9 @@ export class QuotesController {
     const quoteData = {
       ...dto,
       account: accountId,
+      quoteType: dto.quoteType || 'home',
       customer: new Types.ObjectId(dto.customer),
+      ...(dto.customerVehicle && { customerVehicle: new Types.ObjectId(dto.customerVehicle) }),
       ...(dto.services && {
         services: dto.services.map((service) => ({
           ...service,
@@ -69,6 +71,7 @@ export class QuotesController {
       updatedBy: new Types.ObjectId(userId)
     } as any;
 
+    await this.quoteToServiceOrderService.validateQuoteData(quoteData, accountId);
     return this.quotesService.create(quoteData);
   }
 
@@ -104,6 +107,7 @@ export class QuotesController {
     const nextServiceTaxPercent = dto.serviceTaxPercent ?? 0;
     const { serviceTaxAmount, totalValue } = calculateQuoteTotals({
       ...dto,
+      ...(dto.customerVehicle !== undefined && { customerVehicle: dto.customerVehicle ? new Types.ObjectId(dto.customerVehicle) : null }),
       applyServiceTax: nextApplyServiceTax,
       serviceTaxPercent: nextServiceTaxPercent
     });
@@ -122,6 +126,9 @@ export class QuotesController {
           ...product,
           ...(product.product && { product: new Types.ObjectId(product.product) })
         }))
+      }),
+      ...(dto.customerVehicle !== undefined && {
+        customerVehicle: dto.customerVehicle ? new Types.ObjectId(dto.customerVehicle) : null
       }),
       ...(dto.applyServiceTax !== undefined && { applyServiceTax: nextApplyServiceTax }),
       ...(dto.serviceTaxPercent !== undefined && { serviceTaxPercent: nextServiceTaxPercent }),
