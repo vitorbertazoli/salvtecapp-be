@@ -164,13 +164,15 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN') // Only users with ADMIN role can delete users
+  @Roles('ADMIN') // Only users with ADMIN role can deactivate users
   async remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser() user: any) {
+    const updatedBy = new Types.ObjectId(user.id);
     if (user.isMasterAdmin) {
-      return this.usersService.deleteById(id);
+      await this.usersService.deactivateById(id, updatedBy);
+    } else {
+      await this.usersService.deactivate(id, accountId, updatedBy);
     }
-    await this.usersService.delete(id, accountId);
-    return { message: 'User deleted successfully' };
+    return { message: 'User deactivated successfully' };
   }
 
   @Post(':id/profile-picture')

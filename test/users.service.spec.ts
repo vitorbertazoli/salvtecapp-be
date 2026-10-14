@@ -348,6 +348,36 @@ describe('UsersService', () => {
     });
   });
 
+  describe('deactivate', () => {
+    it('should set user inactive within the specified account', async () => {
+      const mockQuery = { exec: jest.fn().mockResolvedValue(mockUser) };
+      userModel.findOneAndUpdate.mockReturnValue(mockQuery);
+
+      const result = await service.deactivate(mockUserId.toString(), mockAccountId, mockUpdatedBy);
+
+      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockUserId.toString(), account: mockAccountId },
+        { status: 'inactive', updatedBy: mockUpdatedBy },
+        { new: true }
+      );
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should set user inactive by id for master admin', async () => {
+      const mockQuery = { exec: jest.fn().mockResolvedValue(mockUser) };
+      userModel.findOneAndUpdate.mockReturnValue(mockQuery);
+
+      const result = await service.deactivateById(mockUserId.toString(), mockUpdatedBy);
+
+      expect(userModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: mockUserId.toString() },
+        { status: 'inactive', updatedBy: mockUpdatedBy },
+        { new: true }
+      );
+      expect(result).toEqual(mockUser);
+    });
+  });
+
   describe('delete', () => {
     it('should delete user successfully', async () => {
       const mockQuery = {

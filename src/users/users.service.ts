@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { promises as fs } from 'fs';
 import * as bcrypt from 'bcrypt';
+import { promises as fs } from 'fs';
 import { Model, Types } from 'mongoose';
 import { join } from 'path';
 import { User, UserDocument } from './schemas/user.schema';
@@ -264,6 +264,14 @@ export class UsersService {
   async updateLanguage(id: string, language: string, accountId: Types.ObjectId): Promise<User | null> {
     const query = { _id: id, account: accountId };
     return this.userModel.findOneAndUpdate(query, { language }, { new: true }).populate('account', 'name id logoUrl').populate('roles', 'name').exec();
+  }
+
+  async deactivate(id: string, accountId: Types.ObjectId, updatedBy: Types.ObjectId): Promise<User | null> {
+    return this.userModel.findOneAndUpdate({ _id: id, account: accountId }, { status: 'inactive', updatedBy }, { new: true }).exec();
+  }
+
+  async deactivateById(id: string, updatedBy: Types.ObjectId): Promise<User | null> {
+    return this.userModel.findOneAndUpdate({ _id: id }, { status: 'inactive', updatedBy }, { new: true }).exec();
   }
 
   async delete(id: string, accountId: Types.ObjectId): Promise<User | null> {

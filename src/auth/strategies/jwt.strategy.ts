@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { TechniciansService } from 'src/technicians/technicians.service';
+import { TechniciansService } from '../../technicians/technicians.service';
 import { UsersService } from '../../users/users.service';
 
 @Injectable()
@@ -21,6 +21,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.usersService.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('auth.errors.userNotFound');
+    }
+
+    if (user.status !== 'active') {
+      throw new UnauthorizedException('auth.errors.userNotActive');
     }
 
     // Check if account is active

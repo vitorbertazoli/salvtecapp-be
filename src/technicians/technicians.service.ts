@@ -273,15 +273,15 @@ export class TechniciansService {
       .exec();
   }
 
-  async delete(id: string, accountId: Types.ObjectId): Promise<Technician | null> {
+  async delete(id: string, accountId: Types.ObjectId, updatedBy: Types.ObjectId): Promise<Technician | null> {
     const query = { _id: id, account: accountId };
 
     // First, get the technician to find the associated user
     const technician = await this.technicianModel.findOne(query).exec();
 
-    // If technician has an associated user, delete the user as well
+    // If technician has an associated user, deactivate that user as well
     if (technician && technician.user) {
-      await this.usersService.delete(technician.user.toString(), accountId);
+      await this.usersService.deactivate(technician.user.toString(), accountId, updatedBy);
     }
 
     // Delete the technician

@@ -117,6 +117,7 @@ describe('TechniciansService', () => {
       findOneByAccountAndEmail: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      deactivate: jest.fn(),
       delete: jest.fn()
     };
 
@@ -558,18 +559,19 @@ describe('TechniciansService', () => {
       technicianModel.findOne.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockTechnician)
       });
-      usersService.delete.mockResolvedValue(mockUser);
+      usersService.deactivate.mockResolvedValue(mockUser);
 
       technicianModel.findOneAndDelete.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockTechnician)
       });
 
-      const result = await service.delete(mockTechnicianId.toString(), mockAccountId);
+      const result = await service.delete(mockTechnicianId.toString(), mockAccountId, mockUpdatedBy);
 
       expect(technicianModel.findOne).toHaveBeenCalledWith({
         _id: mockTechnicianId.toString(),
         account: mockAccountId
       });
+      expect(usersService.deactivate).toHaveBeenCalledWith(mockUserId.toString(), mockAccountId, mockUpdatedBy);
       expect(technicianModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: mockTechnicianId.toString(),
         account: mockAccountId
@@ -588,9 +590,9 @@ describe('TechniciansService', () => {
         exec: jest.fn().mockResolvedValue(technicianWithoutUser)
       });
 
-      const result = await service.delete(mockTechnicianId.toString(), mockAccountId);
+      const result = await service.delete(mockTechnicianId.toString(), mockAccountId, mockUpdatedBy);
 
-      expect(usersService.delete).not.toHaveBeenCalled();
+      expect(usersService.deactivate).not.toHaveBeenCalled();
       expect(result).toEqual(technicianWithoutUser);
     });
 
@@ -602,7 +604,7 @@ describe('TechniciansService', () => {
         exec: jest.fn().mockResolvedValue(null)
       });
 
-      const result = await service.delete('nonexistent-id', mockAccountId);
+      const result = await service.delete('nonexistent-id', mockAccountId, mockUpdatedBy);
 
       expect(technicianModel.findOneAndDelete).toHaveBeenCalledWith({
         _id: 'nonexistent-id',

@@ -12,6 +12,8 @@ describe('UsersController', () => {
   const mockAccountId = new Types.ObjectId();
   const mockUserId = new Types.ObjectId();
   const mockRoleId = new Types.ObjectId();
+  const mockAdminId = new Types.ObjectId();
+  const mockMasterAdminId = new Types.ObjectId();
 
   const mockUser = {
     _id: mockUserId,
@@ -40,13 +42,13 @@ describe('UsersController', () => {
   };
 
   const mockAdminUser = {
-    id: 'admin-id',
+    id: mockAdminId.toString(),
     roles: ['ADMIN'],
     isMasterAdmin: false
   };
 
   const mockMasterAdminUser = {
-    id: 'master-admin-id',
+    id: mockMasterAdminId.toString(),
     roles: ['ADMIN'],
     isMasterAdmin: true
   };
@@ -65,8 +67,8 @@ describe('UsersController', () => {
       findByIdAndAccount: jest.fn(),
       update: jest.fn(),
       updateLanguage: jest.fn(),
-      delete: jest.fn(),
-      deleteById: jest.fn()
+      deactivate: jest.fn(),
+      deactivateById: jest.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -256,7 +258,7 @@ describe('UsersController', () => {
           password: 'newpassword123',
           status: 'active',
           language: 'en-US',
-          updatedBy: 'admin-id',
+          updatedBy: mockAdminUser.id,
           roles: [mockRoleId] // Should be ObjectId
         },
         mockAccountId
@@ -326,22 +328,22 @@ describe('UsersController', () => {
   });
 
   describe('remove', () => {
-    it('should delete user for admin user', async () => {
-      usersService.delete.mockResolvedValue(mockUser);
+    it('should deactivate user within the admin account', async () => {
+      usersService.deactivate.mockResolvedValue(mockUser);
 
       const result = await controller.remove(mockUserId.toString(), mockAccountId, mockAdminUser);
 
-      expect(usersService.delete).toHaveBeenCalledWith(mockUserId.toString(), mockAccountId);
-      expect(result).toEqual({ message: 'User deleted successfully' });
+      expect(usersService.deactivate).toHaveBeenCalledWith(mockUserId.toString(), mockAccountId, mockAdminId);
+      expect(result).toEqual({ message: 'User deactivated successfully' });
     });
 
-    it('should delete user across all accounts for master admin', async () => {
-      usersService.deleteById.mockResolvedValue(mockUser);
+    it('should deactivate user across all accounts for master admin', async () => {
+      usersService.deactivateById.mockResolvedValue(mockUser);
 
       const result = await controller.remove(mockUserId.toString(), mockAccountId, mockMasterAdminUser);
 
-      expect(usersService.deleteById).toHaveBeenCalledWith(mockUserId.toString());
-      expect(result).toEqual(mockUser);
+      expect(usersService.deactivateById).toHaveBeenCalledWith(mockUserId.toString(), mockMasterAdminId);
+      expect(result).toEqual({ message: 'User deactivated successfully' });
     });
   });
 });

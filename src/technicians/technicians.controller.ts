@@ -116,7 +116,7 @@ export class TechniciansController {
 
   @Delete(':id')
   @Roles('ADMIN') // Only users with ADMIN role can delete technicians
-  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId) {
-    return this.techniciansService.delete(id, accountId);
+  remove(@Param('id') id: string, @GetAccountId() accountId: Types.ObjectId, @GetUser('id') userId: string) {
+    return this.techniciansService.delete(id, accountId, new Types.ObjectId(userId));
   }
 }
